@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'login.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const FigmaToCodeApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class FigmaToCodeApp extends StatelessWidget {
+  const FigmaToCodeApp({super.key});
 
   // This widget is the root of your application.
   @override
