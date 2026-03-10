@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
@@ -402,7 +402,6 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 }
-=======
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
@@ -806,4 +805,3 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 }
->>>>>>> 2f7e400eb22f3eebbf23e8764dc71b949bcd9780
