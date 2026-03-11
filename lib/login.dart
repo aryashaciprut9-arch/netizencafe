@@ -129,7 +129,7 @@ class _LoginPageState extends State<LoginPage> {
                                 radius: 40,
                                 backgroundColor: Colors.transparent,
                                 // Menggunakan gambar lokal dari folder assets
-                                backgroundImage: AssetImage('assets/nettyzencafe.png'),
+                                backgroundImage: AssetImage('assets/nettyzenca.png'),
                               ),
                             ),
                             const SizedBox(height: 20),
