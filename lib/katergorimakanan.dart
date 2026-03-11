@@ -13,14 +13,9 @@ void main() {
   runApp(const MyApp());
 }
 
-<<<<<<< HEAD
-class FigmaToCodeApp extends StatelessWidget {
-  const FigmaToCodeApp({super.key});
-=======
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
->>>>>>> 2f7e400eb22f3eebbf23e8764dc71b949bcd9780
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
