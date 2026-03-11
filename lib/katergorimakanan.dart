@@ -429,7 +429,7 @@ class _DetailSheet extends StatefulWidget {
   final MenuItem item;
   final Function(int) onAddToCart;
 
-  _DetailSheet({required this.item, required this.onAddToCart});
+  const _DetailSheet({required this.item, required this.onAddToCart});
 
   @override
   State<_DetailSheet> createState() => _DetailSheetState();
