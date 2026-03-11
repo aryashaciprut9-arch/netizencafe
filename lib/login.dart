@@ -34,12 +34,11 @@ class _LoginPageState extends State<LoginPage> {
   bool isUserSelected = true;
   bool isPasswordVisible = false;
   bool _isPressed = false;
-  
-  // Variabel baru untuk status "Ingat Saya"
-  bool _isRememberMe = false; 
+  bool _isRememberMe = false;
 
   @override
   Widget build(BuildContext context) {
+    // Mendapatkan ukuran layar untuk responsivitas
     final size = MediaQuery.of(context).size;
 
     return Container(
@@ -58,7 +57,7 @@ class _LoginPageState extends State<LoginPage> {
       ),
       child: Stack(
         children: [
-          // Dekorasi Background
+          // Dekorasi Background (Lingkaran)
           Positioned(
             top: -50,
             left: -50,
@@ -84,182 +83,186 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
 
-          // Konten Utama
-          Center(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(40),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                    child: Container(
-                      width: double.infinity,
-                      constraints: const BoxConstraints(maxWidth: 450),
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.9),
-                        borderRadius: BorderRadius.circular(40),
-                        border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 30,
-                            spreadRadius: 5,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Logo
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(color: const Color(0xFF8A4607).withOpacity(0.1), width: 2),
-                              color: const Color(0xFFFFF8F0),
+          // Konten Utama dengan SafeArea untuk kompatibilitas device
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 24.0, 
+                    vertical: MediaQuery.of(context).padding.top > 0 ? 10 : 20
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(40),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                      child: Container(
+                        width: double.infinity,
+                        constraints: const BoxConstraints(maxWidth: 450),
+                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.9),
+                          borderRadius: BorderRadius.circular(40),
+                          border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 30,
+                              spreadRadius: 5,
+                              offset: const Offset(0, 10),
                             ),
-                            child: const CircleAvatar(
-                              radius: 40,
-                              backgroundColor: Colors.transparent,
-                              backgroundImage: NetworkImage("https://placehold.co/80x80"),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-
-                          ShaderMask(
-                            shaderCallback: (bounds) => const LinearGradient(
-                              colors: [Color(0xFF8A4607), Color(0xFFD97B29)],
-                            ).createShader(bounds),
-                            child: const Text(
-                              'Nettyzen Access',
-                              style: TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                letterSpacing: 0.5,
+                          ],
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // --- Logo di dalam Lingkaran ---
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(color: const Color(0xFF8A4607).withOpacity(0.1), width: 2),
+                                color: const Color(0xFFFFF8F0),
+                              ),
+                              child: const CircleAvatar(
+                                radius: 40,
+                                backgroundColor: Colors.transparent,
+                                // Menggunakan gambar lokal dari folder assets
+                                backgroundImage: AssetImage('assets/nettyzencafe.png'),
                               ),
                             ),
-                          ),
-                          
-                          const SizedBox(height: 8),
-                          
-                          Text(
-                            'Cafe & UMKM Solution',
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 14,
-                              letterSpacing: 1.5,
-                              fontWeight: FontWeight.w500,
+                            const SizedBox(height: 20),
+
+                            ShaderMask(
+                              shaderCallback: (bounds) => const LinearGradient(
+                                colors: [Color(0xFF8A4607), Color(0xFFD97B29)],
+                              ).createShader(bounds),
+                              child: const Text(
+                                'Nettyzen Access',
+                                style: TextStyle(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
                             ),
-                          ),
-                          
-                          const SizedBox(height: 35),
+                            
+                            const SizedBox(height: 8),
+                            
+                            Text(
+                              'Cafe & UMKM Solution',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 14,
+                                letterSpacing: 1.5,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            
+                            const SizedBox(height: 35),
 
-                          // --- Toggle User / Admin ---
-                          _buildCustomToggle(),
-                          
-                          const SizedBox(height: 30),
+                            // Toggle User / Admin
+                            _buildCustomToggle(),
+                            
+                            const SizedBox(height: 30),
 
-                          // Input Fields
-                          _buildInputField(label: "Email", hint: "ambarya@gmail.com", icon: Icons.email_outlined, isPassword: false),
-                          
-                          const SizedBox(height: 20),
-                          
-                          _buildInputField(label: "Password", hint: "••••••••", icon: Icons.lock_outline, isPassword: true),
+                            // Input Fields
+                            _buildInputField(label: "Email", hint: "ambarya@gmail.com", icon: Icons.email_outlined, isPassword: false),
+                            
+                            const SizedBox(height: 20),
+                            
+                            _buildInputField(label: "Password", hint: "••••••••", icon: Icons.lock_outline, isPassword: true),
 
-                          // --- Ingat Saya & Lupa Password (LOGIKA BARU) ---
-                          Padding(
-                            padding: const EdgeInsets.only(top: 15.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: Checkbox(
-                                        // Menggunakan state _isRememberMe
-                                        value: _isRememberMe,
-                                        // Fungsi untuk mengubah nilai
-                                        onChanged: (value) {
-                                          setState(() {
-                                            _isRememberMe = value ?? false;
-                                          });
-                                        },
-                                        activeColor: const Color(0xFF8A4607),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+                            // Ingat Saya & Lupa Password
+                            Padding(
+                              padding: const EdgeInsets.only(top: 15.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: Checkbox(
+                                          value: _isRememberMe,
+                                          onChanged: (value) {
+                                            setState(() {
+                                              _isRememberMe = value ?? false;
+                                            });
+                                          },
+                                          activeColor: const Color(0xFF8A4607),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Text("Ingat Saya", style: TextStyle(color: Colors.grey[700], fontWeight: FontWeight.w500)),
+                                    ],
+                                  ),
+                                  GestureDetector(
+                                    onTap: () {},
+                                    child: Text(
+                                      "Lupa Password?",
+                                      style: TextStyle(
+                                        color: Colors.brown[700],
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13,
                                       ),
                                     ),
-                                    const SizedBox(width: 10),
-                                    Text("Ingat Saya", style: TextStyle(color: Colors.grey[700], fontWeight: FontWeight.w500)),
-                                  ],
-                                ),
-                                GestureDetector(
-                                  onTap: () {},
-                                  child: Text(
-                                    "Lupa Password?",
-                                    style: TextStyle(
-                                      color: Colors.brown[700],
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 13,
-                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
 
-                          const SizedBox(height: 35),
+                            const SizedBox(height: 35),
 
-                          // Tombol Masuk
-                          GestureDetector(
-                            onTapDown: (_) => setState(() => _isPressed = true),
-                            onTapUp: (_) => setState(() => _isPressed = false),
-                            onTapCancel: () => setState(() => _isPressed = false),
-                            child: AnimatedScale(
-                              scale: _isPressed ? 0.96 : 1.0,
-                              duration: const Duration(milliseconds: 150),
-                              curve: Curves.easeInOut,
-                              child: Container(
-                                width: double.infinity,
-                                height: 55,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(30),
-                                  gradient: const LinearGradient(
-                                    colors: [Color(0xFFD97B29), Color(0xFF8A4607)],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: const Color(0xFF8A4607).withOpacity(0.4),
-                                      blurRadius: 15,
-                                      offset: const Offset(0, 8),
+                            // Tombol Masuk
+                            GestureDetector(
+                              onTapDown: (_) => setState(() => _isPressed = true),
+                              onTapUp: (_) => setState(() => _isPressed = false),
+                              onTapCancel: () => setState(() => _isPressed = false),
+                              child: AnimatedScale(
+                                scale: _isPressed ? 0.96 : 1.0,
+                                duration: const Duration(milliseconds: 150),
+                                curve: Curves.easeInOut,
+                                child: Container(
+                                  width: double.infinity,
+                                  height: 55,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(30),
+                                    gradient: const LinearGradient(
+                                      colors: [Color(0xFFD97B29), Color(0xFF8A4607)],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
                                     ),
-                                  ],
-                                ),
-                                child: const Center(
-                                  child: Text(
-                                    "MASUK",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 1.2,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0xFF8A4607).withOpacity(0.4),
+                                        blurRadius: 15,
+                                        offset: const Offset(0, 8),
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Center(
+                                    child: Text(
+                                      "MASUK",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 1.2,
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
 
-                          const SizedBox(height: 20),
-                        ],
+                            const SizedBox(height: 20),
+                          ],
+                        ),
                       ),
                     ),
                   ),
