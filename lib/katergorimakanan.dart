@@ -1,1192 +1,551 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 void main() {
-  runApp(const FigmaToCodeApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+    ),
+  );
+  runApp(const MyApp());
 }
 
+<<<<<<< HEAD
 class FigmaToCodeApp extends StatelessWidget {
   const FigmaToCodeApp({super.key});
+=======
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+>>>>>>> 2f7e400eb22f3eebbf23e8764dc71b949bcd9780
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color.fromARGB(255, 18, 32, 47),
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        fontFamily: 'Geologica',
+        useMaterial3: true,
       ),
-      home: Scaffold(
-        body: ListView(children: [
-          PuMenuJenisMakanan(),
-        ]),
+      home: const MenuPage(),
+    );
+  }
+}
+
+// MODEL DATA
+class MenuItem {
+  final String id;
+  final String name;
+  final String price;
+  final String status;
+  final String imageUrl;
+  final double rating;
+
+  MenuItem({
+    required this.id,
+    required this.name,
+    required this.price,
+    this.status = 'Tersedia',
+    required this.imageUrl,
+    this.rating = 4.8,
+  });
+}
+
+// HALAMAN UTAMA
+class MenuPage extends StatefulWidget {
+  const MenuPage({super.key});
+
+  @override
+  State<MenuPage> createState() => _MenuPageState();
+}
+
+class _MenuPageState extends State<MenuPage> {
+  // Data Dummy Menu
+  final List<MenuItem> _allMenuItems = [
+    MenuItem(id: '1', name: 'Rice Chicken Mushroom', price: 'IDR 15.000', imageUrl: 'https://placehold.co/400x300/FFFFFF/8A4607?text=Mushroom', rating: 4.9),
+    MenuItem(id: '2', name: 'Rice Chicken Blackpapper', price: 'IDR 15.000', imageUrl: 'https://placehold.co/400x300/FFFFFF/8A4607?text=Blackpaper', rating: 4.7),
+    MenuItem(id: '3', name: 'Rice Sambal Goreng Cumi', price: 'IDR 18.000', imageUrl: 'https://placehold.co/400x300/FFFFFF/8A4607?text=Cumi', rating: 4.8),
+    MenuItem(id: '4', name: 'Chicken Teriyaki', price: 'IDR 17.000', imageUrl: 'https://placehold.co/400x300/FFFFFF/8A4607?text=Teriyaki', rating: 4.6),
+    MenuItem(id: '5', name: 'Bakso Special', price: 'IDR 13.000', imageUrl: 'https://placehold.co/400x300/FFFFFF/8A4607?text=Bakso', rating: 4.9),
+    MenuItem(id: '6', name: 'Bakso Urat', price: 'IDR 15.000', imageUrl: 'https://placehold.co/400x300/FFFFFF/8A4607?text=Bakso+Urat', rating: 4.5),
+    MenuItem(id: '7', name: 'Mie Ayam Cakalang', price: 'IDR 12.000', imageUrl: 'https://placehold.co/400x300/FFFFFF/8A4607?text=Mie+Ayam', rating: 4.7),
+    MenuItem(id: '8', name: 'Es Teh Manis', price: 'IDR 5.000', imageUrl: 'https://placehold.co/400x300/FFFFFF/8A4607?text=Es+Teh', rating: 5.0),
+  ];
+
+  final TextEditingController _searchController = TextEditingController();
+  List<MenuItem> _filteredMenuItems = [];
+  
+  // State Keranjang
+  final Map<String, int> _cartItems = {};
+  int _totalCartCount = 0;
+
+  // State untuk Navbar
+  int _selectedIndex = 0; // 0: Home, 1: Search, 2: Cart, 3: Profile
+
+  @override
+  void initState() {
+    super.initState();
+    _filteredMenuItems = _allMenuItems;
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _filterMenu(String query) {
+    setState(() {
+      _filteredMenuItems = _allMenuItems
+          .where((item) => item.name.toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    });
+  }
+
+  void _addToCart(MenuItem item, int quantity) {
+    setState(() {
+      _cartItems.update(item.id, (value) => value + quantity, ifAbsent: () => quantity);
+      _totalCartCount += quantity;
+    });
+
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(15),
+        backgroundColor: const Color(0xFFF5CC9E),
+        content: Text('${item.name} (x$quantity) ditambahkan', style: const TextStyle(color: Color(0xFF5C2E05), fontWeight: FontWeight.w600)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _showDetailSheet(MenuItem item) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _DetailSheet(
+        item: item,
+        onAddToCart: (qty) {
+          _addToCart(item, qty);
+          Navigator.pop(context);
+        },
+      ),
+    );
+  }
+
+  // Logika navigasi navbar
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    // Tambahkan logika navigasi ke halaman lain jika ada
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF8A4607), // Warna dasar body
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF8A4607), Color(0xFF5C2E05)],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(),
+              Expanded(child: _buildBody()),
+            ],
+          ),
+        ),
+      ),
+      // --- PERUBAHAN UTAMA: BOTTOM NAVBAR ---
+      bottomNavigationBar: _buildBottomNavBar(),
+    );
+  }
+
+  // Widget Navbar Baru
+  Widget _buildBottomNavBar() {
+    return Container(
+      height: 70,
+      decoration: const BoxDecoration(
+        color: Color(0xFFF5CC9E), // Warna pembungkus sesuai permintaan
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        boxShadow: [
+          BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, -2))
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _buildNavItem(Icons.home_filled, 0),
+          _buildNavItem(Icons.search, 1),
+          _buildNavItem(Icons.shopping_bag_outlined, 2, showBadge: true), // Ikon Keranjang
+          _buildNavItem(Icons.person_outline, 3),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNavItem(IconData icon, int index, {bool showBadge = false}) {
+    final bool isSelected = _selectedIndex == index;
+    final Color activeColor = const Color(0xFF8A4607); // Coklat Gelap
+    final Color inactiveColor = Colors.brown.withOpacity(0.4); // Coklat Transparan
+
+    return GestureDetector(
+      onTap: () => _onItemTapped(index),
+      behavior: HitTestBehavior.opaque, // Agar area kosong bisa diklik
+      child: SizedBox(
+        width: 60,
+        height: 50,
+        child: Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 26,
+              color: isSelected ? activeColor : inactiveColor,
+            ),
+            // Badge untuk Keranjang
+            if (showBadge && _totalCartCount > 0)
+              Positioned(
+                top: 0,
+                right: 10,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    color: Colors.red, 
+                    shape: BoxShape.circle
+                  ),
+                  child: Text(
+                    '$_totalCartCount',
+                    style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
+                    ),
+                  ),
+                  const SizedBox(width: 15),
+                  const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Menu Makanan',
+                        style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        'Pilih menu favoritmu',
+                        style: TextStyle(color: Colors.white70, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(color: Colors.white24),
+            ),
+            child: TextField(
+              controller: _searchController,
+              onChanged: _filterMenu,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                hintText: 'Cari menu lezat...',
+                hintStyle: TextStyle(color: Colors.white.withOpacity(0.6)),
+                prefixIcon: Icon(Icons.search_rounded, color: Colors.white.withOpacity(0.8)),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_filteredMenuItems.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.search_off_rounded, size: 60, color: Colors.white.withOpacity(0.5)),
+            const SizedBox(height: 10),
+            Text("Menu tidak ditemukan", style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 16)),
+          ],
+        ),
+      );
+    }
+
+    return GridView.builder(
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 20), // Padding bawah dikurangi karena tidak ada FAB
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 0.70,
+        crossAxisSpacing: 15,
+        mainAxisSpacing: 15,
+      ),
+      itemCount: _filteredMenuItems.length,
+      itemBuilder: (context, index) {
+        return _buildMenuCard(_filteredMenuItems[index]);
+      },
+    );
+  }
+
+  Widget _buildMenuCard(MenuItem item) {
+    return GestureDetector(
+      onTap: () => _showDetailSheet(item),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.25),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            )
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Stack(
+                children: [
+                  Hero(
+                    tag: 'image_${item.id}',
+                    child: Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                        image: DecorationImage(
+                          image: NetworkImage(item.imageUrl),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 10,
+                    right: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.star, color: Colors.amber, size: 12),
+                          const SizedBox(width: 2),
+                          Text(item.rating.toString(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(10.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF333333)),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    item.price,
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF8A4607)),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Tersedia', style: TextStyle(color: Colors.grey[500], fontSize: 10)),
+                      GestureDetector(
+                        onTap: () => _addToCart(item, 1),
+                        child: Container(
+                          padding: const EdgeInsets.all(5),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF8A4607),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.add, color: Colors.white, size: 14),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class PuMenuJenisMakanan extends StatelessWidget {
+// WIDGET DETAIL BOTTOM SHEET
+class _DetailSheet extends StatefulWidget {
+  final MenuItem item;
+  final Function(int) onAddToCart;
+
+  _DetailSheet({required this.item, required this.onAddToCart});
+
+  @override
+  State<_DetailSheet> createState() => _DetailSheetState();
+}
+
+class _DetailSheetState extends State<_DetailSheet> {
+  int _quantity = 1;
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          width: 430,
-          height: 961,
-          clipBehavior: Clip.antiAlias,
-          decoration: ShapeDecoration(
-            gradient: LinearGradient(
-              begin: Alignment(0.50, -0.00),
-              end: Alignment(0.50, 1.00),
-              colors: [const Color(0xFF8A4607)],
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(35),
-            ),
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.60,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10))),
           ),
-          child: Stack(
-            children: [
-              Positioned(
-                left: 80,
-                top: 36,
-                child: Text(
-                  'Makanan',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontFamily: 'Geologica',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 333,
-                top: 41,
-                child: Text(
-                  'Tambah',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontFamily: 'Geologica',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 313,
-                top: 36,
-                child: Text(
-                  '+',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontFamily: 'Geologica',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 28,
-                top: 75,
-                child: Container(
-                  width: 368,
-                  height: 29,
-                  decoration: ShapeDecoration(
-                    color: const Color(0xFF8A4607),
-                    shape: RoundedRectangleBorder(
-                      side: BorderSide(width: 1, color: Colors.white),
-                      borderRadius: BorderRadius.circular(35),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 44,
-                top: 81,
-                child: Container(
-                  width: 21,
-                  height: 18,
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: NetworkImage("https://placehold.co/21x18"),
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 80,
-                top: 81,
-                child: SizedBox(
-                  width: 186.56,
-                  height: 17.61,
-                  child: Text(
-                    'Cari Menu....',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontFamily: 'Inter',
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 234,
-                top: 715,
-                child: Container(
-                  width: 162,
-                  height: 183,
-                  decoration: ShapeDecoration(
-                    color: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    shadows: [
-                      BoxShadow(
-                        color: Color(0x3F000000),
-                        blurRadius: 4,
-                        offset: Offset(0, 4),
-                        spreadRadius: 0,
-                      )
-                    ],
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 242,
-                top: 836,
-                child: Text(
-                  'Bakso',
-                  style: TextStyle(
-                    color: const Color(0xFFD4741B),
-                    fontSize: 10,
-                    fontFamily: 'Geologica',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 355,
-                top: 863,
-                child: Container(
-                  width: 26,
-                  height: 26,
-                  decoration: ShapeDecoration(
-                    color: const Color(0xFF8A4607),
-                    shape: OvalBorder(),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 361,
-                top: 863,
-                child: Text(
-                  '+',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontFamily: 'Geologica',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 242,
-                top: 850,
-                child: Text(
-                  'IDR 13.000',
-                  style: TextStyle(
-                    color: const Color(0xFF8A4607),
-                    fontSize: 10,
-                    fontFamily: 'Geologica',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 242,
-                top: 874,
-                child: Text(
-                  'Tersedia',
-                  style: TextStyle(
-                    color: const Color(0xFF767070),
-                    fontSize: 7,
-                    fontFamily: 'Instrument Sans',
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 238,
-                top: 720,
-                child: Container(
-                  width: 154,
-                  height: 103,
-                  decoration: ShapeDecoration(
-                    image: DecorationImage(
-                      image: NetworkImage("https://placehold.co/154x103"),
-                      fit: BoxFit.fill,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 33,
-                top: 715,
-                child: Container(
-                  width: 162,
-                  height: 183,
-                  decoration: ShapeDecoration(
-                    color: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    shadows: [
-                      BoxShadow(
-                        color: Color(0x3F000000),
-                        blurRadius: 4,
-                        offset: Offset(0, 4),
-                        spreadRadius: 0,
-                      )
-                    ],
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 37,
-                top: 720,
-                child: Container(
-                  width: 154,
-                  height: 103,
-                  decoration: ShapeDecoration(
-                    image: DecorationImage(
-                      image: NetworkImage("https://placehold.co/154x103"),
-                      fit: BoxFit.fill,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 41,
-                top: 836,
-                child: Text(
-                  'Rice Mushroom',
-                  style: TextStyle(
-                    color: const Color(0xFFD4741B),
-                    fontSize: 10,
-                    fontFamily: 'Geologica',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 41,
-                top: 850,
-                child: Text(
-                  'IDR 15.000',
-                  style: TextStyle(
-                    color: const Color(0xFF8A4607),
-                    fontSize: 10,
-                    fontFamily: 'Geologica',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 41,
-                top: 876,
-                child: Text(
-                  'Tersedia',
-                  style: TextStyle(
-                    color: const Color(0xFF767070),
-                    fontSize: 7,
-                    fontFamily: 'Instrument Sans',
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 156,
-                top: 863,
-                child: Container(
-                  width: 26,
-                  height: 26,
-                  decoration: ShapeDecoration(
-                    color: const Color(0xFF8A4607),
-                    shape: OvalBorder(),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 162,
-                top: 863,
-                child: Text(
-                  '+',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontFamily: 'Geologica',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 234,
-                top: 519,
-                child: Container(
-                  width: 162,
-                  height: 183,
-                  decoration: ShapeDecoration(
-                    color: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    shadows: [
-                      BoxShadow(
-                        color: Color(0x3F000000),
-                        blurRadius: 4,
-                        offset: Offset(0, 4),
-                        spreadRadius: 0,
-                      )
-                    ],
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 242,
-                top: 640,
-                child: Text(
-                  'Rice Chicken Blackpapper',
-                  style: TextStyle(
-                    color: const Color(0xFFD4741B),
-                    fontSize: 10,
-                    fontFamily: 'Geologica',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 242,
-                top: 654,
-                child: Text(
-                  'IDR 15.000',
-                  style: TextStyle(
-                    color: const Color(0xFF8A4607),
-                    fontSize: 10,
-                    fontFamily: 'Geologica',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 242,
-                top: 678,
-                child: Text(
-                  'Tersedia',
-                  style: TextStyle(
-                    color: const Color(0xFF767070),
-                    fontSize: 7,
-                    fontFamily: 'Instrument Sans',
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 355,
-                top: 667,
-                child: Container(
-                  width: 26,
-                  height: 26,
-                  decoration: ShapeDecoration(
-                    color: const Color(0xFF8A4607),
-                    shape: OvalBorder(),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 361,
-                top: 667,
-                child: Text(
-                  '+',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontFamily: 'Geologica',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 238,
-                top: 523,
-                child: Container(
-                  width: 154,
-                  height: 101,
-                  decoration: ShapeDecoration(
-                    image: DecorationImage(
-                      image: NetworkImage("https://placehold.co/154x101"),
-                      fit: BoxFit.fill,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 33,
-                top: 519,
-                child: Container(
-                  width: 162,
-                  height: 183,
-                  decoration: ShapeDecoration(
-                    color: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    shadows: [
-                      BoxShadow(
-                        color: Color(0x3F000000),
-                        blurRadius: 4,
-                        offset: Offset(0, 4),
-                        spreadRadius: 0,
-                      )
-                    ],
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 37,
-                top: 523,
-                child: Container(
-                  width: 154,
-                  height: 104,
-                  decoration: ShapeDecoration(
-                    image: DecorationImage(
-                      image: NetworkImage("https://placehold.co/154x104"),
-                      fit: BoxFit.fill,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 41,
-                top: 640,
-                child: Text(
-                  'Bakso Special',
-                  style: TextStyle(
-                    color: const Color(0xFFD4741B),
-                    fontSize: 10,
-                    fontFamily: 'Geologica',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 41,
-                top: 654,
-                child: Text(
-                  'IDR 13.000',
-                  style: TextStyle(
-                    color: const Color(0xFF8A4607),
-                    fontSize: 10,
-                    fontFamily: 'Geologica',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 156,
-                top: 667,
-                child: Container(
-                  width: 26,
-                  height: 26,
-                  decoration: ShapeDecoration(
-                    color: const Color(0xFF8A4607),
-                    shape: OvalBorder(),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 162,
-                top: 667,
-                child: Text(
-                  '+',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontFamily: 'Geologica',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 41,
-                top: 680,
-                child: Text(
-                  'Tersedia',
-                  style: TextStyle(
-                    color: const Color(0xFF767070),
-                    fontSize: 7,
-                    fontFamily: 'Instrument Sans',
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 234,
-                top: 320,
-                child: Container(
-                  width: 162,
-                  height: 183,
-                  decoration: ShapeDecoration(
-                    color: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    shadows: [
-                      BoxShadow(
-                        color: Color(0x3F000000),
-                        blurRadius: 4,
-                        offset: Offset(0, 4),
-                        spreadRadius: 0,
-                      )
-                    ],
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 242,
-                top: 441,
-                child: Text(
-                  'Chicken Teriyaki',
-                  style: TextStyle(
-                    color: const Color(0xFFD4741B),
-                    fontSize: 10,
-                    fontFamily: 'Geologica',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 242,
-                top: 455,
-                child: Text(
-                  'IDR  17.000',
-                  style: TextStyle(
-                    color: const Color(0xFF8A4607),
-                    fontSize: 10,
-                    fontFamily: 'Geologica',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 242,
-                top: 479,
-                child: Text(
-                  'Tersedia',
-                  style: TextStyle(
-                    color: const Color(0xFF767070),
-                    fontSize: 7,
-                    fontFamily: 'Instrument Sans',
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 238,
-                top: 324,
-                child: Container(
-                  width: 154,
-                  height: 104,
-                  decoration: ShapeDecoration(
-                    image: DecorationImage(
-                      image: NetworkImage("https://placehold.co/154x104"),
-                      fit: BoxFit.fill,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 355,
-                top: 468,
-                child: Container(
-                  width: 26,
-                  height: 26,
-                  decoration: ShapeDecoration(
-                    color: const Color(0xFF8A4607),
-                    shape: OvalBorder(),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 361,
-                top: 468,
-                child: Text(
-                  '+',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontFamily: 'Geologica',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 33,
-                top: 320,
-                child: Container(
-                  width: 162,
-                  height: 183,
-                  decoration: ShapeDecoration(
-                    color: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    shadows: [
-                      BoxShadow(
-                        color: Color(0x3F000000),
-                        blurRadius: 4,
-                        offset: Offset(0, 4),
-                        spreadRadius: 0,
-                      )
-                    ],
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 37,
-                top: 324,
-                child: Container(
-                  width: 154,
-                  height: 104,
-                  decoration: ShapeDecoration(
-                    image: DecorationImage(
-                      image: NetworkImage("https://placehold.co/154x104"),
-                      fit: BoxFit.cover,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 41,
-                top: 441,
-                child: Text(
-                  'Rice Sambal Goreng Cumi',
-                  style: TextStyle(
-                    color: const Color(0xFFD4741B),
-                    fontSize: 10,
-                    fontFamily: 'Geologica',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 41,
-                top: 455,
-                child: Text(
-                  'IDR 18.000',
-                  style: TextStyle(
-                    color: const Color(0xFF8A4607),
-                    fontSize: 10,
-                    fontFamily: 'Geologica',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 41,
-                top: 481,
-                child: Text(
-                  'Tersedia',
-                  style: TextStyle(
-                    color: const Color(0xFF767070),
-                    fontSize: 7,
-                    fontFamily: 'Instrument Sans',
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 156,
-                top: 466,
-                child: Container(
-                  width: 26,
-                  height: 26,
-                  decoration: ShapeDecoration(
-                    color: const Color(0xFF8A4607),
-                    shape: OvalBorder(),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 162,
-                top: 466,
-                child: Text(
-                  '+',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontFamily: 'Geologica',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 234,
-                top: 121,
-                child: Container(
-                  width: 162,
-                  height: 183,
-                  decoration: ShapeDecoration(
-                    color: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    shadows: [
-                      BoxShadow(
-                        color: Color(0x3F000000),
-                        blurRadius: 4,
-                        offset: Offset(0, 4),
-                        spreadRadius: 0,
-                      )
-                    ],
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 357,
-                top: 267,
-                child: Container(
-                  width: 26,
-                  height: 26,
-                  decoration: ShapeDecoration(
-                    color: const Color(0xFFE58A37),
-                    shape: OvalBorder(),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 363,
-                top: 267,
-                child: Text(
-                  '+',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontFamily: 'Geologica',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 357,
-                top: 267,
-                child: Container(
-                  width: 26,
-                  height: 26,
-                  decoration: ShapeDecoration(
-                    color: const Color(0xFF8A4607),
-                    shape: OvalBorder(),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 363,
-                top: 267,
-                child: Text(
-                  '+',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontFamily: 'Geologica',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 242,
-                top: 242,
-                child: Text(
-                  'Rice Chicken Blackpapper',
-                  style: TextStyle(
-                    color: const Color(0xFFD4741B),
-                    fontSize: 10,
-                    fontFamily: 'Geologica',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 242,
-                top: 256,
-                child: Text(
-                  'IDR 15.000',
-                  style: TextStyle(
-                    color: const Color(0xFF8A4607),
-                    fontSize: 10,
-                    fontFamily: 'Geologica',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 242,
-                top: 280,
-                child: Text(
-                  'Tersedia',
-                  style: TextStyle(
-                    color: const Color(0xFF767070),
-                    fontSize: 7,
-                    fontFamily: 'Instrument Sans',
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 239,
-                top: 126,
-                child: Container(
-                  width: 152,
-                  height: 104,
-                  decoration: ShapeDecoration(
-                    image: DecorationImage(
-                      image: NetworkImage("https://placehold.co/152x104"),
-                      fit: BoxFit.fill,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 33,
-                top: 121,
-                child: Container(
-                  width: 162,
-                  height: 183,
-                  decoration: ShapeDecoration(
-                    color: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    shadows: [
-                      BoxShadow(
-                        color: Color(0x3F000000),
-                        blurRadius: 4,
-                        offset: Offset(0, 4),
-                        spreadRadius: 0,
-                      )
-                    ],
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 37,
-                top: 126,
-                child: Container(
-                  width: 154,
-                  height: 104,
-                  decoration: ShapeDecoration(
-                    image: DecorationImage(
-                      image: NetworkImage("https://placehold.co/154x104"),
-                      fit: BoxFit.fill,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 41,
-                top: 242,
-                child: Text(
-                  'Rice Chicken Mushroom',
-                  style: TextStyle(
-                    color: const Color(0xFFD4741B),
-                    fontSize: 10,
-                    fontFamily: 'Geologica',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 41,
-                top: 256,
-                child: Text(
-                  'IDR 15.000 ',
-                  style: TextStyle(
-                    color: const Color(0xFF8A4607),
-                    fontSize: 10,
-                    fontFamily: 'Geologica',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 41,
-                top: 282,
-                child: Text(
-                  'Tersedia',
-                  style: TextStyle(
-                    color: const Color(0xFF767070),
-                    fontSize: 7,
-                    fontFamily: 'Instrument Sans',
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 156,
-                top: 267,
-                child: Container(
-                  width: 26,
-                  height: 26,
-                  decoration: ShapeDecoration(
-                    color: const Color(0xFF8A4607),
-                    shape: OvalBorder(),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 162,
-                top: 267,
-                child: Text(
-                  '+',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontFamily: 'Geologica',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 0,
-                top: 115,
-                child: Opacity(
-                  opacity: 0.15,
-                  child: Container(
-                    width: 430,
-                    decoration: ShapeDecoration(
-                      shape: RoundedRectangleBorder(
-                        side: BorderSide(
-                          width: 1,
-                          strokeAlign: BorderSide.strokeAlignCenter,
-                        ),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Hero(
+                    tag: 'image_${widget.item.id}',
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
+                      child: Image.network(
+                        widget.item.imageUrl,
+                        height: 220,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
                       ),
                     ),
                   ),
-                ),
-              ),
-              Positioned(
-                left: 40,
-                top: 908,
-                child: Container(
-                  width: 355,
-                  height: 45,
-                  decoration: ShapeDecoration(
-                    color: const Color(0xFFF5CC9E),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(35),
-                    ),
-                    shadows: [
-                      BoxShadow(
-                        color: Color(0x3F000000),
-                        blurRadius: 4,
-                        offset: Offset(0, 4),
-                        spreadRadius: 0,
-                      )
-                    ],
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 62,
-                top: 915,
-                child: Container(
-                  width: 42,
-                  height: 31,
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: NetworkImage("https://placehold.co/42x31"),
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 150,
-                top: 915,
-                child: Container(
-                  width: 41,
-                  height: 31,
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: NetworkImage("https://placehold.co/41x31"),
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 244,
-                top: 915,
-                child: Container(
-                  width: 42,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: NetworkImage("https://placehold.co/42x32"),
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 332,
-                top: 915,
-                child: Container(
-                  width: 42,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: NetworkImage("https://placehold.co/42x32"),
-                      fit: BoxFit.contain,
+                  Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.item.name,
+                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF333333)),
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          widget.item.price,
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Color(0xFF8A4607)),
+                        ),
+                        const SizedBox(height: 15),
+                        Text(
+                          "Deskripsi makanan yang lezat dan bergizi, cocok untuk makan siang atau malam bersama keluarga.",
+                          style: TextStyle(color: Colors.grey[600], height: 1.5, fontSize: 13),
+                        ),
+                        const SizedBox(height: 25),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text("Jumlah", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.grey[100],
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Row(
+                                children: [
+                                  IconButton(
+                                    onPressed: () => setState(() => _quantity > 1 ? _quantity-- : null),
+                                    icon: const Icon(Icons.remove, color: Color(0xFF8A4607)),
+                                  ),
+                                  Text(_quantity.toString(), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                  IconButton(
+                                    onPressed: () => setState(() => _quantity++),
+                                    icon: const Icon(Icons.add, color: Color(0xFF8A4607)),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 25),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton(
+                            onPressed: () => widget.onAddToCart(_quantity),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF8A4607),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                            ),
+                            child: const Text(
+                              "Tambah ke Keranjang",
+                              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
+                ],
               ),
-              Positioned(
-                left: 38,
-                top: 36,
-                child: Container(
-                  width: 29,
-                  height: 26,
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: NetworkImage("https://placehold.co/29x26"),
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 19,
-                top: 10,
-                child: SizedBox(
-                  width: 29,
-                  height: 19,
-                  child: Text(
-                    '20.11',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 13,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 16,
-                top: 10,
-                child: Container(
-                  width: 37,
-                  height: 19,
-                  decoration: BoxDecoration(color: Colors.white),
-                ),
-              ),
-              Positioned(
-                left: 406.14,
-                top: 11,
-                child: Container(
-                  transform: Matrix4.identity()..translate(0.0, 0.0)..rotateZ(1.57),
-                  width: 19,
-                  height: 20.36,
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: NetworkImage("https://placehold.co/19x20"),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 384,
-                top: 7,
-                child: Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(color: const Color(0xFFD9D9D9)),
-                ),
-              ),
-              Positioned(
-                left: 361.36,
-                top: 11,
-                child: Container(
-                  width: 16.29,
-                  height: 16.29,
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: NetworkImage("https://placehold.co/16x16"),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 360,
-                top: 10,
-                child: Container(
-                  width: 20,
-                  height: 20,
-                  decoration: BoxDecoration(color: Colors.white),
-                ),
-              ),
-              Positioned(
-                left: 339,
-                top: 12,
-                child: Container(
-                  width: 14,
-                  height: 15,
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: NetworkImage("https://placehold.co/14x15"),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 332,
-                top: 8,
-                child: Container(
-                  width: 24,
-                  height: 21,
-                  decoration: BoxDecoration(color: Colors.white),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
