@@ -241,13 +241,7 @@ class _LoginPageState extends State<LoginPage> {
                               onTapDown: (_) => setState(() => _isPressed = true),
                               onTapUp: (_) => setState(() => _isPressed = false),
                               onTapCancel: () => setState(() => _isPressed = false),
-                              onTap: () {
-                                // Navigasi ke halaman berikutnya (ganti dengan halaman tujuan Anda)
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(builder: (context) => const MenuPage()),
-                                );
-                              },
+        
                               child: AnimatedScale(
                                 scale: _isPressed ? 0.96 : 1.0,
                                 duration: const Duration(milliseconds: 150),
