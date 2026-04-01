@@ -1,4 +1,3 @@
-
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
@@ -14,7 +13,7 @@ class FigmaToCodeApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        fontFamily: 'Poppins', // Pastikan font Poppins sudah ditambahkan
+        fontFamily: 'Poppins', // Pastikan font Poppins sudah ditambahkan di pubspec.yaml
         useMaterial3: true,
       ),
       home: const Scaffold(
@@ -39,7 +38,6 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Mendapatkan ukuran layar untuk responsivitas
     final size = MediaQuery.of(context).size;
 
     return Container(
@@ -58,7 +56,7 @@ class _LoginPageState extends State<LoginPage> {
       ),
       child: Stack(
         children: [
-          // Dekorasi Background (Lingkaran)
+          // Dekorasi background (lingkaran)
           Positioned(
             top: -50,
             left: -50,
@@ -84,15 +82,15 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
 
-          // Konten Utama dengan SafeArea untuk kompatibilitas device
+          // Konten utama
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
                 child: Padding(
                   padding: EdgeInsets.symmetric(
-                    horizontal: 24.0, 
-                    vertical: MediaQuery.of(context).padding.top > 0 ? 10 : 20
+                    horizontal: 24.0,
+                    vertical: MediaQuery.of(context).padding.top > 0 ? 10 : 20,
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(40),
@@ -118,7 +116,7 @@ class _LoginPageState extends State<LoginPage> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            // --- Logo di dalam Lingkaran ---
+                            // Logo
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
@@ -129,7 +127,7 @@ class _LoginPageState extends State<LoginPage> {
                               child: const CircleAvatar(
                                 radius: 40,
                                 backgroundColor: Colors.transparent,
-                                // Menggunakan gambar lokal dari folder assets
+                                // Pastikan file gambar ada di assets/nettyzencaffe.png
                                 backgroundImage: AssetImage('assets/nettyzencafe.png'),
                               ),
                             ),
@@ -149,9 +147,9 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               ),
                             ),
-                            
+
                             const SizedBox(height: 8),
-                            
+
                             Text(
                               'Cafe & UMKM Solution',
                               style: TextStyle(
@@ -161,20 +159,31 @@ class _LoginPageState extends State<LoginPage> {
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
-                            
+
                             const SizedBox(height: 35),
 
                             // Toggle User / Admin
                             _buildCustomToggle(),
-                            
+
                             const SizedBox(height: 30),
 
-                            // Input Fields
-                            _buildInputField(label: "Email", hint: "ambarya@gmail.com", icon: Icons.email_outlined, isPassword: false),
-                            
+                            // Field Email
+                            _buildInputField(
+                              label: "Email",
+                              hint: "ambarya@gmail.com",
+                              icon: Icons.email_outlined,
+                              isPassword: false,
+                            ),
+
                             const SizedBox(height: 20),
-                            
-                            _buildInputField(label: "Password", hint: "••••••••", icon: Icons.lock_outline, isPassword: true),
+
+                            // Field Password
+                            _buildInputField(
+                              label: "Password",
+                              hint: "••••••••",
+                              icon: Icons.lock_outline,
+                              isPassword: true,
+                            ),
 
                             // Ingat Saya & Lupa Password
                             Padding(
@@ -195,15 +204,23 @@ class _LoginPageState extends State<LoginPage> {
                                             });
                                           },
                                           activeColor: const Color(0xFF8A4607),
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(5)),
                                         ),
                                       ),
                                       const SizedBox(width: 10),
-                                      Text("Ingat Saya", style: TextStyle(color: Colors.grey[700], fontWeight: FontWeight.w500)),
+                                      Text(
+                                        "Ingat Saya",
+                                        style: TextStyle(
+                                            color: Colors.grey[700],
+                                            fontWeight: FontWeight.w500),
+                                      ),
                                     ],
                                   ),
                                   GestureDetector(
-                                    onTap: () {},
+                                    onTap: () {
+                                      // Aksi lupa password
+                                    },
                                     child: Text(
                                       "Lupa Password?",
                                       style: TextStyle(
@@ -224,6 +241,7 @@ class _LoginPageState extends State<LoginPage> {
                               onTapDown: (_) => setState(() => _isPressed = true),
                               onTapUp: (_) => setState(() => _isPressed = false),
                               onTapCancel: () => setState(() => _isPressed = false),
+        
                               child: AnimatedScale(
                                 scale: _isPressed ? 0.96 : 1.0,
                                 duration: const Duration(milliseconds: 150),
@@ -281,7 +299,7 @@ class _LoginPageState extends State<LoginPage> {
       width: double.infinity,
       height: 55,
       decoration: BoxDecoration(
-        color: Colors.grey[200], 
+        color: Colors.grey[200],
         borderRadius: BorderRadius.circular(30),
       ),
       child: Row(
@@ -293,18 +311,14 @@ class _LoginPageState extends State<LoginPage> {
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOut,
                 decoration: BoxDecoration(
-                  color: isUserSelected 
-                      ? const Color(0xFF8A4607) 
-                      : Colors.transparent,
+                  color: isUserSelected ? const Color(0xFF8A4607) : Colors.transparent,
                   borderRadius: const BorderRadius.horizontal(left: Radius.circular(30)),
                 ),
                 alignment: Alignment.center,
                 child: Text(
                   "User",
                   style: TextStyle(
-                    color: isUserSelected 
-                        ? Colors.white 
-                        : Colors.grey[700],
+                    color: isUserSelected ? Colors.white : Colors.grey[700],
                     fontWeight: FontWeight.w600,
                     fontSize: 15,
                   ),
@@ -312,7 +326,6 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
           ),
-
           Expanded(
             child: GestureDetector(
               onTap: () => setState(() => isUserSelected = false),
@@ -320,27 +333,23 @@ class _LoginPageState extends State<LoginPage> {
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOut,
                 decoration: BoxDecoration(
-                  color: !isUserSelected 
-                      ? Colors.white 
-                      : Colors.transparent,
+                  color: !isUserSelected ? Colors.white : Colors.transparent,
                   borderRadius: const BorderRadius.horizontal(right: Radius.circular(30)),
-                  boxShadow: !isUserSelected 
+                  boxShadow: !isUserSelected
                       ? [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.1),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           )
-                        ] 
+                        ]
                       : [],
                 ),
                 alignment: Alignment.center,
                 child: Text(
                   "Admin",
                   style: TextStyle(
-                    color: !isUserSelected 
-                        ? const Color(0xFF804D1E) 
-                        : Colors.grey[700],
+                    color: !isUserSelected ? const Color(0xFF804D1E) : Colors.grey[700],
                     fontWeight: FontWeight.w600,
                     fontSize: 15,
                   ),
@@ -353,7 +362,12 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _buildInputField({required String label, required String hint, required IconData icon, required bool isPassword}) {
+  Widget _buildInputField({
+    required String label,
+    required String hint,
+    required IconData icon,
+    required bool isPassword,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -393,7 +407,11 @@ class _LoginPageState extends State<LoginPage> {
                         color: Colors.grey[500],
                         size: 20,
                       ),
-                      onPressed: () => setState(() => isPasswordVisible = !isPasswordVisible),
+                      onPressed: () {
+                        setState(() {
+                          isPasswordVisible = !isPasswordVisible;
+                        });
+                      },
                     )
                   : null,
               border: InputBorder.none,
@@ -402,6 +420,19 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ),
       ],
+    );
+  }
+}
+
+// Contoh halaman tujuan setelah login (ganti dengan halaman yang sesuai)
+class MenuPage extends StatelessWidget {
+  const MenuPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Menu')),
+      body: const Center(child: Text('Halaman Menu')),
     );
   }
 }

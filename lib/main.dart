@@ -1,20 +1,41 @@
 import 'package:flutter/material.dart';
-import 'login.dart';
+import 'package:flutter/services.dart';
+// Pastikan nama file sesuai. Jika filenya bernama beranda.dart, maka:
+import 'beranda.dart'; 
 
 void main() {
-  runApp(const FigmaToCodeApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Konfigurasi sistem (diambil dari logika beranda kamu)
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+  
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+    ),
+  );
+
+  runApp(const MyApp());
 }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> f5b53b99ae453613434e135dd4189d9c5ef628eb
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Figma to Code',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
+<<<<<<< HEAD
         // This is the theme of your application.
         //
         // TRY THIS: Try running your application with "flutter run". You'll see
@@ -31,10 +52,16 @@ class MyApp extends StatelessWidget {
         // This works for code too, not just values: Most code changes can be
         // tested with just a hot reload.
         colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+=======
+        fontFamily: 'Geologica', // Pastikan font ini sudah terdaftar di pubspec.yaml
+        useMaterial3: true,
+>>>>>>> f5b53b99ae453613434e135dd4189d9c5ef628eb
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      // Di sini kita memanggil class dari file beranda.dart
+      home: const PuBeranda(), 
     );
   }
+<<<<<<< HEAD
 }
 
 class MyHomePage extends StatefulWidget {
@@ -121,4 +148,6 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
+=======
+>>>>>>> f5b53b99ae453613434e135dd4189d9c5ef628eb
 }

@@ -3,6 +3,13 @@ import 'package:flutter/services.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Mengunci orientasi layar ke Portrait (Tegak)
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+  
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -46,12 +53,12 @@ class Product {
   final String name;
   final String price;
   final String category;
-  final String image; // Ditambahkan properti image
+  final String image;
 
   const Product({
     required this.name,
     required this.price,
-    required this.image, // Wajib diisi
+    required this.image,
     this.category = 'Makanan',
   });
 }
@@ -59,24 +66,23 @@ class Product {
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
 const List<Product> kProducts = [
-  // Produk dengan asset yang Anda minta
   Product(
     name: 'Choffe Cheese',
     price: 'IDR 12.000',
-    category: 'Snack',
-    image: 'assets/Choofe cheese.png', 
+    category: 'Minuman',
+    image: 'assets/Choffe cheese.png', 
   ),
   Product(
     name: 'Orange Noise',
     price: 'IDR 15.000',
     category: 'Minuman',
-    image: 'assets/Orange noise.png',
+    image: 'assets/Orange Noise.png',
   ),
   Product(
     name: 'Matcha Cheese',
     price: 'IDR 17.000',
     category: 'Minuman',
-    image: 'assets/Matcha Cheese.png',
+    image: 'assets/Matcha cheese.png',
   ),
   Product(
     name: 'Chicken Teriyaki',
@@ -84,19 +90,47 @@ const List<Product> kProducts = [
     category: 'Makanan',
     image: 'assets/Chicken teriyaki.png',
   ),
-  
-  // Produk tambahan (placeholder untuk asset lain jika ada)
   Product(
     name: 'Rice Mushroom',
     price: 'IDR 15.000',
     category: 'Makanan',
-    image: 'assets/placeholder.png', // Ganti dengan nama file asset Anda
+    image: 'assets/Rice mushroom.png',
   ),
   Product(
     name: 'Choco Lava',
     price: 'IDR 18.000',
+    category: 'Minuman',
+    image: 'assets/Chocolava.png',
+  ),
+  Product(
+    name: 'Bakso Spesial',
+    price: 'IDR 10.000',
     category: 'Makanan',
-    image: 'assets/placeholder.png', // Ganti dengan nama file asset Anda
+    image: 'assets/imgbakso.png',
+  ),
+  Product(
+    name: 'Risol Mayonise',
+    price: 'IDR 10.000',
+    category: 'Snack',
+    image: 'assets/apanamanya.png',
+  ),
+  Product(
+    name: 'Milky Cookies',
+    price: 'IDR 15.000',
+    category: 'Minuman',
+    image: 'assets/milky cookies.png',
+  ),
+  Product(
+    name: 'Ricechicken Blackpaper',
+    price: 'IDR 17.000',
+    category: 'Makanan',
+    image: 'assets/ricechickenblackpaper.png',
+  ),
+  Product(
+    name: 'Es Coklat',
+    price: 'IDR 15.000',
+    category: 'Minuman',
+    image: 'assets/Escoklat.png',
   ),
 ];
 
@@ -152,50 +186,50 @@ class _PuBerandaState extends State<PuBeranda> {
 
   @override
   Widget build(BuildContext context) {
-    // Responsive Helper
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isSmallDevice = screenWidth < 360;
-
+    // Membungkus seluruh scaffold agar tampilan menyerupai handphone (max width 480)
+    // Jika dijalankan di tablet/web, akan muncul area kosong di kiri/kanan.
     return Scaffold(
-      backgroundColor: AppColors.white,
-      body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(child: _buildHeader(context)),
-            SliverToBoxAdapter(child: SizedBox(height: isSmallDevice ? 12 : 20)),
-            SliverToBoxAdapter(child: _buildSearchBar(context)),
-            SliverToBoxAdapter(child: SizedBox(height: isSmallDevice ? 12 : 20)),
-            SliverToBoxAdapter(child: _buildPromoBanner(context)),
-            SliverToBoxAdapter(child: SizedBox(height: isSmallDevice ? 16 : 24)),
-            SliverToBoxAdapter(child: _buildCategories(context)),
-            SliverToBoxAdapter(child: SizedBox(height: isSmallDevice ? 16 : 24)),
-            SliverToBoxAdapter(child: _buildSectionTitle(context)),
-            SliverToBoxAdapter(child: const SizedBox(height: 12)),
-            _buildProductGrid(context),
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
-          ],
+      backgroundColor: Colors.grey[100], // Warna background luar (area kosong)
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480), // Lebar maksimal handphone
+          child: Scaffold(
+            backgroundColor: AppColors.white,
+            body: SafeArea(
+              child: CustomScrollView(
+                slivers: [
+                  SliverToBoxAdapter(child: _buildHeader(context)),
+                  const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                  SliverToBoxAdapter(child: _buildSearchBar(context)),
+                  const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                  SliverToBoxAdapter(child: _buildPromoBanner(context)),
+                  const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                  SliverToBoxAdapter(child: _buildCategories(context)),
+                  const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                  SliverToBoxAdapter(child: _buildSectionTitle(context)),
+                  const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                  _buildProductGrid(context),
+                  // Extra space agar tidak tertutup bottom nav
+                  const SliverToBoxAdapter(child: SizedBox(height: 80)),
+                ],
+              ),
+            ),
+            // Menempatkan bottom nav di dalam constraint agar sejajar
+            bottomNavigationBar: _buildBottomNavBar(),
+          ),
         ),
       ),
-      bottomNavigationBar: _buildBottomNavBar(),
     );
   }
 
-  // ─── Header (Modified) ────────────────────────────────────────────────────────
+  // ─── Header ────────────────────────────────────────────────────────────────
 
   Widget _buildHeader(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-
     return Padding(
-      padding: EdgeInsets.fromLTRB(
-        size.width * 0.07, // Responsive horizontal padding
-        16,
-        size.width * 0.07,
-        0,
-      ),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0), // Padding tetap
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Greeting Text
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -204,7 +238,7 @@ class _PuBerandaState extends State<PuBeranda> {
                   'Hai, Kenzi! 👋',
                   style: TextStyle(
                     color: AppColors.primary,
-                    fontSize: size.width < 360 ? 22 : 28, // Responsive font
+                    fontSize: 24, // Ukuran font tetap untuk portrait
                     fontWeight: FontWeight.w700,
                     letterSpacing: -0.5,
                   ),
@@ -214,19 +248,15 @@ class _PuBerandaState extends State<PuBeranda> {
                   'Selamat datang kembali',
                   style: TextStyle(
                     color: const Color(0xFFB36A2B),
-                    fontSize: size.width < 360 ? 13 : 15,
+                    fontSize: 14,
                     fontWeight: FontWeight.w400,
                   ),
                 ),
               ],
             ),
           ),
-          
-          // Profile Picture (Replacing Bell Icon)
           GestureDetector(
-            onTap: () {
-              // Aksi ketika profil di tap
-            },
+            onTap: () {},
             child: Container(
               width: 48,
               height: 48,
@@ -243,11 +273,8 @@ class _PuBerandaState extends State<PuBeranda> {
                     offset: const Offset(0, 4),
                   ),
                 ],
-                // Menggunakan image dari internet (ganti URL sesuai kebutuhan)
                 image: const DecorationImage(
-                  image: NetworkImage(
-                    'https://i.pravatar.cc/150?img=11', // Contoh gambar user
-                  ),
+                  image: AssetImage('assets/patrick-star.png'),
                   fit: BoxFit.cover,
                 ),
               ),
@@ -261,10 +288,8 @@ class _PuBerandaState extends State<PuBeranda> {
   // ─── Search Bar ────────────────────────────────────────────────────────────
 
   Widget _buildSearchBar(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: size.width * 0.07),
+      padding: const EdgeInsets.symmetric(horizontal: 20), // Padding tetap
       child: Container(
         height: 50,
         decoration: BoxDecoration(
@@ -316,12 +341,10 @@ class _PuBerandaState extends State<PuBeranda> {
   // ─── Promo Banner ──────────────────────────────────────────────────────────
 
   Widget _buildPromoBanner(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: size.width * 0.07),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
-        height: size.width < 360 ? 130 : 155, // Tinggi responsif
+        height: 150, // Tinggi tetap untuk portrait
         width: double.infinity,
         decoration: BoxDecoration(
           gradient: const LinearGradient(
@@ -374,7 +397,7 @@ class _PuBerandaState extends State<PuBeranda> {
                     'Ready!!',
                     style: TextStyle(
                       color: const Color(0xFFF5CC9E),
-                      fontSize: size.width < 360 ? 24 : 30,
+                      fontSize: 28,
                       fontWeight: FontWeight.w800,
                       letterSpacing: -0.5,
                     ),
@@ -383,7 +406,7 @@ class _PuBerandaState extends State<PuBeranda> {
                     'Chocolate Series 🍫',
                     style: TextStyle(
                       color: Colors.white70,
-                      fontSize: size.width < 360 ? 12 : 14,
+                      fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -416,7 +439,7 @@ class _PuBerandaState extends State<PuBeranda> {
     );
   }
 
-  // ─── Categories (MODIFIED) ────────────────────────────────────────────────────
+  // ─── Categories ────────────────────────────────────────────────────────────
 
   Widget _buildCategories(BuildContext context) {
     final categories = [
@@ -426,17 +449,10 @@ class _PuBerandaState extends State<PuBeranda> {
       ('Snack', Icons.cookie_outlined),
     ];
 
-    // Responsive sizing
-    final screenWidth = MediaQuery.of(context).size.width;
-    // Ukuran container icon menyesuaikan lebar layar
-    final double iconContainerSize = screenWidth < 360 ? 55 : 62;
-    final double iconSize = screenWidth < 360 ? 24 : 28;
-
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0), // Padding luar
+      padding: const EdgeInsets.symmetric(horizontal: 12.0),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment
-            .spaceEvenly, // Membuat jarak merata dan posisi di tengah
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: categories.map((item) {
           final (label, icon) = item;
           final isSelected = _selectedCategory == label;
@@ -448,8 +464,8 @@ class _PuBerandaState extends State<PuBeranda> {
               children: [
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  width: iconContainerSize,
-                  height: iconContainerSize,
+                  width: 60, // Ukuran tetap
+                  height: 60, // Ukuran tetap
                   decoration: BoxDecoration(
                     color: isSelected
                         ? AppColors.primary
@@ -468,7 +484,7 @@ class _PuBerandaState extends State<PuBeranda> {
                   child: Icon(
                     icon,
                     color: isSelected ? Colors.white : AppColors.primary,
-                    size: iconSize,
+                    size: 26,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -494,7 +510,6 @@ class _PuBerandaState extends State<PuBeranda> {
   // ─── Section Title ─────────────────────────────────────────────────────────
 
   Widget _buildSectionTitle(BuildContext context) {
-    final size = MediaQuery.of(context).size;
     final title = _searchQuery.isNotEmpty
         ? 'Hasil Pencarian'
         : _selectedCategory == 'Semua'
@@ -502,7 +517,7 @@ class _PuBerandaState extends State<PuBeranda> {
             : _selectedCategory;
 
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: size.width * 0.07),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -510,7 +525,7 @@ class _PuBerandaState extends State<PuBeranda> {
             title,
             style: TextStyle(
               color: AppColors.primary,
-              fontSize: size.width < 360 ? 16 : 18,
+              fontSize: 18,
               fontWeight: FontWeight.w700,
               letterSpacing: -0.3,
             ),
@@ -519,7 +534,7 @@ class _PuBerandaState extends State<PuBeranda> {
             '${_filteredProducts.length} menu',
             style: TextStyle(
               color: AppColors.primary.withOpacity(0.45),
-              fontSize: size.width < 360 ? 12 : 13,
+              fontSize: 13,
             ),
           ),
         ],
@@ -527,16 +542,10 @@ class _PuBerandaState extends State<PuBeranda> {
     );
   }
 
-  // ─── Product Grid (Responsive) ─────────────────────────────────────────────
+  // ─── Product Grid ─────────────────────────────────────────────────────────
 
   Widget _buildProductGrid(BuildContext context) {
     final products = _filteredProducts;
-    final size = MediaQuery.of(context).size;
-    
-    // Menyesuaikan jarak dan rasio grid berdasarkan lebar layar
-    final double crossAxisSpacing = size.width < 360 ? 10 : 14;
-    final double mainAxisSpacing = size.width < 360 ? 10 : 14;
-    final double childAspectRatio = size.width < 360 ? 0.72 : 0.75;
 
     if (products.isEmpty) {
       return SliverToBoxAdapter(
@@ -567,7 +576,7 @@ class _PuBerandaState extends State<PuBeranda> {
     }
 
     return SliverPadding(
-      padding: EdgeInsets.symmetric(horizontal: size.width * 0.07),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       sliver: SliverGrid(
         delegate: SliverChildBuilderDelegate(
           (context, index) => _ProductCard(
@@ -576,11 +585,11 @@ class _PuBerandaState extends State<PuBeranda> {
           ),
           childCount: products.length,
         ),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
-          mainAxisSpacing: mainAxisSpacing,
-          crossAxisSpacing: crossAxisSpacing,
-          childAspectRatio: childAspectRatio,
+          mainAxisSpacing: 14,
+          crossAxisSpacing: 14,
+          childAspectRatio: 0.75, // Rasio kartu tetap
         ),
       ),
     );
@@ -642,13 +651,10 @@ class _ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final isSmall = size.width < 360;
-
     return Container(
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.circular(isSmall ? 14 : 18),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: AppColors.primary.withOpacity(0.1),
         ),
@@ -665,18 +671,16 @@ class _ProductCard extends StatelessWidget {
         children: [
           Expanded(
             child: ClipRRect(
-              borderRadius: BorderRadius.vertical(
-                top: Radius.circular(isSmall ? 14 : 18),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(18),
               ),
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // Menggunakan Image.asset untuk memanggil gambar lokal
                   Image.asset(
                     product.image,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
-                      // Fallback jika gambar tidak ditemukan
                       return Container(
                         color: AppColors.primaryLighter,
                         child: Center(
@@ -703,9 +707,9 @@ class _ProductCard extends StatelessWidget {
                       ),
                       child: Text(
                         product.category,
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Colors.white,
-                          fontSize: isSmall ? 8 : 9,
+                          fontSize: 9,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -716,15 +720,15 @@ class _ProductCard extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: EdgeInsets.fromLTRB(isSmall ? 8 : 10, 10, isSmall ? 8 : 10, 10),
+            padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   product.name,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: AppColors.primary,
-                    fontSize: isSmall ? 12 : 13,
+                    fontSize: 13,
                     fontWeight: FontWeight.w700,
                   ),
                   maxLines: 1,
@@ -735,11 +739,11 @@ class _ProductCard extends StatelessWidget {
                   product.price,
                   style: TextStyle(
                     color: AppColors.primary.withOpacity(0.6),
-                    fontSize: isSmall ? 10 : 11,
+                    fontSize: 11,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                SizedBox(height: isSmall ? 6 : 8),
+                const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -758,7 +762,7 @@ class _ProductCard extends StatelessWidget {
                           'Tersedia',
                           style: TextStyle(
                             color: AppColors.primary.withOpacity(0.5),
-                            fontSize: isSmall ? 9 : 10,
+                            fontSize: 10,
                           ),
                         ),
                       ],
@@ -766,16 +770,16 @@ class _ProductCard extends StatelessWidget {
                     GestureDetector(
                       onTap: onAddToCart,
                       child: Container(
-                        width: isSmall ? 26 : 28,
-                        height: isSmall ? 26 : 28,
+                        width: 28,
+                        height: 28,
                         decoration: const BoxDecoration(
                           color: AppColors.primary,
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(
+                        child: const Icon(
                           Icons.add_rounded,
                           color: Colors.white,
-                          size: isSmall ? 16 : 18,
+                          size: 18,
                         ),
                       ),
                     ),

@@ -59,6 +59,18 @@ flutter:
   
   assets:
   - assets/nettyzencafe.png
+  - assets/Choffe cheese.png
+  - assets/Orange Noise.png
+  - assets/Matcha cheese.png
+  - assets/Chicken teriyaki.png
+  - assets/Rice mushroom.png
+  - assets/Chocolava.png
+  - assets/patrick-star.png
+  - assets/imgbakso.png
+  - assets/apanamanya.png
+  - assets/milky cookies.png
+  - assets/ricechickenblackpaper.png
+  - assets/Escoklat.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:
