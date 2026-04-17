@@ -3,23 +3,23 @@ import 'package:flutter/services.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Mengunci orientasi layar ke Portrait (Tegak)
+
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight,
   ]);
-  
+
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
     ),
   );
+
   runApp(const FigmaToCodeApp());
 }
-
-// ─── App ─────────────────────────────────────────────────────────────────────
 
 class FigmaToCodeApp extends StatelessWidget {
   const FigmaToCodeApp({super.key});
@@ -38,8 +38,6 @@ class FigmaToCodeApp extends StatelessWidget {
   }
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-
 class AppColors {
   static const Color primary = Color(0xFF8A4607);
   static const Color primaryLight = Color(0xFFF5CC9E);
@@ -47,8 +45,7 @@ class AppColors {
   static const Color white = Colors.white;
 }
 
-// ─── Model ────────────────────────────────────────────────────────────────────
-
+// === MODEL DATA PRODUK ===
 class Product {
   final String name;
   final String price;
@@ -63,78 +60,27 @@ class Product {
   });
 }
 
-// ─── Data ─────────────────────────────────────────────────────────────────────
+// === MODEL DATA KERANJANG ===
+class CartItem {
+  final Product product;
+  int quantity;
+
+  CartItem({required this.product, this.quantity = 1});
+}
 
 const List<Product> kProducts = [
-  Product(
-    name: 'Choffe Cheese',
-    price: 'IDR 12.000',
-    category: 'Minuman',
-    image: 'assets/Choffe cheese.png', 
-  ),
-  Product(
-    name: 'Orange Noise',
-    price: 'IDR 15.000',
-    category: 'Minuman',
-    image: 'assets/Orange Noise.png',
-  ),
-  Product(
-    name: 'Matcha Cheese',
-    price: 'IDR 17.000',
-    category: 'Minuman',
-    image: 'assets/Matcha cheese.png',
-  ),
-  Product(
-    name: 'Chicken Teriyaki',
-    price: 'IDR 25.000',
-    category: 'Makanan',
-    image: 'assets/Chicken teriyaki.png',
-  ),
-  Product(
-    name: 'Rice Mushroom',
-    price: 'IDR 15.000',
-    category: 'Makanan',
-    image: 'assets/Rice mushroom.png',
-  ),
-  Product(
-    name: 'Choco Lava',
-    price: 'IDR 18.000',
-    category: 'Minuman',
-    image: 'assets/Chocolava.png',
-  ),
-  Product(
-    name: 'Bakso Spesial',
-    price: 'IDR 10.000',
-    category: 'Makanan',
-    image: 'assets/imgbakso.png',
-  ),
-  Product(
-    name: 'Risol Mayonise',
-    price: 'IDR 10.000',
-    category: 'Snack',
-    image: 'assets/apanamanya.png',
-  ),
-  Product(
-    name: 'Milky Cookies',
-    price: 'IDR 15.000',
-    category: 'Minuman',
-    image: 'assets/milky cookies.png',
-  ),
-  Product(
-    name: 'Ricechicken Blackpaper',
-    price: 'IDR 17.000',
-    category: 'Makanan',
-    image: 'assets/ricechickenblackpaper.png',
-  ),
-  Product(
-    name: 'Es Coklat',
-    price: 'IDR 15.000',
-    category: 'Minuman',
-    image: 'assets/Escoklat.png',
-  ),
+  Product(name: 'Choffe Cheese', price: 'IDR 12.000', category: 'Minuman', image: 'assets/coffe_cheese.png'), 
+  Product(name: 'Orange Noise', price: 'IDR 15.000', category: 'Minuman', image: 'assets/Orange_Noise.png'),
+  Product(name: 'Matcha Cheese', price: 'IDR 17.000', category: 'Minuman', image: 'assets/Matcha cheese.png'),
+  Product(name: 'Chicken Teriyaki', price: 'IDR 25.000', category: 'Makanan', image: 'assets/Chicken_teriyaki.png'),
+  Product(name: 'Rice Mushroom', price: 'IDR 15.000', category: 'Makanan', image: 'assets/Rice mushroom.png'),
+  Product(name: 'Choco Lava', price: 'IDR 18.000', category: 'Minuman', image: 'assets/Chocolava.png'),
+  Product(name: 'Bakso Spesial', price: 'IDR 10.000', category: 'Makanan', image: 'assets/imgbakso.png'),
+  Product(name: 'Risol Mayonise', price: 'IDR 10.000', category: 'Snack', image: 'assets/apanamanya.png'),
+  Product(name: 'Milky Cookies', price: 'IDR 15.000', category: 'Minuman', image: 'assets/milky cookies.png'),
+  Product(name: 'Ricechicken Blackpaper', price: 'IDR 17.000', category: 'Makanan', image: 'assets/ricechickenblackpaper.png'),
+  Product(name: 'Es Coklat', price: 'IDR 15.000', category: 'Minuman', image: 'assets/Escoklat.png'),
 ];
-
-// ─── Main Screen ──────────────────────────────────────────────────────────────
 
 class PuBeranda extends StatefulWidget {
   const PuBeranda({super.key});
@@ -145,10 +91,9 @@ class PuBeranda extends StatefulWidget {
 
 class _PuBerandaState extends State<PuBeranda> {
   int _currentIndex = 0;
-  int _cartCount = 0;
+  List<CartItem> _cartItems = [];
   String _searchQuery = '';
   String _selectedCategory = 'Semua';
-
   final TextEditingController _searchController = TextEditingController();
 
   List<Product> get _filteredProducts {
@@ -161,13 +106,25 @@ class _PuBerandaState extends State<PuBeranda> {
     }).toList();
   }
 
-  void _addToCart(String productName) {
-    setState(() => _cartCount++);
+  int get _totalCartItems {
+    return _cartItems.fold(0, (sum, item) => sum + item.quantity);
+  }
+
+  void _addToCart(Product product) {
+    setState(() {
+      int index = _cartItems.indexWhere((item) => item.product.name == product.name);
+      if (index != -1) {
+        _cartItems[index].quantity++;
+      } else {
+        _cartItems.add(CartItem(product: product));
+      }
+    });
+    
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text('$productName ditambahkan ke keranjang'),
+          content: Text('${product.name} ditambahkan ke keranjang'),
           backgroundColor: AppColors.primary,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -178,6 +135,14 @@ class _PuBerandaState extends State<PuBeranda> {
       );
   }
 
+  int _getCrossAxisCount(double width) {
+    if (width < 500) return 2; 
+    if (width < 850) return 3; 
+    if (width < 1100) return 4; 
+    if (width < 1400) return 5; 
+    return 6; 
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -186,35 +151,35 @@ class _PuBerandaState extends State<PuBeranda> {
 
   @override
   Widget build(BuildContext context) {
-    // Membungkus seluruh scaffold agar tampilan menyerupai handphone (max width 480)
-    // Jika dijalankan di tablet/web, akan muncul area kosong di kiri/kanan.
     return Scaffold(
-      backgroundColor: Colors.grey[100], // Warna background luar (area kosong)
+      backgroundColor: Colors.grey[100], 
       body: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 480), // Lebar maksimal handphone
+          constraints: const BoxConstraints(maxWidth: 1400), 
           child: Scaffold(
             backgroundColor: AppColors.white,
             body: SafeArea(
-              child: CustomScrollView(
-                slivers: [
-                  SliverToBoxAdapter(child: _buildHeader(context)),
-                  const SliverToBoxAdapter(child: SizedBox(height: 16)),
-                  SliverToBoxAdapter(child: _buildSearchBar(context)),
-                  const SliverToBoxAdapter(child: SizedBox(height: 20)),
-                  SliverToBoxAdapter(child: _buildPromoBanner(context)),
-                  const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                  SliverToBoxAdapter(child: _buildCategories(context)),
-                  const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                  SliverToBoxAdapter(child: _buildSectionTitle(context)),
-                  const SliverToBoxAdapter(child: SizedBox(height: 12)),
-                  _buildProductGrid(context),
-                  // Extra space agar tidak tertutup bottom nav
-                  const SliverToBoxAdapter(child: SizedBox(height: 80)),
-                ],
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return CustomScrollView(
+                    slivers: [
+                      SliverToBoxAdapter(child: _buildHeader(context)),
+                      const SliverToBoxAdapter(child: SizedBox(height: 10)),
+                      SliverToBoxAdapter(child: _buildSearchBar(context)),
+                      const SliverToBoxAdapter(child: SizedBox(height: 15)),
+                      SliverToBoxAdapter(child: _buildPromoBanner(context)),
+                      const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                      SliverToBoxAdapter(child: _buildCategories(context)),
+                      const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                      SliverToBoxAdapter(child: _buildSectionTitle(context)),
+                      const SliverToBoxAdapter(child: SizedBox(height: 10)),
+                      _buildProductGrid(context, constraints.maxWidth),
+                      const SliverToBoxAdapter(child: SizedBox(height: 80)),
+                    ],
+                  );
+                },
               ),
             ),
-            // Menempatkan bottom nav di dalam constraint agar sejajar
             bottomNavigationBar: _buildBottomNavBar(),
           ),
         ),
@@ -222,11 +187,9 @@ class _PuBerandaState extends State<PuBeranda> {
     );
   }
 
-  // ─── Header ────────────────────────────────────────────────────────────────
-
   Widget _buildHeader(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0), // Padding tetap
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 0), 
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -235,28 +198,28 @@ class _PuBerandaState extends State<PuBeranda> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Hai, Kenzi! 👋',
+                  'Hai, Kenzi!',
                   style: TextStyle(
                     color: AppColors.primary,
-                    fontSize: 24, // Ukuran font tetap untuk portrait
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.5,
+                    fontSize: 24, 
+                    fontWeight: FontWeight.w700, 
+                    letterSpacing: -0.5, 
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 2), 
                 Text(
                   'Selamat datang kembali',
                   style: TextStyle(
-                    color: const Color(0xFFB36A2B),
+                    color: const Color(0xFFB36A2B), 
                     fontSize: 14,
-                    fontWeight: FontWeight.w400,
+                    fontWeight: FontWeight.w400, 
                   ),
                 ),
               ],
             ),
           ),
           GestureDetector(
-            onTap: () {},
+            onTap: () {}, 
             child: Container(
               width: 48,
               height: 48,
@@ -270,12 +233,12 @@ class _PuBerandaState extends State<PuBeranda> {
                   BoxShadow(
                     color: AppColors.primary.withOpacity(0.1),
                     blurRadius: 8,
-                    offset: const Offset(0, 4),
+                    offset: const Offset(0, 4), 
                   ),
                 ],
                 image: const DecorationImage(
                   image: AssetImage('assets/patrick-star.png'),
-                  fit: BoxFit.cover,
+                  fit: BoxFit.cover, 
                 ),
               ),
             ),
@@ -285,11 +248,9 @@ class _PuBerandaState extends State<PuBeranda> {
     );
   }
 
-  // ─── Search Bar ────────────────────────────────────────────────────────────
-
   Widget _buildSearchBar(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20), // Padding tetap
+      padding: const EdgeInsets.symmetric(horizontal: 20), 
       child: Container(
         height: 50,
         decoration: BoxDecoration(
@@ -325,11 +286,11 @@ class _PuBerandaState extends State<PuBeranda> {
                       size: 18,
                     ),
                     onPressed: () {
-                      _searchController.clear();
-                      setState(() => _searchQuery = '');
+                      _searchController.clear(); 
+                      setState(() => _searchQuery = ''); 
                     },
                   )
-                : null,
+                : null, 
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(vertical: 15),
           ),
@@ -338,21 +299,19 @@ class _PuBerandaState extends State<PuBeranda> {
     );
   }
 
-  // ─── Promo Banner ──────────────────────────────────────────────────────────
-
   Widget _buildPromoBanner(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
-        height: 150, // Tinggi tetap untuk portrait
-        width: double.infinity,
+        height: 140, 
+        width: double.infinity, 
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             colors: [Color(0xFF8A4607), Color(0xFFB35A0A)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(22), 
           boxShadow: [
             BoxShadow(
               color: AppColors.primary.withOpacity(0.35),
@@ -364,20 +323,20 @@ class _PuBerandaState extends State<PuBeranda> {
         child: Stack(
           children: [
             Positioned(
-              right: -20,
-              top: -20,
+              right: -20, 
+              top: -20,   
               child: Container(
                 width: 140,
                 height: 140,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.06),
+                  color: Colors.white.withOpacity(0.06), 
                 ),
               ),
             ),
             Positioned(
               right: 20,
-              bottom: -30,
+              bottom: -30, 
               child: Container(
                 width: 100,
                 height: 100,
@@ -391,21 +350,21 @@ class _PuBerandaState extends State<PuBeranda> {
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center, 
                 children: [
                   Text(
                     'Ready!!',
                     style: TextStyle(
-                      color: const Color(0xFFF5CC9E),
+                      color: const Color(0xFFF5CC9E), 
                       fontSize: 28,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w800, 
                       letterSpacing: -0.5,
                     ),
                   ),
                   Text(
-                    'Chocolate Series 🍫',
+                    'Pesan Sekarang Nikmati Nongkimu',
                     style: TextStyle(
-                      color: Colors.white70,
+                      color: Colors.white70, 
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
@@ -413,17 +372,17 @@ class _PuBerandaState extends State<PuBeranda> {
                   const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 5,
+                      horizontal: 12, 
+                      vertical: 5,    
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
+                      color: Colors.white, 
+                      borderRadius: BorderRadius.circular(20), 
                     ),
                     child: const Text(
-                      '🚀 GRATIS ONGKIR',
+                      'Solusi Nongkimu',
                       style: TextStyle(
-                        color: AppColors.primary,
+                        color: AppColors.primary, 
                         fontWeight: FontWeight.w700,
                         fontSize: 12,
                         letterSpacing: 0.3,
@@ -438,8 +397,6 @@ class _PuBerandaState extends State<PuBeranda> {
       ),
     );
   }
-
-  // ─── Categories ────────────────────────────────────────────────────────────
 
   Widget _buildCategories(BuildContext context) {
     final categories = [
@@ -463,9 +420,9 @@ class _PuBerandaState extends State<PuBeranda> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: 60, // Ukuran tetap
-                  height: 60, // Ukuran tetap
+                  duration: const Duration(milliseconds: 200), 
+                  width: 60, 
+                  height: 60, 
                   decoration: BoxDecoration(
                     color: isSelected
                         ? AppColors.primary
@@ -487,7 +444,7 @@ class _PuBerandaState extends State<PuBeranda> {
                     size: 26,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 8), 
                 Text(
                   label,
                   style: TextStyle(
@@ -502,24 +459,22 @@ class _PuBerandaState extends State<PuBeranda> {
               ],
             ),
           );
-        }).toList(),
+        }).toList(), 
       ),
     );
   }
 
-  // ─── Section Title ─────────────────────────────────────────────────────────
-
   Widget _buildSectionTitle(BuildContext context) {
     final title = _searchQuery.isNotEmpty
-        ? 'Hasil Pencarian'
+        ? 'Hasil Pencarian' 
         : _selectedCategory == 'Semua'
-            ? 'Rekomendasi untukmu'
-            : _selectedCategory;
+            ? 'Rekomendasi untukmu' 
+            : _selectedCategory; 
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween, 
         children: [
           Text(
             title,
@@ -542,21 +497,21 @@ class _PuBerandaState extends State<PuBeranda> {
     );
   }
 
-  // ─── Product Grid ─────────────────────────────────────────────────────────
-
-  Widget _buildProductGrid(BuildContext context) {
+  Widget _buildProductGrid(BuildContext context, double screenWidth) {
     final products = _filteredProducts;
+    
+    int crossAxisCount = _getCrossAxisCount(screenWidth);
 
     if (products.isEmpty) {
       return SliverToBoxAdapter(
         child: SizedBox(
-          height: 200,
+          height: 200, 
           child: Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
-                  Icons.search_off_rounded,
+                  Icons.search_off_rounded, 
                   size: 52,
                   color: AppColors.primary.withOpacity(0.2),
                 ),
@@ -580,28 +535,26 @@ class _PuBerandaState extends State<PuBeranda> {
       sliver: SliverGrid(
         delegate: SliverChildBuilderDelegate(
           (context, index) => _ProductCard(
-            product: products[index],
-            onAddToCart: () => _addToCart(products[index].name),
+            product: products[index], 
+            onAddToCart: () => _addToCart(products[index]),
           ),
           childCount: products.length,
         ),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          mainAxisSpacing: 14,
-          crossAxisSpacing: 14,
-          childAspectRatio: 0.75, // Rasio kartu tetap
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: crossAxisCount, 
+          mainAxisSpacing: 14, 
+          crossAxisSpacing: 14, 
+          childAspectRatio: 0.8, 
         ),
       ),
     );
   }
 
-  // ─── Bottom Nav Bar ────────────────────────────────────────────────────────
-
   Widget _buildBottomNavBar() {
     return Container(
-      height: 72,
+      height: 70, 
       decoration: const BoxDecoration(
-        color: AppColors.primaryLight,
+        color: AppColors.primaryLight, 
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Row(
@@ -623,8 +576,10 @@ class _PuBerandaState extends State<PuBeranda> {
             icon: Icons.shopping_bag_rounded,
             index: 2,
             currentIndex: _currentIndex,
-            badgeCount: _cartCount,
-            onTap: (i) => setState(() => _currentIndex = i),
+            badgeCount: _totalCartItems,
+            onTap: (i) {
+              setState(() => _currentIndex = i);
+            },
           ),
           _NavItem(
             icon: Icons.person_rounded,
@@ -637,8 +592,6 @@ class _PuBerandaState extends State<PuBeranda> {
     );
   }
 }
-
-// ─── Product Card Widget ──────────────────────────────────────────────────────
 
 class _ProductCard extends StatelessWidget {
   final Product product;
@@ -654,7 +607,7 @@ class _ProductCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(18), 
         border: Border.all(
           color: AppColors.primary.withOpacity(0.1),
         ),
@@ -672,7 +625,7 @@ class _ProductCard extends StatelessWidget {
           Expanded(
             child: ClipRRect(
               borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(18),
+                top: Radius.circular(18), 
               ),
               child: Stack(
                 fit: StackFit.expand,
@@ -685,7 +638,7 @@ class _ProductCard extends StatelessWidget {
                         color: AppColors.primaryLighter,
                         child: Center(
                           child: Icon(
-                            Icons.broken_image_rounded,
+                            Icons.broken_image_rounded, 
                             color: AppColors.primary.withOpacity(0.3),
                             size: 40,
                           ),
@@ -702,8 +655,8 @@ class _ProductCard extends StatelessWidget {
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.85),
-                        borderRadius: BorderRadius.circular(20),
+                        color: AppColors.primary.withOpacity(0.85), 
+                        borderRadius: BorderRadius.circular(20), 
                       ),
                       child: Text(
                         product.category,
@@ -720,7 +673,7 @@ class _ProductCard extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+            padding: const EdgeInsets.fromLTRB(10, 10, 10, 10), 
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -731,21 +684,21 @@ class _ProductCard extends StatelessWidget {
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                   ),
-                  maxLines: 1,
+                  maxLines: 2, 
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
                 Text(
                   product.price,
                   style: TextStyle(
-                    color: AppColors.primary.withOpacity(0.6),
+                    color: AppColors.primary.withOpacity(0.6), 
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween, 
                   children: [
                     Row(
                       children: [
@@ -773,11 +726,11 @@ class _ProductCard extends StatelessWidget {
                         width: 28,
                         height: 28,
                         decoration: const BoxDecoration(
-                          color: AppColors.primary,
+                          color: AppColors.primary, 
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
-                          Icons.add_rounded,
+                          Icons.add_rounded, 
                           color: Colors.white,
                           size: 18,
                         ),
@@ -794,14 +747,12 @@ class _ProductCard extends StatelessWidget {
   }
 }
 
-// ─── Nav Item Widget ──────────────────────────────────────────────────────────
-
 class _NavItem extends StatelessWidget {
-  final IconData icon;
-  final int index;
-  final int currentIndex;
-  final int badgeCount;
-  final ValueChanged<int> onTap;
+  final IconData icon;          
+  final int index;              
+  final int currentIndex;       
+  final int badgeCount;         
+  final ValueChanged<int> onTap; 
 
   const _NavItem({
     required this.icon,
@@ -822,8 +773,8 @@ class _NavItem extends StatelessWidget {
         width: 56,
         height: 56,
         child: Stack(
-          alignment: Alignment.center,
-          clipBehavior: Clip.none,
+          alignment: Alignment.center, 
+          clipBehavior: Clip.none, 
           children: [
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
@@ -848,7 +799,7 @@ class _NavItem extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(4),
                   decoration: const BoxDecoration(
-                    color: Colors.red,
+                    color: Colors.red, 
                     shape: BoxShape.circle,
                   ),
                   child: Text(
