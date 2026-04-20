@@ -59,9 +59,17 @@ flutter:
   
   assets:
   - assets/nettyzencafe.png
+<<<<<<< HEAD
   - assets/Orange Noise.png
   - assets/Matcha cheese.png
   - assets/Chicken teriyaki.png
+=======
+  - assets/Choffe_cheese.png
+  - assets/Orange_Noise.png
+  - assets/Matcha_cheese.png
+  - assets/Chicken_teriyaki.png
+  - assets/Rice_mushroom.png
+>>>>>>> arya
   - assets/Chocolava.png
   - assets/patrick-star.png
   - assets/imgbakso.png
@@ -69,6 +77,7 @@ flutter:
   - assets/milky cookies.png
   - assets/ricechickenblackpaper.png
   - assets/Escoklat.png
+<<<<<<< HEAD
   - assets/blakpaper.png
   - assets/mieayam.png
   - assets/ricebowl teriyaki.png
@@ -85,6 +94,15 @@ flutter:
   - assets/coffe_cheese.png
   - assets/sakura_blossom.png
   - assets/Rice mushroom.png
+=======
+  - assets/Orange_Noise.png
+  - assets/sakura_blosom.png
+  - assets/Bluecattoncandy.png
+  - assets/Taro.png
+  - assets/chocolato.png
+  - assets/vietnamcoffe.png
+
+>>>>>>> arya
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg
