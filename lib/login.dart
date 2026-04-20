@@ -66,10 +66,8 @@ class _LoginPageState extends State<LoginPage> {
                 const EdgeInsets.symmetric(horizontal: 32.0, vertical: 40.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: 
-              [
+              children:[
                 // === LOGO ===
-
             padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 40.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -142,7 +140,6 @@ class _LoginPageState extends State<LoginPage> {
                   hint: "masukkan username",
                   icon: Icons.person_outline,
                 ),
-<<<<<<< HEAD
 
                 _buildRememberAndForgot(),
                 const SizedBox(height: 40),
@@ -161,9 +158,6 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
-
-
-
   Widget _buildLoginButton() {
 
   // === BUTTON LOGIN DENGAN NAVIGASI ===
