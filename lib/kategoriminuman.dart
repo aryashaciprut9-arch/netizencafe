@@ -4,16 +4,18 @@ import 'package:flutter/services.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Kunci orientasi hanya portrait
+  // === PENGATURAN ORIENTASI (AUTO-ROTATE) ===
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight,
   ]);
 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
+      statusBarIconBrightness: Brightness.dark,
     ),
   );
   runApp(const FigmaToCodeApp());
@@ -38,17 +40,16 @@ class FigmaToCodeApp extends StatelessWidget {
   }
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// ─── Constants (Disesuaikan dengan PuBeranda) ─────────────────────────
 
 class AppColors {
-  static const Color primary = Color(0xFF8A4607);
-  static const Color primaryDark = Color(0xFF5C2E05);
+  static const Color primary = Color(0xFF8A4607); // Sesuai PuBeranda
   static const Color primaryLight = Color(0xFFF5CC9E);
   static const Color primaryLighter = Color(0xFFFFF4E6);
   static const Color white = Colors.white;
 }
 
-// ─── Model ────────────────────────────────────────────────────────────────────
+// ─── Model Produk ────────────────────────────────────────────────────────────
 
 class DrinkItem {
   final String name;
@@ -64,6 +65,15 @@ class DrinkItem {
   });
 }
 
+// ─── Model Keranjang (Cart Item) ────────────────────────────────────────────────
+
+class CartItem {
+  final DrinkItem product;
+  int quantity;
+
+  CartItem({required this.product, this.quantity = 1});
+}
+
 // ─── Halaman Utama ────────────────────────────────────────────────────────────
 
 class PaMenuJenisMinuman extends StatefulWidget {
@@ -76,24 +86,38 @@ class PaMenuJenisMinuman extends StatefulWidget {
 class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
   // ── Data ──
   final List<DrinkItem> _allDrinks = [
-    DrinkItem(name: 'Orange Noice', price: 'IDR 15.000', category: 'Jus'),
-    DrinkItem(name: 'Matcha Cheese', price: 'IDR 17.000', category: 'Matcha'),
-    DrinkItem(name: 'Chocolato Cheese', price: 'IDR 12.000', category: 'Coklat'),
-    DrinkItem(name: 'Vietnam Coffe', price: 'IDR 14.000', category: 'Kopi'),
-    DrinkItem(name: 'Sakura Blossom', price: 'IDR 12.000', category: 'Spesial'),
-    DrinkItem(name: 'Coffe Cheese', price: 'IDR 12.000', category: 'Kopi'),
-    DrinkItem(name: 'Chocolato', price: 'IDR 10.000', category: 'Coklat'),
-    DrinkItem(name: 'Blue Cotton Candy', price: 'IDR 12.000', category: 'Spesial'),
+    DrinkItem(name: 'Orange Noise', price: 'IDR 15.000', imageUrl: 'assets/Orange_Noise.png'),
+    DrinkItem(name: 'Matcha Cheese', price: 'IDR 17.000', imageUrl: 'assets/matcha1.png'),
+    DrinkItem(name: 'Choffe Cheese', price: 'IDR 12.000', imageUrl: 'assets/coffe_cheese.png' ),
+    DrinkItem(name: 'Vietnam Coffe', price: 'IDR 14.000', imageUrl: 'assets/vietnam_coffe.png' ),
+    DrinkItem(name: 'Sakura Blossom', price: 'IDR 12.000',imageUrl: 'assets/sakura_blossom.png' ),
+    DrinkItem(name: 'Taro', price: 'IDR 12.000', imageUrl: 'assets/Taro.png' ),
+    DrinkItem(name: 'Chocolato', price: 'IDR 10.000', imageUrl: 'assets/chocolato.png'),
+    DrinkItem(name: 'Blue Cotton Candy', price: 'IDR 12.000', imageUrl: 'assets/Bluecattoncandy.png' ),
   ];
 
   final TextEditingController _searchController = TextEditingController();
 
-  // ── State ──
+  // ── State Keranjang ──
+  List<CartItem> _cartItems = [];
   int _currentIndex = 0;
-  int _cartCount = 0;
   String _searchQuery = '';
 
-  // ── Filter produk (hanya berdasarkan pencarian) ──
+  // ── Hitung total item untuk badge ──
+  int get _totalCartItems {
+    return _cartItems.fold(0, (sum, item) => sum + item.quantity);
+  }
+
+  // ── Logika Responsif Grid (Sama seperti PuBeranda) ──
+  int _getCrossAxisCount(double width) {
+    if (width < 500) return 2; 
+    if (width < 850) return 3; 
+    if (width < 1100) return 4; 
+    if (width < 1400) return 5; 
+    return 6; 
+  }
+
+  // ── Filter produk ──
   List<DrinkItem> get _filteredDrinks {
     if (_searchQuery.isEmpty) return _allDrinks;
     return _allDrinks
@@ -107,27 +131,23 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
     super.dispose();
   }
 
-  // ── Tambah keranjang ──
+  // ── Tambah ke Keranjang (Logic Real) ──
   void _addToCart(DrinkItem item) {
-    setState(() => _cartCount++);
+    setState(() {
+      int index = _cartItems.indexWhere((cartItem) => cartItem.product.name == item.name);
+      if (index != -1) {
+        _cartItems[index].quantity++;
+      } else {
+        _cartItems.add(CartItem(product: item));
+      }
+    });
     HapticFeedback.lightImpact();
 
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  '${item.name} ditambahkan ke keranjang',
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                ),
-              ),
-            ],
-          ),
+          content: Text('${item.name} ditambahkan ke keranjang'),
           backgroundColor: AppColors.primary,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -139,6 +159,7 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
   void _onNavTap(int index) {
     setState(() => _currentIndex = index);
     HapticFeedback.selectionClick();
+    // Navigasi keranjang dihapus sesuai PuBeranda
   }
 
   // ════════════════════════════════════════════════════════════════════════════
@@ -148,41 +169,33 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Colors.grey[100], // Disesuaikan dengan PuBeranda
       body: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 480),
+          constraints: const BoxConstraints(maxWidth: 1400), // Pembungkus disesuaikan
           child: Scaffold(
-            body: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [AppColors.primary, AppColors.primaryDark],
-                ),
-              ),
-              child: SafeArea(
-                child: CustomScrollView(
-                  slivers: [
-                    // Header
-                    SliverToBoxAdapter(child: _buildHeader()),
-                    const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-                    // Search bar
-                    SliverToBoxAdapter(child: _buildSearchBar()),
-                    const SliverToBoxAdapter(child: SizedBox(height: 22)),
-
-                    // Judul seksi
-                    SliverToBoxAdapter(child: _buildSectionTitle()),
-                    const SliverToBoxAdapter(child: SizedBox(height: 14)),
-
-                    // Grid minuman
-                    _buildDrinkGrid(),
-
-                    // Spacer bawah
-                    const SliverToBoxAdapter(child: SizedBox(height: 90)),
-                  ],
-                ),
+            backgroundColor: AppColors.white,
+            body: SafeArea(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return CustomScrollView(
+                    slivers: [
+                      // Header (Tanpa tombol Tambah)
+                      SliverToBoxAdapter(child: _buildHeader(context)),
+                      const SliverToBoxAdapter(child: SizedBox(height: 10)),
+                      // Search bar
+                      SliverToBoxAdapter(child: _buildSearchBar(context)),
+                      const SliverToBoxAdapter(child: SizedBox(height: 15)),
+                      // Judul seksi
+                      SliverToBoxAdapter(child: _buildSectionTitle(context)),
+                      const SliverToBoxAdapter(child: SizedBox(height: 10)),
+                      // Grid minuman
+                      _buildDrinkGrid(context, constraints.maxWidth),
+                      // Spacer bawah
+                      const SliverToBoxAdapter(child: SizedBox(height: 80)),
+                    ],
+                  );
+                },
               ),
             ),
             bottomNavigationBar: _buildBottomNavBar(),
@@ -192,11 +205,11 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
     );
   }
 
-  // ─── Header ────────────────────────────────────────────────────────────────
+  // ─── Header (Disesuaikan Style, Hapus Tombol Tambah) ────────────────────────
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -210,13 +223,13 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
                 child: Container(
                   padding: const EdgeInsets.all(9),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
+                    color: AppColors.primaryLighter, // Disesuaikan
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white.withOpacity(0.1)),
+                    border: Border.all(color: AppColors.primary.withOpacity(0.1)),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.arrow_back_ios_new,
-                    color: Colors.white,
+                    color: AppColors.primary, // Ikon warna utama
                     size: 16,
                   ),
                 ),
@@ -225,7 +238,7 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
               const Text(
                 'Minuman',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppColors.primary, // Teks warna utama
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.3,
@@ -233,55 +246,17 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
               ),
             ],
           ),
-          _buildAddButton(),
+          // Bagian Tombol Tambah Menu DIHAPUS
         ],
       ),
     );
   }
 
-  Widget _buildAddButton() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.12)),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: () {
-            HapticFeedback.lightImpact();
-            _showAddMenuSheet();
-          },
-          child: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.add, color: Colors.white, size: 17),
-                SizedBox(width: 4),
-                Text(
-                  'Tambah',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  // ─── Search Bar (Disesuaikan dengan PuBeranda) ────────────────────────────
 
-  // ─── Search Bar ────────────────────────────────────────────────────────────
-
-  Widget _buildSearchBar() {
+  Widget _buildSearchBar(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 20), 
       child: Container(
         height: 50,
         decoration: BoxDecoration(
@@ -297,7 +272,6 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
           style: const TextStyle(
             color: AppColors.primary,
             fontSize: 14,
-            fontWeight: FontWeight.w500,
           ),
           decoration: InputDecoration(
             hintText: 'Cari makanan, minuman...',
@@ -318,11 +292,11 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
                       size: 18,
                     ),
                     onPressed: () {
-                      _searchController.clear();
-                      setState(() => _searchQuery = '');
+                      _searchController.clear(); 
+                      setState(() => _searchQuery = ''); 
                     },
                   )
-                : null,
+                : null, 
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(vertical: 15),
           ),
@@ -331,20 +305,20 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
     );
   }
 
-  // ─── Judul Seksi ───────────────────────────────────────────────────────────
+  // ─── Judul Seksi (Disesuaikan dengan PuBeranda) ───────────────────────────
 
-  Widget _buildSectionTitle() {
+  Widget _buildSectionTitle(BuildContext context) {
     final title = _searchQuery.isNotEmpty ? 'Hasil Pencarian' : 'Semua Minuman';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween, 
         children: [
           Text(
             title,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: AppColors.primary,
               fontSize: 18,
               fontWeight: FontWeight.w700,
               letterSpacing: -0.3,
@@ -353,7 +327,7 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
           Text(
             '${_filteredDrinks.length} menu',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.45),
+              color: AppColors.primary.withOpacity(0.45),
               fontSize: 13,
             ),
           ),
@@ -364,27 +338,29 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
 
   // ─── Grid Minuman ──────────────────────────────────────────────────────────
 
-  Widget _buildDrinkGrid() {
+  Widget _buildDrinkGrid(BuildContext context, double screenWidth) {
     final drinks = _filteredDrinks;
+    
+    int crossAxisCount = _getCrossAxisCount(screenWidth);
 
     if (drinks.isEmpty) {
       return SliverToBoxAdapter(
         child: SizedBox(
-          height: 200,
+          height: 200, 
           child: Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
-                  Icons.search_off_rounded,
+                  Icons.search_off_rounded, 
                   size: 52,
-                  color: Colors.white.withOpacity(0.2),
+                  color: AppColors.primary.withOpacity(0.2),
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'Minuman tidak ditemukan',
+                  'Menu tidak ditemukan',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.45),
+                    color: AppColors.primary.withOpacity(0.4),
                     fontSize: 15,
                   ),
                 ),
@@ -400,28 +376,28 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
       sliver: SliverGrid(
         delegate: SliverChildBuilderDelegate(
           (context, index) => _DrinkCard(
-            drink: drinks[index],
+            drink: drinks[index], 
             onAddToCart: () => _addToCart(drinks[index]),
           ),
           childCount: drinks.length,
         ),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          mainAxisSpacing: 14,
-          crossAxisSpacing: 14,
-          childAspectRatio: 0.75,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: crossAxisCount, 
+          mainAxisSpacing: 14, 
+          crossAxisSpacing: 14, 
+          childAspectRatio: 0.8, 
         ),
       ),
     );
   }
 
-  // ─── Bottom Nav Bar ────────────────────────────────────────────────────────
+  // ─── Bottom Nav Bar (Disesuaikan dengan PuBeranda - Nav keranjang non-aktif) ──────────
 
   Widget _buildBottomNavBar() {
     return Container(
-      height: 72,
+      height: 70, 
       decoration: const BoxDecoration(
-        color: AppColors.primaryLight,
+        color: AppColors.primaryLight, 
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Row(
@@ -431,236 +407,37 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
             icon: Icons.home_rounded,
             index: 0,
             currentIndex: _currentIndex,
-            onTap: _onNavTap,
+            onTap: (i) => setState(() => _currentIndex = i),
           ),
           _NavItem(
             icon: Icons.search_rounded,
             index: 1,
             currentIndex: _currentIndex,
-            onTap: _onNavTap,
+            onTap: (i) => setState(() => _currentIndex = i),
           ),
           _NavItem(
             icon: Icons.shopping_bag_rounded,
             index: 2,
             currentIndex: _currentIndex,
-            badgeCount: _cartCount,
-            onTap: _onNavTap,
+            badgeCount: _totalCartItems,
+            onTap: (i) {
+              setState(() => _currentIndex = i);
+              // Navigasi keranjang dihapus agar tidak bisa memesan/melihat list
+            },
           ),
           _NavItem(
             icon: Icons.person_rounded,
             index: 3,
             currentIndex: _currentIndex,
-            onTap: _onNavTap,
+            onTap: (i) => setState(() => _currentIndex = i),
           ),
         ],
       ),
     );
   }
-
-  // ─── Bottom Sheet Tambah Menu ──────────────────────────────────────────────
-
-  void _showAddMenuSheet() {
-    final nameCtrl = TextEditingController();
-    final priceCtrl = TextEditingController();
-    final catCtrl = TextEditingController();
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetCtx) {
-        return Container(
-          margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: SafeArea(
-            top: false,
-            child: Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(sheetCtx).viewInsets.bottom,
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const SizedBox(height: 8),
-                    Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 18, 20, 8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Menu Baru',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          _buildSheetField(
-                            'Nama Minuman',
-                            'Contoh: Coklat Hangat',
-                            nameCtrl,
-                          ),
-                          const SizedBox(height: 12),
-                          _buildSheetField(
-                            'Harga (IDR)',
-                            'Contoh: 15000',
-                            priceCtrl,
-                            isNumber: true,
-                          ),
-                          const SizedBox(height: 12),
-                          _buildSheetField(
-                            'Kategori',
-                            'Contoh: Kopi, Teh, Jus',
-                            catCtrl,
-                          ),
-                          const SizedBox(height: 24),
-                          SizedBox(
-                            width: double.infinity,
-                            height: 50,
-                            child: ElevatedButton(
-                              onPressed: () {
-                                final name = nameCtrl.text.trim();
-                                final price = priceCtrl.text.trim();
-                                final cat = catCtrl.text.trim();
-
-                                if (name.isEmpty || price.isEmpty) {
-                                  ScaffoldMessenger.of(sheetCtx).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Nama dan harga wajib diisi'),
-                                      backgroundColor: Color(0xFFE53935),
-                                      behavior: SnackBarBehavior.floating,
-                                      shape: StadiumBorder(),
-                                    ),
-                                  );
-                                  return;
-                                }
-
-                                setState(() {
-                                  _allDrinks.insert(
-                                    0,
-                                    DrinkItem(
-                                      name: name,
-                                      price: 'IDR $price',
-                                      category: cat.isNotEmpty ? cat : 'Minuman',
-                                    ),
-                                  );
-                                });
-
-                                Navigator.pop(sheetCtx);
-                                ScaffoldMessenger.of(context)
-                                    .hideCurrentSnackBar();
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('$name berhasil ditambahkan'),
-                                    backgroundColor: AppColors.primary,
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                                textStyle: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              child: const Text('Simpan Menu'),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildSheetField(
-    String label,
-    String hint,
-    TextEditingController ctrl, {
-    bool isNumber = false,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            color: Colors.grey[600],
-            letterSpacing: 0.5,
-          ),
-        ),
-        const SizedBox(height: 6),
-        TextField(
-          controller: ctrl,
-          keyboardType: isNumber
-              ? const TextInputType.numberWithOptions()
-              : TextInputType.text,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF333333),
-          ),
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: TextStyle(
-              color: Colors.grey[400],
-              fontWeight: FontWeight.w400,
-            ),
-            filled: true,
-            fillColor: const Color(0xFFF9F5F0),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey[200]!),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey[200]!),
-            ),
-            focusedBorder: const OutlineInputBorder(
-              borderRadius: BorderRadius.all(Radius.circular(12)),
-              borderSide: BorderSide(color: AppColors.primary, width: 1.5),
-            ),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-          ),
-        ),
-      ],
-    );
-  }
 }
 
-// ─── Drink Card Widget ────────────────────────────────────────────────────────
+// ─── Drink Card Widget (Disesuaikan Style PuBeranda) ────────────────────────────────
 
 class _DrinkCard extends StatelessWidget {
   final DrinkItem drink;
@@ -676,7 +453,7 @@ class _DrinkCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(18), 
         border: Border.all(
           color: AppColors.primary.withOpacity(0.1),
         ),
@@ -691,30 +468,30 @@ class _DrinkCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Gambar ──
           Expanded(
             child: ClipRRect(
               borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(18),
+                top: Radius.circular(18), 
               ),
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  Image.network(
+                  Image.asset(
                     drink.imageUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      color: AppColors.primaryLighter,
-                      child: Center(
-                        child: Icon(
-                          Icons.broken_image_rounded,
-                          color: AppColors.primary.withOpacity(0.3),
-                          size: 40,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: AppColors.primaryLighter,
+                        child: Center(
+                          child: Icon(
+                            Icons.broken_image_rounded, 
+                            color: AppColors.primary.withOpacity(0.3),
+                            size: 40,
+                          ),
                         ),
-                      ),
-                    ),
+                      );
+                    },
                   ),
-                  // Badge kategori
                   Positioned(
                     top: 8,
                     left: 8,
@@ -724,8 +501,8 @@ class _DrinkCard extends StatelessWidget {
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.85),
-                        borderRadius: BorderRadius.circular(20),
+                        color: AppColors.primary.withOpacity(0.85), 
+                        borderRadius: BorderRadius.circular(20), 
                       ),
                       child: Text(
                         drink.category,
@@ -741,34 +518,33 @@ class _DrinkCard extends StatelessWidget {
               ),
             ),
           ),
-          // ── Info ──
           Padding(
-            padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+            padding: const EdgeInsets.fromLTRB(10, 10, 10, 10), 
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   drink.name,
                   style: const TextStyle(
-                    color: Color(0xFFD4741B),
+                    color: AppColors.primary,
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                   ),
-                  maxLines: 1,
+                  maxLines: 2, 
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
                 Text(
                   drink.price,
                   style: TextStyle(
-                    color: AppColors.primary.withOpacity(0.6),
+                    color: AppColors.primary.withOpacity(0.6), 
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween, 
                   children: [
                     Row(
                       children: [
@@ -796,11 +572,11 @@ class _DrinkCard extends StatelessWidget {
                         width: 28,
                         height: 28,
                         decoration: const BoxDecoration(
-                          color: AppColors.primary,
+                          color: AppColors.primary, 
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
-                          Icons.add_rounded,
+                          Icons.add_rounded, 
                           color: Colors.white,
                           size: 18,
                         ),
@@ -817,14 +593,14 @@ class _DrinkCard extends StatelessWidget {
   }
 }
 
-// ─── Nav Item Widget ──────────────────────────────────────────────────────────
+// ─── Nav Item Widget (Sama dengan PuBeranda) ──────────────────────────────────────────────────
 
 class _NavItem extends StatelessWidget {
-  final IconData icon;
-  final int index;
-  final int currentIndex;
-  final int badgeCount;
-  final ValueChanged<int> onTap;
+  final IconData icon;          
+  final int index;              
+  final int currentIndex;       
+  final int badgeCount;         
+  final ValueChanged<int> onTap; 
 
   const _NavItem({
     required this.icon,
@@ -845,8 +621,8 @@ class _NavItem extends StatelessWidget {
         width: 56,
         height: 56,
         child: Stack(
-          alignment: Alignment.center,
-          clipBehavior: Clip.none,
+          alignment: Alignment.center, 
+          clipBehavior: Clip.none, 
           children: [
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
@@ -871,7 +647,7 @@ class _NavItem extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(4),
                   decoration: const BoxDecoration(
-                    color: Colors.red,
+                    color: Colors.red, 
                     shape: BoxShape.circle,
                   ),
                   child: Text(
@@ -887,6 +663,150 @@ class _NavItem extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ==========================================
+// HALAMAN KERANJANG (CART PAGE)
+// ==========================================
+class CartPage extends StatefulWidget {
+  final List<CartItem> cartItems;
+
+  const CartPage({super.key, required this.cartItems});
+
+  @override
+  State<CartPage> createState() => _CartPageState();
+}
+
+class _CartPageState extends State<CartPage> {
+  late List<CartItem> _localCartItems;
+
+  @override
+  void initState() {
+    super.initState();
+    _localCartItems = List.from(widget.cartItems);
+  }
+
+  int _parsePrice(String priceString) {
+    String cleanString = priceString.replaceAll('IDR ', '').replaceAll('.', '');
+    return int.tryParse(cleanString) ?? 0;
+  }
+
+  // Helper methods dibiarkan jika dibutuhkan, tapi tidak digunakan di UI (bagian pemesanan dihapus)
+  int get _totalPrice {
+    int total = 0;
+    for (var item in _localCartItems) {
+      total += _parsePrice(item.product.price) * item.quantity;
+    }
+    return total;
+  }
+
+  int get _totalItemCount {
+    return _localCartItems.fold(0, (sum, item) => sum + item.quantity);
+  }
+
+  String _formatRupiah(int value) {
+    return 'IDR ${value.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}';
+  }
+
+  void _updateQuantity(int index, int change) {
+    setState(() {
+      _localCartItems[index].quantity += change;
+      if (_localCartItems[index].quantity <= 0) {
+        _localCartItems.removeAt(index);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[100],
+      appBar: AppBar(
+        backgroundColor: AppColors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: AppColors.primary),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text("Keranjang Saya", style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+        centerTitle: true,
+      ),
+      body: _localCartItems.isEmpty
+          ? const SizedBox() // Tampilan keranjang kosong dihapus (sesuai request sebelumnya)
+          : Column(
+              children: [
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(20),
+                    itemCount: _localCartItems.length,
+                    itemBuilder: (context, index) {
+                      final item = _localCartItems[index];
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+                        ),
+                        child: Row(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.asset(
+                                item.product.imageUrl, // Menggunakan imageUrl sesuai model DrinkItem
+                                width: 70,
+                                height: 70,
+                                fit: BoxFit.cover,
+                                errorBuilder: (c, o, s) => Container(width: 70, height: 70, color: Colors.grey[200]),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(item.product.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.primary)),
+                                  const SizedBox(height: 4),
+                                  Text(item.product.price, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                                ],
+                              ),
+                            ),
+                            Row(
+                              children: [
+                                GestureDetector(
+                                  onTap: () => _updateQuantity(index, -1),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(color: AppColors.primaryLighter, shape: BoxShape.circle),
+                                    child: const Icon(Icons.remove, size: 16, color: AppColors.primary),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Text("${item.quantity}", style: const TextStyle(fontWeight: FontWeight.bold)),
+                                const SizedBox(width: 10),
+                                GestureDetector(
+                                  onTap: () => _updateQuantity(index, 1),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                                    child: const Icon(Icons.add, size: 16, color: Colors.white),
+                                  ),
+                                ),
+                              ],
+                            )
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                // === BAGIAN RINCIAN PEMESANAN SUDAH DIHAPUS ===
+                // Tidak ada tombol pesan, user tidak bisa melakukan pemesanan
+              ],
+            ),
     );
   }
 }
