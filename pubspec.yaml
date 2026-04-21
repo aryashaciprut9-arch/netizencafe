@@ -59,6 +59,9 @@ flutter:
   
   assets:
   - assets/nettyzencafe.png
+  - assets/Orange Noise.png
+  - assets/Matcha cheese.png
+  - assets/Chicken teriyaki.png
   - assets/Choffe_cheese.png
   - assets/Orange Noise.png
   - assets/Matcha_cheese.png
@@ -72,6 +75,23 @@ flutter:
   - assets/ricechickenblackpaper.png
   - assets/Escoklat.png
   - assets/Orange Noise.png
+  - assets/blakpaper.png
+  - assets/mieayam.png
+  - assets/ricebowl teriyaki.png
+  - assets/sambel cumi.png
+  - assets/nasisambelcakalang.png
+  - assets/CHECK CIRCLE.png
+  - assets/orange_noise.png
+  - assets/sakura_blossom.png
+  - assets/bluecattoncandy.png
+  - assets/taro.png
+  - assets/chocolato.png
+  - assets/vietnam_coffe.png
+  - assets/matcha1.png
+  - assets/coffe_cheese.png
+  - assets/sakura_blossom.png
+  - assets/Rice mushroom.png
+  - assets/Orange_Noise.png
   - assets/sakura_blosom.png
   - assets/Bluecattoncandy.png
   - assets/Taro.png

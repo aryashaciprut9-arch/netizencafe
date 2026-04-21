@@ -36,6 +36,9 @@ class _LoginPageState extends State<LoginPage> {
   bool _isPressed = false;
   bool _isRememberMe = false;
 
+
+  // 🎨 WARNA UTAMA (SUDAH DIHALUSKAN)
+
   final Color primary = const Color(0xFFB86B2B);
   final Color textDark = const Color(0xFF6D4C41);
 
@@ -58,10 +61,18 @@ class _LoginPageState extends State<LoginPage> {
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: Padding(
+
+            padding:
+                const EdgeInsets.symmetric(horizontal: 32.0, vertical: 40.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children:[
+                // === LOGO ===
             padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 40.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+
                 Column(
                   children: [
                     Container(
@@ -102,6 +113,13 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ],
                 ),
+
+                const SizedBox(height: 50),
+
+                _buildCustomToggle(),
+                const SizedBox(height: 30),
+
+
                 const SizedBox(height: 50),
                 _buildCustomToggle(),
                 const SizedBox(height: 30),
@@ -110,16 +128,29 @@ class _LoginPageState extends State<LoginPage> {
                   hint: "aryasha@gmail.com",
                   icon: Icons.email_outlined,
                 ),
+
+
                 const SizedBox(height: 20),
+
+
+                const SizedBox(height: 20),
+
                 _buildInputField(
                   label: "Password",
                   hint: "Masukan Password",
                   icon: Icons.person_outline,
                 ),
+
+                _buildRememberAndForgot(),
+                const SizedBox(height: 40),
+
+                _buildLoginButton(),
+
                 _buildRememberAndForgot(),
                 const SizedBox(height: 40),
                 // 2. Sekarang mengirimkan 'context' ke dalam fungsi button
                 _buildLoginButton(context),
+
               ],
             ),
           ),
@@ -127,13 +158,17 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
+  Widget _buildLoginButton() {
 
   // === BUTTON LOGIN DENGAN NAVIGASI ===
   Widget _buildLoginButton(BuildContext context) {
+
     return GestureDetector(
       onTapDown: (_) => setState(() => _isPressed = true),
       onTapUp: (_) => setState(() => _isPressed = false),
       onTapCancel: () => setState(() => _isPressed = false),
+
+
       onTap: () {
         // 3. Fungsi pindah ke halaman Beranda
         Navigator.pushReplacement(
@@ -141,6 +176,7 @@ class _LoginPageState extends State<LoginPage> {
           MaterialPageRoute(builder: (context) => const PuBeranda()),
         );
       },
+
       child: AnimatedScale(
         scale: _isPressed ? 0.96 : 1.0,
         duration: const Duration(milliseconds: 150),
