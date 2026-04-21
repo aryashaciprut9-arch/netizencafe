@@ -107,13 +107,13 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: 30),
                 _buildInputField(
                   label: "Email",
-                  hint: "ambarya@gmail.com",
+                  hint: "aryasha@gmail.com",
                   icon: Icons.email_outlined,
                 ),
                 const SizedBox(height: 20),
                 _buildInputField(
-                  label: "User Name",
-                  hint: "masukkan username",
+                  label: "Password",
+                  hint: "Masukan Password",
                   icon: Icons.person_outline,
                 ),
                 _buildRememberAndForgot(),

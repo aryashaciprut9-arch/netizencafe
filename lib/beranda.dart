@@ -69,11 +69,11 @@ class CartItem {
 }
 
 const List<Product> kProducts = [
-  Product(name: 'Choffe Cheese', price: 'IDR 12.000', category: 'Minuman', image: 'assets/coffe_cheese.png'), 
-  Product(name: 'Orange Noise', price: 'IDR 15.000', category: 'Minuman', image: 'assets/Orange_Noise.png'),
-  Product(name: 'Matcha Cheese', price: 'IDR 17.000', category: 'Minuman', image: 'assets/Matcha cheese.png'),
+  Product(name: 'Choffe Cheese', price: 'IDR 12.000', category: 'Minuman', image: 'assets/Choffe_Cheese.png'), 
+  Product(name: 'Orange Noise', price: 'IDR 15.000', category: 'Minuman', image: 'assets/Orange Noise.png'),
+  Product(name: 'Matcha Cheese', price: 'IDR 17.000', category: 'Minuman', image: 'assets/Matcha_cheese.png'),
   Product(name: 'Chicken Teriyaki', price: 'IDR 25.000', category: 'Makanan', image: 'assets/Chicken_teriyaki.png'),
-  Product(name: 'Rice Mushroom', price: 'IDR 15.000', category: 'Makanan', image: 'assets/Rice mushroom.png'),
+  Product(name: 'Rice Mushroom', price: 'IDR 15.000', category: 'Makanan', image: 'assets/Rice_mushroom.png'),
   Product(name: 'Choco Lava', price: 'IDR 18.000', category: 'Minuman', image: 'assets/Chocolava.png'),
   Product(name: 'Bakso Spesial', price: 'IDR 10.000', category: 'Makanan', image: 'assets/imgbakso.png'),
   Product(name: 'Risol Mayonise', price: 'IDR 10.000', category: 'Snack', image: 'assets/apanamanya.png'),
