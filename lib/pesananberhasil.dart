@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'beranda.dart';
+import 'detailkeranjang.dart';
+import 'profil_pelanggan.dart';
 
 void main() {
   runApp(const FigmaToCodeApp());
@@ -9,9 +12,9 @@ class FigmaToCodeApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: const PuPesananBerhasil(),
+      home: PuPesananBerhasil(),
     );
   }
 }
@@ -26,18 +29,15 @@ class PuPesananBerhasil extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-
             const Spacer(),
 
-            // ICON SUCCESS
-            Image.network(
+            Image.asset(
               "assets/Escoklat.png",
               width: 143,
             ),
 
             const SizedBox(height: 20),
 
-            // TITLE
             const Text(
               'Pesanan Berhasil',
               style: TextStyle(
@@ -49,7 +49,6 @@ class PuPesananBerhasil extends StatelessWidget {
 
             const SizedBox(height: 10),
 
-            // SUBTITLE
             const Text(
               'Terimakasih pesanan\nsegera di proses',
               textAlign: TextAlign.center,
@@ -62,7 +61,6 @@ class PuPesananBerhasil extends StatelessWidget {
 
             const Spacer(),
 
-            // BOTTOM NAVBAR
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               padding: const EdgeInsets.symmetric(vertical: 10),
@@ -79,11 +77,52 @@ class PuPesananBerhasil extends StatelessWidget {
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: const [
-                  Icon(Icons.home),
-                  Icon(Icons.shopping_cart),
-                  Icon(Icons.receipt),
-                  Icon(Icons.person),
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.home),
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          // DIUBAH: Menggunakan PuBeranda sesuai nama class di file beranda.dart
+                          builder: (context) => const PuBeranda(),
+                        ),
+                      );
+                    },
+                  ),
+
+                  IconButton(
+                    icon: const Icon(Icons.shopping_cart),
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          // DIUBAH: Menghapus 'const' agar tidak bentrok dengan class tujuan
+                          builder: (context) => PuDetailKeranjang(),
+                        ),
+                      );
+                    },
+                  ),
+
+                  IconButton(
+                    icon: const Icon(Icons.receipt),
+                    onPressed: () {
+                      // Tambahkan navigasi riwayat pesanan di sini jika sudah ada filenya
+                    },
+                  ),
+
+                  IconButton(
+                    icon: const Icon(Icons.person),
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          // DIUBAH: Menghapus 'const' agar tidak bentrok dengan class tujuan
+                          builder: (context) => ProfilPelanggan(),
+                        ),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),

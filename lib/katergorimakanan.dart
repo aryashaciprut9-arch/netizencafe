@@ -59,14 +59,52 @@ class MenuPage extends StatefulWidget {
 class _MenuPageState extends State<MenuPage> {
   // Data Dummy Menu
   final List<MenuItem> _allMenuItems = [
-    MenuItem(id: '1', name: 'Rice Chicken Mushroom', price: 'IDR 15.000', imageUrl: 'https://placehold.co/400x300/FFFFFF/8A4607?text=Mushroom', rating: 4.9),
-    MenuItem(id: '2', name: 'Rice Chicken Blackpapper', price: 'IDR 15.000', imageUrl: 'https://placehold.co/400x300/FFFFFF/8A4607?text=Blackpaper', rating: 4.7),
-    MenuItem(id: '3', name: 'Rice Sambal Goreng Cumi', price: 'IDR 18.000', imageUrl: 'https://placehold.co/400x300/FFFFFF/8A4607?text=Cumi', rating: 4.8),
-    MenuItem(id: '4', name: 'Chicken Teriyaki', price: 'IDR 17.000', imageUrl: 'https://placehold.co/400x300/FFFFFF/8A4607?text=Teriyaki', rating: 4.6),
-    MenuItem(id: '5', name: 'Bakso Special', price: 'IDR 13.000', imageUrl: 'https://placehold.co/400x300/FFFFFF/8A4607?text=Bakso', rating: 4.9),
-    MenuItem(id: '6', name: 'Bakso Urat', price: 'IDR 15.000', imageUrl: 'https://placehold.co/400x300/FFFFFF/8A4607?text=Bakso+Urat', rating: 4.5),
-    MenuItem(id: '7', name: 'Mie Ayam Cakalang', price: 'IDR 12.000', imageUrl: 'https://placehold.co/400x300/FFFFFF/8A4607?text=Mie+Ayam', rating: 4.7),
-    MenuItem(id: '8', name: 'Es Teh Manis', price: 'IDR 5.000', imageUrl: 'https://placehold.co/400x300/FFFFFF/8A4607?text=Es+Teh', rating: 5.0),
+    MenuItem(
+      id: '1',
+      name: 'Rice Chicken Mushroom', 
+      price: 'IDR 15.000', imageUrl:'assets/Rice mushroom.png', 
+      rating: 4.9),
+    MenuItem(
+      id: '2', 
+      name: 'Rice Chicken Blackpapper', 
+      price: 'IDR 15.000', 
+      imageUrl: 'assets/blakpaper.png', 
+      rating: 4.7),
+    MenuItem(
+      id: '3', 
+      name: 'Rice Sambal Goreng Cumi', 
+      price: 'IDR 18.000', 
+      imageUrl: 'assets/sambel cumi.png',
+      rating: 4.8),
+    MenuItem(
+      id: '4', 
+      name: 'Chicken Teriyaki', 
+      price: 'IDR 17.000', 
+      imageUrl: 'assets/ricebowl teriyaki.png', 
+      rating: 4.6),
+    MenuItem(
+      id: '5', 
+      name: 'Bakso Special', 
+      price: 'IDR 13.000', 
+      imageUrl: 'assets/imgbakso.png', 
+      rating: 4.9),
+    MenuItem(
+      id: '6',
+      name: 'Bakso Urat', 
+      price: 'IDR 15.000', 
+      imageUrl: 'assets/imgbakso.png', 
+      rating: 4.5),
+    MenuItem(
+      id: '7', 
+      name: 'Mie Ayam Cakalang', 
+      price: 'IDR 12.000', 
+      imageUrl: 'assets/mieayam.png', 
+      rating: 4.7),
+    MenuItem(
+      id: '8', name: 'Nasi Sambel Cakalang',
+      price: 'IDR 12.000', 
+      imageUrl: 'assets/nasisambelcakalang.png', 
+      rating: 5.0),
   ];
 
   final TextEditingController _searchController = TextEditingController();
