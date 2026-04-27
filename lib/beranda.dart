@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+// === TAMBAHKAN IMPORT INI ===
+import 'kategoriminuman.dart'; 
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -98,10 +100,8 @@ class _PuBerandaState extends State<PuBeranda> {
 
   List<Product> get _filteredProducts {
     return kProducts.where((p) {
-      final matchesSearch =
-          p.name.toLowerCase().contains(_searchQuery.toLowerCase());
-      final matchesCategory =
-          _selectedCategory == 'Semua' || p.category == _selectedCategory;
+      final matchesSearch = p.name.toLowerCase().contains(_searchQuery.toLowerCase());
+      final matchesCategory = _selectedCategory == 'Semua' || p.category == _selectedCategory;
       return matchesSearch && matchesCategory;
     }).toList();
   }
@@ -119,6 +119,7 @@ class _PuBerandaState extends State<PuBeranda> {
         _cartItems.add(CartItem(product: product));
       }
     });
+    HapticFeedback.lightImpact();
     
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -127,12 +128,15 @@ class _PuBerandaState extends State<PuBeranda> {
           content: Text('${product.name} ditambahkan ke keranjang'),
           backgroundColor: AppColors.primary,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           duration: const Duration(seconds: 1),
         ),
       );
+  }
+
+  void _onNavTap(int index) {
+    setState(() => _currentIndex = index);
+    HapticFeedback.selectionClick();
   }
 
   int _getCrossAxisCount(double width) {
@@ -152,44 +156,37 @@ class _PuBerandaState extends State<PuBeranda> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100], 
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1400), 
-          child: Scaffold(
-            backgroundColor: AppColors.white,
-            body: SafeArea(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  return CustomScrollView(
-                    slivers: [
-                      SliverToBoxAdapter(child: _buildHeader(context)),
-                      const SliverToBoxAdapter(child: SizedBox(height: 10)),
-                      SliverToBoxAdapter(child: _buildSearchBar(context)),
-                      const SliverToBoxAdapter(child: SizedBox(height: 15)),
-                      SliverToBoxAdapter(child: _buildPromoBanner(context)),
-                      const SliverToBoxAdapter(child: SizedBox(height: 20)),
-                      SliverToBoxAdapter(child: _buildCategories(context)),
-                      const SliverToBoxAdapter(child: SizedBox(height: 20)),
-                      SliverToBoxAdapter(child: _buildSectionTitle(context)),
-                      const SliverToBoxAdapter(child: SizedBox(height: 10)),
-                      _buildProductGrid(context, constraints.maxWidth),
-                      const SliverToBoxAdapter(child: SizedBox(height: 80)),
-                    ],
-                  );
-                },
-              ),
-            ),
-            bottomNavigationBar: _buildBottomNavBar(),
-          ),
+      backgroundColor: AppColors.white,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(child: _buildHeader(context)),
+                const SliverToBoxAdapter(child: SizedBox(height: 10)),
+                SliverToBoxAdapter(child: _buildSearchBar(context)),
+                const SliverToBoxAdapter(child: SizedBox(height: 15)),
+                SliverToBoxAdapter(child: _buildPromoBanner(context)),
+                const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                SliverToBoxAdapter(child: _buildCategories(context)),
+                const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                SliverToBoxAdapter(child: _buildSectionTitle(context)),
+                const SliverToBoxAdapter(child: SizedBox(height: 10)),
+                _buildProductGrid(context, constraints.maxWidth),
+                const SliverToBoxAdapter(child: SizedBox(height: 80)),
+              ],
+            );
+          },
         ),
       ),
+      bottomNavigationBar: _buildBottomNavBar(),
     );
   }
 
+  // ─── Header (TOMBOL PANAH KE KANAN SUDAH DITAMBAHKAN NAVIGASINYA) ──────────────────────
   Widget _buildHeader(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 0), 
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -197,49 +194,48 @@ class _PuBerandaState extends State<PuBeranda> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Hai, Kenzi!',
                   style: TextStyle(
                     color: AppColors.primary,
-                    fontSize: 24, 
-                    fontWeight: FontWeight.w700, 
-                    letterSpacing: -0.5, 
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.5,
                   ),
                 ),
-                const SizedBox(height: 2), 
+                const SizedBox(height: 2),
                 Text(
                   'Selamat datang kembali',
                   style: TextStyle(
-                    color: const Color(0xFFB36A2B), 
+                    color: const Color(0xFFB36A2B),
                     fontSize: 14,
-                    fontWeight: FontWeight.w400, 
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
               ],
             ),
           ),
+          // TOMBOL PANAH KE KANAN
           GestureDetector(
-            onTap: () {}, 
+            onTap: () {
+              HapticFeedback.lightImpact();
+              // === FUNGSI NAVIGASI KE HALAMAN KATEGORI MINUMAN ===
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const PaMenuJenisMinuman()),
+              );
+            },
             child: Container(
-              width: 48,
-              height: 48,
+              padding: const EdgeInsets.all(9),
               decoration: BoxDecoration(
+                color: AppColors.primaryLighter,
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.primary.withOpacity(0.3),
-                  width: 2,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withOpacity(0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4), 
-                  ),
-                ],
-                image: const DecorationImage(
-                  image: AssetImage('assets/patrick-star.png'),
-                  fit: BoxFit.cover, 
-                ),
+                border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+              ),
+              child: const Icon(
+                Icons.arrow_forward_ios,
+                color: AppColors.primary,
+                size: 16,
               ),
             ),
           ),
@@ -256,35 +252,19 @@ class _PuBerandaState extends State<PuBeranda> {
         decoration: BoxDecoration(
           color: AppColors.primaryLighter,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: AppColors.primary.withOpacity(0.15),
-          ),
+          border: Border.all(color: AppColors.primary.withOpacity(0.15)),
         ),
         child: TextField(
           controller: _searchController,
           onChanged: (value) => setState(() => _searchQuery = value),
-          style: const TextStyle(
-            color: AppColors.primary,
-            fontSize: 14,
-          ),
+          style: const TextStyle(color: AppColors.primary, fontSize: 14),
           decoration: InputDecoration(
             hintText: 'Cari makanan, minuman...',
-            hintStyle: TextStyle(
-              color: AppColors.primary.withOpacity(0.4),
-              fontSize: 14,
-            ),
-            prefixIcon: const Icon(
-              Icons.search_rounded,
-              color: AppColors.primary,
-              size: 22,
-            ),
+            hintStyle: TextStyle(color: AppColors.primary.withOpacity(0.4), fontSize: 14),
+            prefixIcon: const Icon(Icons.search, color: AppColors.primary, size: 22),
             suffixIcon: _searchQuery.isNotEmpty
                 ? IconButton(
-                    icon: const Icon(
-                      Icons.close_rounded,
-                      color: AppColors.primary,
-                      size: 18,
-                    ),
+                    icon: const Icon(Icons.close, color: AppColors.primary, size: 18),
                     onPressed: () {
                       _searchController.clear(); 
                       setState(() => _searchQuery = ''); 
@@ -323,27 +303,17 @@ class _PuBerandaState extends State<PuBeranda> {
         child: Stack(
           children: [
             Positioned(
-              right: -20, 
-              top: -20,   
+              right: -20, top: -20,
               child: Container(
-                width: 140,
-                height: 140,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.06), 
-                ),
+                width: 140, height: 140,
+                decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withOpacity(0.06)),
               ),
             ),
             Positioned(
-              right: 20,
-              bottom: -30, 
+              right: 20, bottom: -30, 
               child: Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.06),
-                ),
+                width: 100, height: 100,
+                decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withOpacity(0.06)),
               ),
             ),
             Padding(
@@ -371,15 +341,12 @@ class _PuBerandaState extends State<PuBeranda> {
                   ),
                   const SizedBox(height: 12),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12, 
-                      vertical: 5,    
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                     decoration: BoxDecoration(
                       color: Colors.white, 
-                      borderRadius: BorderRadius.circular(20), 
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Solusi Nongkimu',
                       style: TextStyle(
                         color: AppColors.primary, 
@@ -400,10 +367,10 @@ class _PuBerandaState extends State<PuBeranda> {
 
   Widget _buildCategories(BuildContext context) {
     final categories = [
-      ('Semua', Icons.apps_rounded),
-      ('Makanan', Icons.fastfood_outlined),
-      ('Minuman', Icons.local_cafe_outlined),
-      ('Snack', Icons.cookie_outlined),
+      {'label': 'Semua', 'icon': Icons.apps},
+      {'label': 'Makanan', 'icon': Icons.fastfood},
+      {'label': 'Minuman', 'icon': Icons.local_cafe},
+      {'label': 'Snack', 'icon': Icons.cookie},
     ];
 
     return Padding(
@@ -411,7 +378,8 @@ class _PuBerandaState extends State<PuBeranda> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: categories.map((item) {
-          final (label, icon) = item;
+          final label = item['label'] as String;
+          final icon = item['icon'] as IconData;
           final isSelected = _selectedCategory == label;
 
           return GestureDetector(
@@ -421,41 +389,16 @@ class _PuBerandaState extends State<PuBeranda> {
               children: [
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 200), 
-                  width: 60, 
-                  height: 60, 
+                  width: 60, height: 60, 
                   decoration: BoxDecoration(
-                    color: isSelected
-                        ? AppColors.primary
-                        : AppColors.primaryLighter,
+                    color: isSelected ? AppColors.primary : AppColors.primaryLighter,
                     shape: BoxShape.circle,
-                    boxShadow: isSelected
-                        ? [
-                            BoxShadow(
-                              color: AppColors.primary.withOpacity(0.35),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            )
-                          ]
-                        : [],
+                    boxShadow: isSelected ? [BoxShadow(color: AppColors.primary.withOpacity(0.35), blurRadius: 10, offset: const Offset(0, 4))] : [],
                   ),
-                  child: Icon(
-                    icon,
-                    color: isSelected ? Colors.white : AppColors.primary,
-                    size: 26,
-                  ),
+                  child: Icon(icon, color: isSelected ? Colors.white : AppColors.primary, size: 26),
                 ),
                 const SizedBox(height: 8), 
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: isSelected
-                        ? AppColors.primary
-                        : AppColors.primary.withOpacity(0.5),
-                    fontWeight:
-                        isSelected ? FontWeight.w700 : FontWeight.w400,
-                    fontSize: 12,
-                  ),
-                ),
+                Text(label, style: TextStyle(color: isSelected ? AppColors.primary : AppColors.primary.withOpacity(0.5), fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400, fontSize: 12)),
               ],
             ),
           );
@@ -465,33 +408,15 @@ class _PuBerandaState extends State<PuBeranda> {
   }
 
   Widget _buildSectionTitle(BuildContext context) {
-    final title = _searchQuery.isNotEmpty
-        ? 'Hasil Pencarian' 
-        : _selectedCategory == 'Semua'
-            ? 'Rekomendasi untukmu' 
-            : _selectedCategory; 
+    final title = _searchQuery.isNotEmpty ? 'Hasil Pencarian' : _selectedCategory == 'Semua' ? 'Rekomendasi untukmu' : _selectedCategory; 
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween, 
         children: [
-          Text(
-            title,
-            style: TextStyle(
-              color: AppColors.primary,
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.3,
-            ),
-          ),
-          Text(
-            '${_filteredProducts.length} menu',
-            style: TextStyle(
-              color: AppColors.primary.withOpacity(0.45),
-              fontSize: 13,
-            ),
-          ),
+          Text(title, style: const TextStyle(color: AppColors.primary, fontSize: 18, fontWeight: FontWeight.w700, letterSpacing: -0.3)),
+          Text('${_filteredProducts.length} menu', style: TextStyle(color: AppColors.primary.withOpacity(0.45), fontSize: 13)),
         ],
       ),
     );
@@ -499,7 +424,6 @@ class _PuBerandaState extends State<PuBeranda> {
 
   Widget _buildProductGrid(BuildContext context, double screenWidth) {
     final products = _filteredProducts;
-    
     int crossAxisCount = _getCrossAxisCount(screenWidth);
 
     if (products.isEmpty) {
@@ -510,19 +434,9 @@ class _PuBerandaState extends State<PuBeranda> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.search_off_rounded, 
-                  size: 52,
-                  color: AppColors.primary.withOpacity(0.2),
-                ),
+                Icon(Icons.search_off, size: 52, color: AppColors.primary.withOpacity(0.2)),
                 const SizedBox(height: 10),
-                Text(
-                  'Menu tidak ditemukan',
-                  style: TextStyle(
-                    color: AppColors.primary.withOpacity(0.4),
-                    fontSize: 15,
-                  ),
-                ),
+                Text('Menu tidak ditemukan', style: TextStyle(color: AppColors.primary.withOpacity(0.4), fontSize: 15)),
               ],
             ),
           ),
@@ -534,10 +448,7 @@ class _PuBerandaState extends State<PuBeranda> {
       padding: const EdgeInsets.symmetric(horizontal: 20),
       sliver: SliverGrid(
         delegate: SliverChildBuilderDelegate(
-          (context, index) => _ProductCard(
-            product: products[index], 
-            onAddToCart: () => _addToCart(products[index]),
-          ),
+          (context, index) => _ProductCard(product: products[index], onAddToCart: () => _addToCart(products[index])),
           childCount: products.length,
         ),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -560,38 +471,17 @@ class _PuBerandaState extends State<PuBeranda> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _NavItem(
-            icon: Icons.home_rounded,
-            index: 0,
-            currentIndex: _currentIndex,
-            onTap: (i) => setState(() => _currentIndex = i),
-          ),
-          _NavItem(
-            icon: Icons.search_rounded,
-            index: 1,
-            currentIndex: _currentIndex,
-            onTap: (i) => setState(() => _currentIndex = i),
-          ),
-          _NavItem(
-            icon: Icons.shopping_bag_rounded,
-            index: 2,
-            currentIndex: _currentIndex,
-            badgeCount: _totalCartItems,
-            onTap: (i) {
-              setState(() => _currentIndex = i);
-            },
-          ),
-          _NavItem(
-            icon: Icons.person_rounded,
-            index: 3,
-            currentIndex: _currentIndex,
-            onTap: (i) => setState(() => _currentIndex = i),
-          ),
+          _NavItem(icon: Icons.home, index: 0, currentIndex: _currentIndex, onTap: _onNavTap),
+          _NavItem(icon: Icons.search, index: 1, currentIndex: _currentIndex, onTap: _onNavTap),
+          _NavItem(icon: Icons.shopping_bag, index: 2, currentIndex: _currentIndex, badgeCount: _totalCartItems, onTap: _onNavTap),
+          _NavItem(icon: Icons.person, index: 3, currentIndex: _currentIndex, onTap: _onNavTap),
         ],
       ),
     );
   }
 }
+
+// ─── Product Card Widget ──────────────────────────────────────────────────────
 
 class _ProductCard extends StatelessWidget {
   final Product product;
@@ -606,146 +496,103 @@ class _ProductCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(18), 
-        border: Border.all(
-          color: AppColors.primary.withOpacity(0.1),
-        ),
+        borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.08),
+            color: AppColors.primary.withOpacity(0.1),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(18), 
-              ),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.asset(
-                    product.image,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: AppColors.primaryLighter,
-                        child: Center(
-                          child: Icon(
-                            Icons.broken_image_rounded, 
-                            color: AppColors.primary.withOpacity(0.3),
-                            size: 40,
-                          ),
-                        ),
-                      );
-                    },
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.asset(
+              product.image,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  color: AppColors.primaryLighter,
+                  child: Center(
+                    child: Icon(Icons.broken_image, color: AppColors.primary.withOpacity(0.3), size: 40),
                   ),
-                  Positioned(
-                    top: 8,
-                    left: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.85), 
-                        borderRadius: BorderRadius.circular(20), 
-                      ),
-                      child: Text(
-                        product.category,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 9,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                );
+              },
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(10, 10, 10, 10), 
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  product.name,
-                  style: const TextStyle(
-                    color: AppColors.primary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  maxLines: 2, 
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  product.price,
-                  style: TextStyle(
-                    color: AppColors.primary.withOpacity(0.6), 
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
+            
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(10, 30, 10, 10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withOpacity(0),
+                      Colors.white.withOpacity(0.85),
+                      AppColors.white,
+                    ],
                   ),
                 ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween, 
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
+                    Text(
+                      product.name,
+                      style: const TextStyle(color: AppColors.primary, fontSize: 13, fontWeight: FontWeight.w700),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      product.price,
+                      style: TextStyle(color: AppColors.primary.withOpacity(0.6), fontSize: 11, fontWeight: FontWeight.w500),
+                    ),
+                    const SizedBox(height: 8),
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Container(
-                          width: 6,
-                          height: 6,
-                          decoration: const BoxDecoration(
-                            color: Colors.green,
-                            shape: BoxShape.circle,
-                          ),
+                        Row(
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle),
+                            ),
+                            const SizedBox(width: 4),
+                            Text('Tersedia', style: TextStyle(color: AppColors.primary.withOpacity(0.5), fontSize: 10)),
+                          ],
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Tersedia',
-                          style: TextStyle(
-                            color: AppColors.primary.withOpacity(0.5),
-                            fontSize: 10,
+                        GestureDetector(
+                          onTap: onAddToCart,
+                          child: Container(
+                            width: 28,
+                            height: 28,
+                            decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                            child: const Icon(Icons.add, color: Colors.white, size: 18),
                           ),
                         ),
                       ],
                     ),
-                    GestureDetector(
-                      onTap: onAddToCart,
-                      child: Container(
-                        width: 28,
-                        height: 28,
-                        decoration: const BoxDecoration(
-                          color: AppColors.primary, 
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.add_rounded, 
-                          color: Colors.white,
-                          size: 18,
-                        ),
-                      ),
-                    ),
                   ],
                 ),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
+
+// ─── Nav Item Widget ─────────────────────────────────────────────────────────
 
 class _NavItem extends StatelessWidget {
   final IconData icon;          
@@ -784,13 +631,7 @@ class _NavItem extends StatelessWidget {
                 color: isSelected ? AppColors.primary : Colors.transparent,
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                icon,
-                size: 24,
-                color: isSelected
-                    ? Colors.white
-                    : AppColors.primary.withOpacity(0.35),
-              ),
+              child: Icon(icon, size: 24, color: isSelected ? Colors.white : AppColors.primary.withOpacity(0.35)),
             ),
             if (badgeCount > 0)
               Positioned(
@@ -798,18 +639,8 @@ class _NavItem extends StatelessWidget {
                 right: 4,
                 child: Container(
                   padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
-                    color: Colors.red, 
-                    shape: BoxShape.circle,
-                  ),
-                  child: Text(
-                    '$badgeCount',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 9,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                  child: Text('$badgeCount', style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
                 ),
               ),
           ],
