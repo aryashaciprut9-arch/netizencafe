@@ -118,7 +118,7 @@ class PuPesananBerhasil extends StatelessWidget {
                         context,
                         MaterialPageRoute(
                           // DIUBAH: Menghapus 'const' agar tidak bentrok dengan class tujuan
-                          builder: (context) => ProfilPelanggan(),
+                          builder: (context) => PuBeranda(),
                         ),
                       );
                     },
