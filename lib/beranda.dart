@@ -1,26 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-    DeviceOrientation.landscapeLeft,
-    DeviceOrientation.landscapeRight,
-  ]);
-
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-    ),
-  );
-
-  runApp(const FigmaToCodeApp());
-}
-
 class FigmaToCodeApp extends StatelessWidget {
   const FigmaToCodeApp({super.key});
 
@@ -91,7 +71,7 @@ class PuBeranda extends StatefulWidget {
 
 class _PuBerandaState extends State<PuBeranda> {
   int _currentIndex = 0;
-  List<CartItem> _cartItems = [];
+  final List<CartItem> _cartItems = [];
   String _searchQuery = '';
   String _selectedCategory = 'Semua';
   final TextEditingController _searchController = TextEditingController();

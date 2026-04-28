@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
-// 1. PASTIKAN FILE BERANDA SUDAH ADA. Jika nama filenya bukan beranda.dart, sesuaikan di bawah ini:
+// Pastikan file ini ada di folder lib kamu
 import 'beranda.dart'; 
-
-void main() {
-  runApp(const FigmaToCodeApp());
-}
 
 class FigmaToCodeApp extends StatelessWidget {
   const FigmaToCodeApp({super.key});
@@ -36,9 +32,6 @@ class _LoginPageState extends State<LoginPage> {
   bool _isPressed = false;
   bool _isRememberMe = false;
 
-
-  // 🎨 WARNA UTAMA (SUDAH DIHALUSKAN)
-
   final Color primary = const Color(0xFFB86B2B);
   final Color textDark = const Color(0xFF6D4C41);
 
@@ -61,18 +54,11 @@ class _LoginPageState extends State<LoginPage> {
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: Padding(
-
-            padding:
-                const EdgeInsets.symmetric(horizontal: 32.0, vertical: 40.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children:[
-                // === LOGO ===
             padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 40.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-
+                // === LOGO & TITLE ===
                 Column(
                   children: [
                     Container(
@@ -86,8 +72,7 @@ class _LoginPageState extends State<LoginPage> {
                       child: const CircleAvatar(
                         radius: 50,
                         backgroundColor: Colors.transparent,
-                        backgroundImage:
-                            AssetImage('assets/nettyzencafe.png'),
+                        backgroundImage: AssetImage('assets/nettyzencafe.png'),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -115,42 +100,26 @@ class _LoginPageState extends State<LoginPage> {
                 ),
 
                 const SizedBox(height: 50),
-
                 _buildCustomToggle(),
                 const SizedBox(height: 30),
 
-
-                const SizedBox(height: 50),
-                _buildCustomToggle(),
-                const SizedBox(height: 30),
                 _buildInputField(
                   label: "Email",
-                  hint: "ambarya@gmail.com",
+                  hint: "masukkan email",
+                  icon: Icons.person_outline,
+                ),
+                const SizedBox(height: 20),
+                _buildInputField(
+                  label: "Password",
+                  hint: "masukan password",
                   icon: Icons.email_outlined,
                 ),
 
-
-                const SizedBox(height: 20),
-
-
-                const SizedBox(height: 20),
-
-                _buildInputField(
-                  label: "User Name",
-                  hint: "masukkan username",
-                  icon: Icons.person_outline,
-                ),
-
                 _buildRememberAndForgot(),
                 const SizedBox(height: 40),
 
-                _buildLoginButton(),
-
-                _buildRememberAndForgot(),
-                const SizedBox(height: 40),
-                // 2. Sekarang mengirimkan 'context' ke dalam fungsi button
+                // Memasukkan context agar Navigator bisa bekerja
                 _buildLoginButton(context),
-
               ],
             ),
           ),
@@ -158,93 +127,8 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
-  Widget _buildLoginButton() {
 
-  // === BUTTON LOGIN DENGAN NAVIGASI ===
-  Widget _buildLoginButton(BuildContext context) {
-
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) => setState(() => _isPressed = false),
-      onTapCancel: () => setState(() => _isPressed = false),
-
-
-      onTap: () {
-        // 3. Fungsi pindah ke halaman Beranda
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const PuBeranda()),
-        );
-      },
-
-      child: AnimatedScale(
-        scale: _isPressed ? 0.96 : 1.0,
-        duration: const Duration(milliseconds: 150),
-        child: Container(
-          width: double.infinity,
-          height: 55,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(30),
-            gradient: LinearGradient(
-              colors: [
-                primary.withOpacity(0.8),
-                primary,
-              ],
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: primary.withOpacity(0.3),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: const Center(
-            child: Text(
-              "LOGIN",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.2,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRememberAndForgot() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 15.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Checkbox(
-                value: _isRememberMe,
-                onChanged: (value) =>
-                    setState(() => _isRememberMe = value ?? false),
-                activeColor: primary,
-              ),
-              const SizedBox(width: 10),
-              Text("Ingat Saya", style: TextStyle(color: textDark)),
-            ],
-          ),
-          Text(
-            "Lupa Password?",
-            style: TextStyle(
-              color: primary,
-              fontWeight: FontWeight.w600,
-              fontSize: 13,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // === WIDGET HELPER ===
 
   Widget _buildCustomToggle() {
     return Container(
@@ -270,8 +154,7 @@ class _LoginPageState extends State<LoginPage> {
                 duration: const Duration(milliseconds: 300),
                 decoration: BoxDecoration(
                   color: isUserSelected ? primary : Colors.transparent,
-                  borderRadius:
-                      const BorderRadius.horizontal(left: Radius.circular(30)),
+                  borderRadius: const BorderRadius.horizontal(left: Radius.circular(30)),
                 ),
                 alignment: Alignment.center,
                 child: Text(
@@ -291,8 +174,7 @@ class _LoginPageState extends State<LoginPage> {
                 duration: const Duration(milliseconds: 300),
                 decoration: BoxDecoration(
                   color: !isUserSelected ? primary : Colors.transparent,
-                  borderRadius:
-                      const BorderRadius.horizontal(right: Radius.circular(30)),
+                  borderRadius: const BorderRadius.horizontal(right: Radius.circular(30)),
                 ),
                 alignment: Alignment.center,
                 child: Text(
@@ -342,20 +224,93 @@ class _LoginPageState extends State<LoginPage> {
           child: TextField(
             decoration: InputDecoration(
               hintText: hint,
-              prefixIcon: Icon(
-                icon,
-                color: primary,
-                size: 22,
-              ),
+              prefixIcon: Icon(icon, color: primary, size: 22),
               border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                vertical: 16,
-                horizontal: 20,
-              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
             ),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildRememberAndForgot() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 15.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              SizedBox(
+                height: 24,
+                width: 24,
+                child: Checkbox(
+                  value: _isRememberMe,
+                  onChanged: (value) => setState(() => _isRememberMe = value ?? false),
+                  activeColor: primary,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text("Ingat Saya", style: TextStyle(color: textDark, fontSize: 13)),
+            ],
+          ),
+          Text(
+            "Lupa Password?",
+            style: TextStyle(
+              color: primary,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoginButton(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) => setState(() => _isPressed = false),
+      onTapCancel: () => setState(() => _isPressed = false),
+      onTap: () {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const PuBeranda()),
+        );
+      },
+      child: AnimatedScale(
+        scale: _isPressed ? 0.96 : 1.0,
+        duration: const Duration(milliseconds: 150),
+        child: Container(
+          width: double.infinity,
+          height: 55,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(30),
+            gradient: LinearGradient(
+              colors: [primary.withOpacity(0.8), primary],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: primary.withOpacity(0.3),
+                blurRadius: 15,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: const Center(
+            child: Text(
+              "LOGIN",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

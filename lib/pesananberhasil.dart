@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(const FigmaToCodeApp());
-}
-
 class FigmaToCodeApp extends StatelessWidget {
   const FigmaToCodeApp({super.key});
 

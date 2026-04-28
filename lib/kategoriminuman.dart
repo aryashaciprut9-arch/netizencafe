@@ -1,26 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  // === PENGATURAN ORIENTASI (AUTO-ROTATE) ===
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-    DeviceOrientation.landscapeLeft,
-    DeviceOrientation.landscapeRight,
-  ]);
-
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-    ),
-  );
-  runApp(const FigmaToCodeApp());
-}
-
 // ─── App ─────────────────────────────────────────────────────────────────────
 
 class FigmaToCodeApp extends StatelessWidget {
@@ -99,7 +78,7 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
   final TextEditingController _searchController = TextEditingController();
 
   // ── State Keranjang ──
-  List<CartItem> _cartItems = [];
+  final List<CartItem> _cartItems = [];
   int _currentIndex = 0;
   String _searchQuery = '';
 

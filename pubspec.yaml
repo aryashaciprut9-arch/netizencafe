@@ -30,6 +30,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  http: ^1.2.0 
+  image_picker: ^1.0.7      
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -96,6 +98,12 @@ flutter:
   - assets/Taro.png
   - assets/chocolato.png
   - assets/vietnamcoffe.png
+  - assets/ramen cup.png
+  - assets/roti panggang sosis.png
+  - assets/roti panggang manis.png
+  - assets/mie cup.png
+  - assets/baked potato.png
+
 
   # To add assets to your application, add an assets section, like this:
   # assets:

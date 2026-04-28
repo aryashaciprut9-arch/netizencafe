@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(const ProfileApp());
-}
 
 class ProfileApp extends StatelessWidget {
   const ProfileApp({super.key});
@@ -603,7 +600,7 @@ class AnimatedSwitch extends StatelessWidget {
     return Switch(
       value: value,
       onChanged: onChanged,
-      activeColor: activeColor,
+      activeThumbColor: activeColor,
       activeTrackColor: activeColor.withOpacity(0.3),
       inactiveThumbColor: Colors.grey.shade400,
       inactiveTrackColor: Colors.grey.shade200,
