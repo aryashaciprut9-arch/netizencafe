@@ -1,5 +1,29 @@
 import 'package:flutter/material.dart';
 
+void main() {
+  runApp(const ProfileApp());
+}
+
+class ProfileApp extends StatelessWidget {
+  const ProfileApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData.light().copyWith(
+        scaffoldBackgroundColor: Colors.white,
+        colorScheme: const ColorScheme.light(
+          primary: Color(0xFF8A4607),
+          secondary: Color(0xFFF5CC9E),
+          error: Color(0xFFB50000),
+        ),
+      ),
+      home: const ProfilePage(),
+    );
+  }
+}
+
 // ─── Data Model ───────────────────────────────────────────────
 class ProfileMenuItem {
   final IconData icon;
@@ -14,14 +38,14 @@ class ProfileMenuItem {
 }
 
 // ─── Profile Page ─────────────────────────────────────────────
-class ProfilPelanggan extends StatefulWidget {
-  const ProfilPelanggan({super.key});
+class ProfilePage extends StatefulWidget {
+  const ProfilePage({super.key});
 
   @override
-  State<ProfilPelanggan> createState() => _ProfilPelangganState();
+  State<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfilPelangganState extends State<ProfilPelanggan> {
+class _ProfilePageState extends State<ProfilePage> {
   int _selectedNavIndex = 3;
   bool _notificationsOn = true;
 
@@ -148,6 +172,7 @@ class _ProfilPelangganState extends State<ProfilPelanggan> {
     );
   }
 
+  // ── Main Content ──
   Widget _buildContent(double padding) {
     return SingleChildScrollView(
       padding: EdgeInsets.symmetric(horizontal: padding, vertical: 24),
@@ -168,9 +193,11 @@ class _ProfilPelangganState extends State<ProfilPelanggan> {
     );
   }
 
+  // ── Header (Avatar + Name + Email) ──
   Widget _buildHeader() {
     return Column(
       children: [
+        // Avatar
         Container(
           width: 90,
           height: 90,
@@ -186,9 +213,11 @@ class _ProfilPelangganState extends State<ProfilPelanggan> {
               ),
             ],
           ),
-          child: const Icon(Icons.person_rounded, size: 44, color: Color(0xFF8A4607)),
+          child: const Icon(Icons.person_rounded,
+              size: 44, color: Color(0xFF8A4607)),
         ),
         const SizedBox(height: 14),
+        // Name
         Text(
           _name,
           style: const TextStyle(
@@ -198,6 +227,7 @@ class _ProfilPelangganState extends State<ProfilPelanggan> {
           ),
         ),
         const SizedBox(height: 4),
+        // Email
         Text(
           _email,
           style: TextStyle(
@@ -207,6 +237,7 @@ class _ProfilPelangganState extends State<ProfilPelanggan> {
           ),
         ),
         const SizedBox(height: 12),
+        // Edit Profile chip
         GestureDetector(
           onTap: () => _showSnackBar('Membuka Edit Profil...'),
           child: Container(
@@ -237,6 +268,7 @@ class _ProfilPelangganState extends State<ProfilPelanggan> {
     );
   }
 
+  // ── Stats Row ──
   Widget _buildStatsRow() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8),
@@ -292,6 +324,7 @@ class _ProfilPelangganState extends State<ProfilPelanggan> {
     );
   }
 
+  // ── Menu List ──
   Widget _buildMenuList() {
     return Container(
       decoration: BoxDecoration(
@@ -303,6 +336,7 @@ class _ProfilPelangganState extends State<ProfilPelanggan> {
         children: List.generate(_menuItems.length, (index) {
           final item = _menuItems[index];
           final isLast = index == _menuItems.length - 1;
+
           return _menuTile(item, isLast);
         }),
       ),
@@ -310,6 +344,7 @@ class _ProfilPelangganState extends State<ProfilPelanggan> {
   }
 
   Widget _menuTile(ProfileMenuItem item, bool isLast) {
+    // Special case: notifikasi toggle
     final isNotification = item.label == 'Notifikasi';
 
     return Material(
@@ -322,7 +357,8 @@ class _ProfilPelangganState extends State<ProfilPelanggan> {
           decoration: isLast
               ? null
               : const BoxDecoration(
-                  border: Border(bottom: BorderSide(color: Color(0xFFF0E8E4), width: 1)),
+                  border: Border(
+                      bottom: BorderSide(color: Color(0xFFF0E8E4), width: 1)),
                 ),
           child: Row(
             children: [
@@ -353,7 +389,8 @@ class _ProfilPelangganState extends State<ProfilPelanggan> {
                   activeColor: const Color(0xFF8A4607),
                 ),
               ] else ...[
-                const Icon(Icons.chevron_right_rounded, size: 22, color: Color(0xFF8B6C60)),
+                const Icon(Icons.chevron_right_rounded,
+                    size: 22, color: Color(0xFF8B6C60)),
               ],
             ],
           ),
@@ -362,26 +399,23 @@ class _ProfilPelangganState extends State<ProfilPelanggan> {
     );
   }
 
+  // ── Quick Access Cards ──
   Widget _buildQuickAccessCards() {
     return Row(
       children: [
-        Expanded(
-          child: _quickCard(
-            icon: Icons.receipt_long_rounded,
-            title: 'Pesanan Saya',
-            subtitle: 'Lihat Riwayat',
-            onTap: () => _showSnackBar('Membuka Pesanan Saya...'),
-          ),
-        ),
+        Expanded(child: _quickCard(
+          icon: Icons.receipt_long_rounded,
+          title: 'Pesanan Saya',
+          subtitle: 'Lihat Riwayat',
+          onTap: () => _showSnackBar('Membuka Pesanan Saya...'),
+        )),
         const SizedBox(width: 12),
-        Expanded(
-          child: _quickCard(
-            icon: Icons.favorite_outline_rounded,
-            title: 'Favorite',
-            subtitle: 'Menu Kesukaan',
-            onTap: () => _showSnackBar('Membuka Favorite...'),
-          ),
-        ),
+        Expanded(child: _quickCard(
+          icon: Icons.favorite_outline_rounded,
+          title: 'Favorite',
+          subtitle: 'Menu Kesukaan',
+          onTap: () => _showSnackBar('Membuka Favorite...'),
+        )),
       ],
     );
   }
@@ -443,6 +477,7 @@ class _ProfilPelangganState extends State<ProfilPelanggan> {
     );
   }
 
+  // ── Logout Button ──
   Widget _buildLogoutButton() {
     return GestureDetector(
       onTap: _showLogoutDialog,
@@ -480,6 +515,7 @@ class _ProfilPelangganState extends State<ProfilPelanggan> {
     );
   }
 
+  // ── Bottom Navigation ──
   Widget _buildBottomNav() {
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 4, 12, 12),
@@ -549,7 +585,7 @@ class _ProfilPelangganState extends State<ProfilPelanggan> {
   }
 }
 
-// ─── Animated Switch ─────────────────────
+// ─── Animated Switch (custom agar smooth) ─────────────────────
 class AnimatedSwitch extends StatelessWidget {
   final bool value;
   final ValueChanged<bool> onChanged;
