@@ -1,22 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:netizencafe/main.dart'; // sesuaikan dengan nama project Anda
+import 'package:netizencafe/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Bangun widget MyApp
-    await tester.pumpWidget(const MyApp());
+  testWidgets('Halaman Detail Pesanan tampil dengan benar',
+      (WidgetTester tester) async {
+    // Bangun widget FigmaToCodeApp
+    await tester.pumpWidget(const FigmaToCodeApp());
+    await tester.pumpAndSettle();
 
-    // Pastikan counter dimulai dari 0
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Pastikan app berhasil dirender
+    expect(find.byType(FigmaToCodeApp), findsOneWidget);
 
-    // Tekan tombol '+' (ikon add) dan proses frame
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    // Pastikan halaman Detail Pesanan muncul
+    expect(find.text('Detail Pesanan'), findsOneWidget);
 
-    // Pastikan counter bertambah menjadi 1
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Pastikan item makanan tampil
+    expect(find.text('Chicken Teriyaki'), findsOneWidget);
+    expect(find.text('Bakso Special'), findsOneWidget);
+
+    // Pastikan tombol Pesan Sekarang tersedia
+    expect(find.text('Pesan Sekarang'), findsOneWidget);
+
+    // Pastikan tombol '+' tersedia
+    expect(find.byIcon(Icons.add_rounded), findsWidgets);
+
+    // Tekan salah satu tombol '+' dan tunggu animasi selesai
+    await tester.tap(find.byIcon(Icons.add_rounded).first);
+    await tester.pumpAndSettle();
+
+    // Pastikan halaman masih tampil setelah tap
+    expect(find.text('Detail Pesanan'), findsOneWidget);
   });
 }
