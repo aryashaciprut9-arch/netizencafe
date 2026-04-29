@@ -1,26 +1,5 @@
 import 'package:flutter/material.dart';
 
-
-class ProfileApp extends StatelessWidget {
-  const ProfileApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData.light().copyWith(
-        scaffoldBackgroundColor: Colors.white,
-        colorScheme: const ColorScheme.light(
-          primary: Color(0xFF8A4607),
-          secondary: Color(0xFFF5CC9E),
-          error: Color(0xFFB50000),
-        ),
-      ),
-      home: const ProfilePage(),
-    );
-  }
-}
-
 // ─── Data Model ───────────────────────────────────────────────
 class ProfileMenuItem {
   final IconData icon;
@@ -101,11 +80,13 @@ class _ProfilePageState extends State<ProfilePage> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFB50000),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
             ),
             child: const Text(
               'Keluar',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+              style:
+                  TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -190,11 +171,10 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // ── Header (Avatar + Name + Email) ──
+  // ── Header ──
   Widget _buildHeader() {
     return Column(
       children: [
-        // Avatar
         Container(
           width: 90,
           height: 90,
@@ -214,7 +194,6 @@ class _ProfilePageState extends State<ProfilePage> {
               size: 44, color: Color(0xFF8A4607)),
         ),
         const SizedBox(height: 14),
-        // Name
         Text(
           _name,
           style: const TextStyle(
@@ -224,7 +203,6 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ),
         const SizedBox(height: 4),
-        // Email
         Text(
           _email,
           style: TextStyle(
@@ -234,11 +212,11 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ),
         const SizedBox(height: 12),
-        // Edit Profile chip
         GestureDetector(
           onTap: () => _showSnackBar('Membuka Edit Profil...'),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 7),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 7),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(25),
@@ -314,11 +292,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _statDivider() {
-    return Container(
-      height: 40,
-      width: 1,
-      color: const Color(0xFFEAEAEA),
-    );
+    return Container(height: 40, width: 1, color: const Color(0xFFEAEAEA));
   }
 
   // ── Menu List ──
@@ -333,7 +307,6 @@ class _ProfilePageState extends State<ProfilePage> {
         children: List.generate(_menuItems.length, (index) {
           final item = _menuItems[index];
           final isLast = index == _menuItems.length - 1;
-
           return _menuTile(item, isLast);
         }),
       ),
@@ -341,7 +314,6 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _menuTile(ProfileMenuItem item, bool isLast) {
-    // Special case: notifikasi toggle
     final isNotification = item.label == 'Notifikasi';
 
     return Material(
@@ -350,12 +322,14 @@ class _ProfilePageState extends State<ProfilePage> {
         onTap: item.onTap,
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: isLast
               ? null
               : const BoxDecoration(
                   border: Border(
-                      bottom: BorderSide(color: Color(0xFFF0E8E4), width: 1)),
+                      bottom:
+                          BorderSide(color: Color(0xFFF0E8E4), width: 1)),
                 ),
           child: Row(
             children: [
@@ -366,7 +340,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   color: const Color(0xFFF5CC9E).withOpacity(0.4),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(item.icon, size: 20, color: const Color(0xFF8A4607)),
+                child: Icon(item.icon,
+                    size: 20, color: const Color(0xFF8A4607)),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -400,14 +375,16 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget _buildQuickAccessCards() {
     return Row(
       children: [
-        Expanded(child: _quickCard(
+        Expanded(
+            child: _quickCard(
           icon: Icons.receipt_long_rounded,
           title: 'Pesanan Saya',
           subtitle: 'Lihat Riwayat',
           onTap: () => _showSnackBar('Membuka Pesanan Saya...'),
         )),
         const SizedBox(width: 12),
-        Expanded(child: _quickCard(
+        Expanded(
+            child: _quickCard(
           icon: Icons.favorite_outline_rounded,
           title: 'Favorite',
           subtitle: 'Menu Kesukaan',
@@ -426,7 +403,8 @@ class _ProfilePageState extends State<ProfilePage> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -448,7 +426,8 @@ class _ProfilePageState extends State<ProfilePage> {
                 color: const Color(0xFFF5CC9E).withOpacity(0.4),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, size: 22, color: const Color(0xFF8A4607)),
+              child:
+                  Icon(icon, size: 22, color: const Color(0xFF8A4607)),
             ),
             const SizedBox(height: 10),
             Text(
@@ -533,15 +512,19 @@ class _ProfilePageState extends State<ProfilePage> {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _navItem(Icons.home_outlined, Icons.home_rounded, 'Home', 0),
-          _navItem(Icons.search_outlined, Icons.search_rounded, 'Cari', 1),
-          _navItem(Icons.shopping_cart_outlined, Icons.shopping_cart_rounded, 'Keranjang', 2),
-          _navItem(Icons.person_outline_rounded, Icons.person_rounded, 'Profil', 3),
+          _navItem(
+              Icons.search_outlined, Icons.search_rounded, 'Cari', 1),
+          _navItem(Icons.shopping_cart_outlined,
+              Icons.shopping_cart_rounded, 'Keranjang', 2),
+          _navItem(Icons.person_outline_rounded, Icons.person_rounded,
+              'Profil', 3),
         ],
       ),
     );
   }
 
-  Widget _navItem(IconData inactive, IconData active, String label, int index) {
+  Widget _navItem(
+      IconData inactive, IconData active, String label, int index) {
     final isSelected = _selectedNavIndex == index;
     return GestureDetector(
       onTap: () {
@@ -551,7 +534,8 @@ class _ProfilePageState extends State<ProfilePage> {
         }
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected
               ? const Color(0xFF8A4607).withOpacity(0.15)
@@ -572,7 +556,8 @@ class _ProfilePageState extends State<ProfilePage> {
               style: TextStyle(
                 color: const Color(0xFF8A4607),
                 fontSize: 10,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+                fontWeight:
+                    isSelected ? FontWeight.w700 : FontWeight.w400,
               ),
             ),
           ],
@@ -582,7 +567,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 }
 
-// ─── Animated Switch (custom agar smooth) ─────────────────────
+// ─── Animated Switch ──────────────────────────────────────────
 class AnimatedSwitch extends StatelessWidget {
   final bool value;
   final ValueChanged<bool> onChanged;
@@ -600,7 +585,7 @@ class AnimatedSwitch extends StatelessWidget {
     return Switch(
       value: value,
       onChanged: onChanged,
-      activeThumbColor: activeColor,
+      activeColor: activeColor,
       activeTrackColor: activeColor.withOpacity(0.3),
       inactiveThumbColor: Colors.grey.shade400,
       inactiveTrackColor: Colors.grey.shade200,

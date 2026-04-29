@@ -1,59 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-// ─── App ─────────────────────────────────────────────────────────────────────
+import 'models/menu_models.dart';
+import 'services/api_services.dart';
+import 'katergorimakanan.dart';
 
-class FigmaToCodeApp extends StatelessWidget {
-  const FigmaToCodeApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        fontFamily: 'Geologica',
-        primaryColor: AppColors.primary,
-        useMaterial3: true,
-      ),
-      home: const PaMenuJenisMinuman(),
-    );
-  }
-}
-
-// ─── Constants (Disesuaikan dengan PuBeranda) ─────────────────────────
-
-class AppColors {
-  static const Color primary = Color(0xFF8A4607); // Sesuai PuBeranda
-  static const Color primaryLight = Color(0xFFF5CC9E);
-  static const Color primaryLighter = Color(0xFFFFF4E6);
-  static const Color white = Colors.white;
-}
-
-// ─── Model Produk ────────────────────────────────────────────────────────────
-
-class DrinkItem {
-  final String name;
-  final String price;
-  final String imageUrl;
-  final String category;
-
-  DrinkItem({
-    required this.name,
-    required this.price,
-    this.imageUrl = 'https://placehold.co/200x150/FFFFFF/8A4607?text=Drink',
-    this.category = 'Minuman',
-  });
-}
-
-// ─── Model Keranjang (Cart Item) ────────────────────────────────────────────────
-
-class CartItem {
-  final DrinkItem product;
-  int quantity;
-
-  CartItem({required this.product, this.quantity = 1});
-}
-
-// ─── Halaman Utama ────────────────────────────────────────────────────────────
+// ─── Halaman Minuman ─────────────────────────────────────────────────────────
 
 class PaMenuJenisMinuman extends StatefulWidget {
   const PaMenuJenisMinuman({super.key});
@@ -63,45 +14,36 @@ class PaMenuJenisMinuman extends StatefulWidget {
 }
 
 class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
-  // ── Data ──
-  final List<DrinkItem> _allDrinks = [
-    DrinkItem(name: 'Orange Noise', price: 'IDR 15.000', imageUrl: 'assets/Orange_Noise.png'),
-    DrinkItem(name: 'Matcha Cheese', price: 'IDR 17.000', imageUrl: 'assets/matcha1.png'),
-    DrinkItem(name: 'Choffe Cheese', price: 'IDR 12.000', imageUrl: 'assets/coffe_cheese.png' ),
-    DrinkItem(name: 'Vietnam Coffe', price: 'IDR 14.000', imageUrl: 'assets/vietnam_coffe.png' ),
-    DrinkItem(name: 'Sakura Blossom', price: 'IDR 12.000',imageUrl: 'assets/sakura_blossom.png' ),
-    DrinkItem(name: 'Taro', price: 'IDR 12.000', imageUrl: 'assets/Taro.png' ),
-    DrinkItem(name: 'Chocolato', price: 'IDR 10.000', imageUrl: 'assets/chocolato.png'),
-    DrinkItem(name: 'Blue Cotton Candy', price: 'IDR 12.000', imageUrl: 'assets/Bluecattoncandy.png' ),
-  ];
-
-  final TextEditingController _searchController = TextEditingController();
-
-  // ── State Keranjang ──
-  final List<CartItem> _cartItems = [];
+  // =====================
+  //  STATE & DATA
+  // =====================
+  List<MenuModel> _allDrinks = [];
+  bool _isLoading = true;
+  List<CartItem> _cartItems = [];
   int _currentIndex = 0;
   String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
 
-  // ── Hitung total item untuk badge ──
-  int get _totalCartItems {
-    return _cartItems.fold(0, (sum, item) => sum + item.quantity);
-  }
+  int get _totalCartItems =>
+      _cartItems.fold(0, (sum, item) => sum + item.quantity);
 
-  // ── Logika Responsif Grid (Sama seperti PuBeranda) ──
-  int _getCrossAxisCount(double width) {
-    if (width < 500) return 2; 
-    if (width < 850) return 3; 
-    if (width < 1100) return 4; 
-    if (width < 1400) return 5; 
-    return 6; 
-  }
-
-  // ── Filter produk ──
-  List<DrinkItem> get _filteredDrinks {
-    if (_searchQuery.isEmpty) return _allDrinks;
-    return _allDrinks
-        .where((d) => d.name.toLowerCase().contains(_searchQuery.toLowerCase()))
+  List<MenuModel> get _filteredDrinks {
+    final items = _allDrinks.where((m) {
+      return m.kategori.toLowerCase().trim().contains('minuman');
+    }).toList();
+    if (_searchQuery.isEmpty) return items;
+    return items
+        .where((m) => m.nama.toLowerCase().contains(_searchQuery.toLowerCase()))
         .toList();
+  }
+
+  // =====================
+  //  FUNGSI / LOGIKA
+  // =====================
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
   }
 
   @override
@@ -110,10 +52,37 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
     super.dispose();
   }
 
-  // ── Tambah ke Keranjang (Logic Real) ──
-  void _addToCart(DrinkItem item) {
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+    try {
+      final data = await ApiService.getMenu();
+      setState(() {
+        _allDrinks = data;
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint("ERROR MINUMAN: $e");
+      setState(() => _isLoading = false);
+    }
+  }
+
+  String _buildImageUrl(String foto) {
+    if (foto.isEmpty) return '';
+    if (foto.startsWith('http')) return foto;
+    return "${ApiService.baseUrl}/menu/uploads/$foto";
+  }
+
+  int _getCrossAxisCount(double width) {
+    if (width < 500) return 2;
+    if (width < 850) return 3;
+    if (width < 1100) return 4;
+    if (width < 1400) return 5;
+    return 6;
+  }
+
+  void _addToCart(MenuModel item) {
     setState(() {
-      int index = _cartItems.indexWhere((cartItem) => cartItem.product.name == item.name);
+      int index = _cartItems.indexWhere((c) => c.product.id == item.id);
       if (index != -1) {
         _cartItems[index].quantity++;
       } else {
@@ -121,15 +90,15 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
       }
     });
     HapticFeedback.lightImpact();
-
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text('${item.name} ditambahkan ke keranjang'),
+          content: Text('${item.nama} ditambahkan ke keranjang'),
           backgroundColor: AppColors.primary,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           duration: const Duration(seconds: 1),
         ),
       );
@@ -138,53 +107,39 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
   void _onNavTap(int index) {
     setState(() => _currentIndex = index);
     HapticFeedback.selectionClick();
-    // Navigasi keranjang dihapus sesuai PuBeranda
   }
 
-  // ════════════════════════════════════════════════════════════════════════════
-  //  BUILD
-  // ════════════════════════════════════════════════════════════════════════════
-
+  // =====================
+  //  UI / BUILD
+  // =====================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100], // Disesuaikan dengan PuBeranda
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1400), // Pembungkus disesuaikan
-          child: Scaffold(
-            backgroundColor: AppColors.white,
-            body: SafeArea(
-              child: LayoutBuilder(
+      backgroundColor: AppColors.white,
+      body: SafeArea(
+        child: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(color: AppColors.primary))
+            : LayoutBuilder(
                 builder: (context, constraints) {
                   return CustomScrollView(
                     slivers: [
-                      // Header (Tanpa tombol Tambah)
                       SliverToBoxAdapter(child: _buildHeader(context)),
                       const SliverToBoxAdapter(child: SizedBox(height: 10)),
-                      // Search bar
                       SliverToBoxAdapter(child: _buildSearchBar(context)),
                       const SliverToBoxAdapter(child: SizedBox(height: 15)),
-                      // Judul seksi
                       SliverToBoxAdapter(child: _buildSectionTitle(context)),
                       const SliverToBoxAdapter(child: SizedBox(height: 10)),
-                      // Grid minuman
                       _buildDrinkGrid(context, constraints.maxWidth),
-                      // Spacer bawah
                       const SliverToBoxAdapter(child: SizedBox(height: 80)),
                     ],
                   );
                 },
               ),
-            ),
-            bottomNavigationBar: _buildBottomNavBar(),
-          ),
-        ),
       ),
+      bottomNavigationBar: _buildBottomNavBar(),
     );
   }
-
-  // ─── Header (Disesuaikan Style, Hapus Tombol Tambah) ────────────────────────
 
   Widget _buildHeader(BuildContext context) {
     return Padding(
@@ -202,22 +157,20 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
                 child: Container(
                   padding: const EdgeInsets.all(9),
                   decoration: BoxDecoration(
-                    color: AppColors.primaryLighter, // Disesuaikan
+                    color: AppColors.primaryLighter,
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+                    border: Border.all(
+                        color: AppColors.primary.withOpacity(0.1)),
                   ),
-                  child: Icon(
-                    Icons.arrow_back_ios_new,
-                    color: AppColors.primary, // Ikon warna utama
-                    size: 16,
-                  ),
+                  child: const Icon(Icons.arrow_back_ios_new,
+                      color: AppColors.primary, size: 16),
                 ),
               ),
               const SizedBox(width: 15),
               const Text(
                 'Minuman',
                 style: TextStyle(
-                  color: AppColors.primary, // Teks warna utama
+                  color: AppColors.primary,
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.3,
@@ -225,57 +178,59 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
               ),
             ],
           ),
-          // Bagian Tombol Tambah Menu DIHAPUS
+          GestureDetector(
+            onTap: () {
+              HapticFeedback.lightImpact();
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const MenuPage()));
+            },
+            child: Container(
+              padding: const EdgeInsets.all(9),
+              decoration: BoxDecoration(
+                color: AppColors.primaryLighter,
+                shape: BoxShape.circle,
+                border:
+                    Border.all(color: AppColors.primary.withOpacity(0.1)),
+              ),
+              child: const Icon(Icons.arrow_forward_ios,
+                  color: AppColors.primary, size: 16),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  // ─── Search Bar (Disesuaikan dengan PuBeranda) ────────────────────────────
-
   Widget _buildSearchBar(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20), 
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
         height: 50,
         decoration: BoxDecoration(
           color: AppColors.primaryLighter,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: AppColors.primary.withOpacity(0.15),
-          ),
+          border: Border.all(color: AppColors.primary.withOpacity(0.15)),
         ),
         child: TextField(
           controller: _searchController,
           onChanged: (value) => setState(() => _searchQuery = value),
-          style: const TextStyle(
-            color: AppColors.primary,
-            fontSize: 14,
-          ),
+          style: const TextStyle(color: AppColors.primary, fontSize: 14),
           decoration: InputDecoration(
             hintText: 'Cari makanan, minuman...',
             hintStyle: TextStyle(
-              color: AppColors.primary.withOpacity(0.4),
-              fontSize: 14,
-            ),
-            prefixIcon: const Icon(
-              Icons.search_rounded,
-              color: AppColors.primary,
-              size: 22,
-            ),
+                color: AppColors.primary.withOpacity(0.4), fontSize: 14),
+            prefixIcon: const Icon(Icons.search_rounded,
+                color: AppColors.primary, size: 22),
             suffixIcon: _searchQuery.isNotEmpty
                 ? IconButton(
-                    icon: const Icon(
-                      Icons.close_rounded,
-                      color: AppColors.primary,
-                      size: 18,
-                    ),
+                    icon: const Icon(Icons.close_rounded,
+                        color: AppColors.primary, size: 18),
                     onPressed: () {
-                      _searchController.clear(); 
-                      setState(() => _searchQuery = ''); 
+                      _searchController.clear();
+                      setState(() => _searchQuery = '');
                     },
                   )
-                : null, 
+                : null,
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(vertical: 15),
           ),
@@ -284,65 +239,49 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
     );
   }
 
-  // ─── Judul Seksi (Disesuaikan dengan PuBeranda) ───────────────────────────
-
   Widget _buildSectionTitle(BuildContext context) {
-    final title = _searchQuery.isNotEmpty ? 'Hasil Pencarian' : 'Semua Minuman';
-
+    final title =
+        _searchQuery.isNotEmpty ? 'Hasil Pencarian' : 'Semua Minuman';
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween, 
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            title,
-            style: TextStyle(
-              color: AppColors.primary,
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.3,
-            ),
-          ),
-          Text(
-            '${_filteredDrinks.length} menu',
-            style: TextStyle(
-              color: AppColors.primary.withOpacity(0.45),
-              fontSize: 13,
-            ),
-          ),
+          Text(title,
+              style: const TextStyle(
+                color: AppColors.primary,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.3,
+              )),
+          Text('${_filteredDrinks.length} menu',
+              style: TextStyle(
+                  color: AppColors.primary.withOpacity(0.45), fontSize: 13)),
         ],
       ),
     );
   }
 
-  // ─── Grid Minuman ──────────────────────────────────────────────────────────
-
   Widget _buildDrinkGrid(BuildContext context, double screenWidth) {
     final drinks = _filteredDrinks;
-    
     int crossAxisCount = _getCrossAxisCount(screenWidth);
 
     if (drinks.isEmpty) {
       return SliverToBoxAdapter(
         child: SizedBox(
-          height: 200, 
+          height: 200,
           child: Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.search_off_rounded, 
-                  size: 52,
-                  color: AppColors.primary.withOpacity(0.2),
-                ),
+                Icon(Icons.search_off_rounded,
+                    size: 52,
+                    color: AppColors.primary.withOpacity(0.2)),
                 const SizedBox(height: 10),
-                Text(
-                  'Menu tidak ditemukan',
-                  style: TextStyle(
-                    color: AppColors.primary.withOpacity(0.4),
-                    fontSize: 15,
-                  ),
-                ),
+                Text('Menu tidak ditemukan',
+                    style: TextStyle(
+                        color: AppColors.primary.withOpacity(0.4),
+                        fontSize: 15)),
               ],
             ),
           ),
@@ -355,75 +294,52 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
       sliver: SliverGrid(
         delegate: SliverChildBuilderDelegate(
           (context, index) => _DrinkCard(
-            drink: drinks[index], 
+            drink: drinks[index],
+            imageUrl: _buildImageUrl(drinks[index].foto),
             onAddToCart: () => _addToCart(drinks[index]),
           ),
           childCount: drinks.length,
         ),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: crossAxisCount, 
-          mainAxisSpacing: 14, 
-          crossAxisSpacing: 14, 
-          childAspectRatio: 0.8, 
+          crossAxisCount: crossAxisCount,
+          mainAxisSpacing: 14,
+          crossAxisSpacing: 14,
+          childAspectRatio: 0.8,
         ),
       ),
     );
   }
 
-  // ─── Bottom Nav Bar (Disesuaikan dengan PuBeranda - Nav keranjang non-aktif) ──────────
-
   Widget _buildBottomNavBar() {
     return Container(
-      height: 70, 
+      height: 70,
       decoration: const BoxDecoration(
-        color: AppColors.primaryLight, 
+        color: AppColors.primaryLight,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _NavItem(
-            icon: Icons.home_rounded,
-            index: 0,
-            currentIndex: _currentIndex,
-            onTap: (i) => setState(() => _currentIndex = i),
-          ),
-          _NavItem(
-            icon: Icons.search_rounded,
-            index: 1,
-            currentIndex: _currentIndex,
-            onTap: (i) => setState(() => _currentIndex = i),
-          ),
-          _NavItem(
-            icon: Icons.shopping_bag_rounded,
-            index: 2,
-            currentIndex: _currentIndex,
-            badgeCount: _totalCartItems,
-            onTap: (i) {
-              setState(() => _currentIndex = i);
-              // Navigasi keranjang dihapus agar tidak bisa memesan/melihat list
-            },
-          ),
-          _NavItem(
-            icon: Icons.person_rounded,
-            index: 3,
-            currentIndex: _currentIndex,
-            onTap: (i) => setState(() => _currentIndex = i),
-          ),
+          _NavItem(icon: Icons.home_rounded, index: 0, currentIndex: _currentIndex, onTap: _onNavTap),
+          _NavItem(icon: Icons.search_rounded, index: 1, currentIndex: _currentIndex, onTap: _onNavTap),
+          _NavItem(icon: Icons.shopping_bag_rounded, index: 2, currentIndex: _currentIndex, badgeCount: _totalCartItems, onTap: _onNavTap),
+          _NavItem(icon: Icons.person_rounded, index: 3, currentIndex: _currentIndex, onTap: _onNavTap),
         ],
       ),
     );
   }
 }
 
-// ─── Drink Card Widget (Disesuaikan Style PuBeranda) ────────────────────────────────
+// ─── Drink Card Widget ────────────────────────────────────────────────────────
 
 class _DrinkCard extends StatelessWidget {
-  final DrinkItem drink;
+  final MenuModel drink;
+  final String imageUrl;
   final VoidCallback onAddToCart;
 
   const _DrinkCard({
     required this.drink,
+    required this.imageUrl,
     required this.onAddToCart,
   });
 
@@ -431,155 +347,139 @@ class _DrinkCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(18), 
-        border: Border.all(
-          color: AppColors.primary.withOpacity(0.1),
-        ),
+        borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.08),
+            color: AppColors.primary.withOpacity(0.1),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(18), 
-              ),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.asset(
-                    drink.imageUrl,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            imageUrl.isNotEmpty
+                ? Image.network(
+                    imageUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: AppColors.primaryLighter,
-                        child: Center(
-                          child: Icon(
-                            Icons.broken_image_rounded, 
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      color: AppColors.primaryLighter,
+                      child: Center(
+                        child: Icon(Icons.broken_image_rounded,
                             color: AppColors.primary.withOpacity(0.3),
-                            size: 40,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                  Positioned(
-                    top: 8,
-                    left: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.85), 
-                        borderRadius: BorderRadius.circular(20), 
-                      ),
-                      child: Text(
-                        drink.category,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 9,
-                          fontWeight: FontWeight.w600,
-                        ),
+                            size: 40),
                       ),
                     ),
+                  )
+                : Container(
+                    color: AppColors.primaryLighter,
+                    child: const Center(
+                        child: Icon(Icons.local_drink,
+                            color: AppColors.primary, size: 40)),
                   ),
-                ],
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(10, 10, 10, 10), 
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  drink.name,
-                  style: const TextStyle(
-                    color: AppColors.primary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  maxLines: 2, 
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  drink.price,
-                  style: TextStyle(
-                    color: AppColors.primary.withOpacity(0.6), 
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(10, 30, 10, 10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withOpacity(0),
+                      Colors.white.withOpacity(0.85),
+                      AppColors.white,
+                    ],
                   ),
                 ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween, 
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
+                    Text(
+                      drink.nama,
+                      style: const TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'IDR ${drink.harga}',
+                      style: TextStyle(
+                        color: AppColors.primary.withOpacity(0.6),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Container(
-                          width: 6,
-                          height: 6,
-                          decoration: const BoxDecoration(
-                            color: Colors.green,
-                            shape: BoxShape.circle,
-                          ),
+                        Row(
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                color: drink.tersedia
+                                    ? Colors.green
+                                    : Colors.red,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              drink.tersedia ? 'Tersedia' : 'Habis',
+                              style: TextStyle(
+                                color: AppColors.primary.withOpacity(0.5),
+                                fontSize: 10,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Tersedia',
-                          style: TextStyle(
-                            color: AppColors.primary.withOpacity(0.5),
-                            fontSize: 10,
+                        GestureDetector(
+                          onTap: onAddToCart,
+                          child: Container(
+                            width: 28,
+                            height: 28,
+                            decoration: const BoxDecoration(
+                              color: AppColors.primary,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.add_rounded,
+                                color: Colors.white, size: 18),
                           ),
                         ),
                       ],
                     ),
-                    GestureDetector(
-                      onTap: onAddToCart,
-                      child: Container(
-                        width: 28,
-                        height: 28,
-                        decoration: const BoxDecoration(
-                          color: AppColors.primary, 
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.add_rounded, 
-                          color: Colors.white,
-                          size: 18,
-                        ),
-                      ),
-                    ),
                   ],
                 ),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
-// ─── Nav Item Widget (Sama dengan PuBeranda) ──────────────────────────────────────────────────
+// ─── Nav Item Widget ─────────────────────────────────────────────────────────
 
 class _NavItem extends StatelessWidget {
-  final IconData icon;          
-  final int index;              
-  final int currentIndex;       
-  final int badgeCount;         
-  final ValueChanged<int> onTap; 
+  final IconData icon;
+  final int index;
+  final int currentIndex;
+  final int badgeCount;
+  final ValueChanged<int> onTap;
 
   const _NavItem({
     required this.icon,
@@ -592,7 +492,6 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSelected = currentIndex == index;
-
     return GestureDetector(
       onTap: () => onTap(index),
       behavior: HitTestBehavior.opaque,
@@ -600,8 +499,8 @@ class _NavItem extends StatelessWidget {
         width: 56,
         height: 56,
         child: Stack(
-          alignment: Alignment.center, 
-          clipBehavior: Clip.none, 
+          alignment: Alignment.center,
+          clipBehavior: Clip.none,
           children: [
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
@@ -611,13 +510,11 @@ class _NavItem extends StatelessWidget {
                 color: isSelected ? AppColors.primary : Colors.transparent,
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                icon,
-                size: 24,
-                color: isSelected
-                    ? Colors.white
-                    : AppColors.primary.withOpacity(0.35),
-              ),
+              child: Icon(icon,
+                  size: 24,
+                  color: isSelected
+                      ? Colors.white
+                      : AppColors.primary.withOpacity(0.35)),
             ),
             if (badgeCount > 0)
               Positioned(
@@ -626,166 +523,17 @@ class _NavItem extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(4),
                   decoration: const BoxDecoration(
-                    color: Colors.red, 
-                    shape: BoxShape.circle,
-                  ),
-                  child: Text(
-                    '$badgeCount',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 9,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                      color: Colors.red, shape: BoxShape.circle),
+                  child: Text('$badgeCount',
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold)),
                 ),
               ),
           ],
         ),
       ),
-    );
-  }
-}
-
-// ==========================================
-// HALAMAN KERANJANG (CART PAGE)
-// ==========================================
-class CartPage extends StatefulWidget {
-  final List<CartItem> cartItems;
-
-  const CartPage({super.key, required this.cartItems});
-
-  @override
-  State<CartPage> createState() => _CartPageState();
-}
-
-class _CartPageState extends State<CartPage> {
-  late List<CartItem> _localCartItems;
-
-  @override
-  void initState() {
-    super.initState();
-    _localCartItems = List.from(widget.cartItems);
-  }
-
-  int _parsePrice(String priceString) {
-    String cleanString = priceString.replaceAll('IDR ', '').replaceAll('.', '');
-    return int.tryParse(cleanString) ?? 0;
-  }
-
-  // Helper methods dibiarkan jika dibutuhkan, tapi tidak digunakan di UI (bagian pemesanan dihapus)
-  int get _totalPrice {
-    int total = 0;
-    for (var item in _localCartItems) {
-      total += _parsePrice(item.product.price) * item.quantity;
-    }
-    return total;
-  }
-
-  int get _totalItemCount {
-    return _localCartItems.fold(0, (sum, item) => sum + item.quantity);
-  }
-
-  String _formatRupiah(int value) {
-    return 'IDR ${value.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}';
-  }
-
-  void _updateQuantity(int index, int change) {
-    setState(() {
-      _localCartItems[index].quantity += change;
-      if (_localCartItems[index].quantity <= 0) {
-        _localCartItems.removeAt(index);
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        backgroundColor: AppColors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.primary),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text("Keranjang Saya", style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
-        centerTitle: true,
-      ),
-      body: _localCartItems.isEmpty
-          ? const SizedBox() // Tampilan keranjang kosong dihapus (sesuai request sebelumnya)
-          : Column(
-              children: [
-                Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(20),
-                    itemCount: _localCartItems.length,
-                    itemBuilder: (context, index) {
-                      final item = _localCartItems[index];
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 16),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-                        ),
-                        child: Row(
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.asset(
-                                item.product.imageUrl, // Menggunakan imageUrl sesuai model DrinkItem
-                                width: 70,
-                                height: 70,
-                                fit: BoxFit.cover,
-                                errorBuilder: (c, o, s) => Container(width: 70, height: 70, color: Colors.grey[200]),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(item.product.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.primary)),
-                                  const SizedBox(height: 4),
-                                  Text(item.product.price, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
-                                ],
-                              ),
-                            ),
-                            Row(
-                              children: [
-                                GestureDetector(
-                                  onTap: () => _updateQuantity(index, -1),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(6),
-                                    decoration: BoxDecoration(color: AppColors.primaryLighter, shape: BoxShape.circle),
-                                    child: const Icon(Icons.remove, size: 16, color: AppColors.primary),
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Text("${item.quantity}", style: const TextStyle(fontWeight: FontWeight.bold)),
-                                const SizedBox(width: 10),
-                                GestureDetector(
-                                  onTap: () => _updateQuantity(index, 1),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(6),
-                                    decoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
-                                    child: const Icon(Icons.add, size: 16, color: Colors.white),
-                                  ),
-                                ),
-                              ],
-                            )
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                // === BAGIAN RINCIAN PEMESANAN SUDAH DIHAPUS ===
-                // Tidak ada tombol pesan, user tidak bisa melakukan pemesanan
-              ],
-            ),
     );
   }
 }
