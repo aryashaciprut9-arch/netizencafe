@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 // Pastikan file ini ada di folder lib kamu
-import 'beranda.dart'; 
-=======
 import 'beranda.dart';
 import 'services/api_service.dart';
 import 'utils/session_manager.dart';
->>>>>>> 22c10f33198202730c6f121f4a4ecc15410c0649
 
 void main() {
   runApp(const FigmaToCodeApp());
@@ -44,13 +40,9 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
   bool _obscurePassword = true;
 
-<<<<<<< HEAD
-=======
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
->>>>>>> 22c10f33198202730c6f121f4a4ecc15410c0649
   final Color primary = const Color(0xFFB86B2B);
   final Color textDark = const Color(0xFF6D4C41);
 
@@ -69,70 +61,78 @@ class _LoginPageState extends State<LoginPage> {
 
     String role = isUserSelected ? 'user' : 'admin';
 
-    final response = await ApiService.login(
-      email: _emailController.text.trim(),
-      password: _passwordController.text,
-      role: role,
-    );
-
-    setState(() => _isLoading = false);
-
-    if (!mounted) return;
-
-    if (response.success && response.user != null) {
-      await SessionManager.saveSession(response.user!);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Selamat datang user'),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
+    try {
+      final response = await ApiService.login(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        role: role,
       );
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const PuBeranda()),
-      );
-    } else {
+      if (!mounted) return;
+
+      if (response.success && response.user != null) {
+        await SessionManager.saveSession(response.user!);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Login berhasil'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const PuBeranda()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response.message),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(response.message),
+          content: Text("Terjadi error: $e"),
           backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          duration: const Duration(seconds: 3),
         ),
       );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Color(0xFFFFF8F2),
-            Color(0xFFF3E5D8),
-            Color(0xFFE8CBB0),
-          ],
-          stops: [0.2, 0.6, 1.0],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
+  return Container(
+    decoration: const BoxDecoration(
+      gradient: LinearGradient(
+        colors: [
+          Color(0xFFFFF8F2),
+          Color(0xFFF3E5D8),
+          Color(0xFFE8CBB0),
+        ],
+        stops: [0.2, 0.6, 1.0],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
       ),
-      child: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 40.0),
-<<<<<<< HEAD
+    ),
+    child: SafeArea(
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
+          child: Form( // ✅ WAJIB ADA
+            key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // === LOGO & TITLE ===
+
+                /// LOGO
                 Column(
                   children: [
                     Container(
@@ -140,158 +140,104 @@ class _LoginPageState extends State<LoginPage> {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
-                            color: primary.withOpacity(0.2), width: 2),
+                          color: primary.withOpacity(0.2),
+                          width: 2,
+                        ),
                         color: Colors.white,
                       ),
                       child: const CircleAvatar(
                         radius: 50,
                         backgroundColor: Colors.transparent,
                         backgroundImage: AssetImage('assets/nettyzencafe.png'),
-=======
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Column(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                              color: primary.withOpacity(0.2), width: 2),
-                          color: Colors.white,
-                        ),
-                        child: const CircleAvatar(
-                          radius: 50,
-                          backgroundColor: Colors.transparent,
-                          backgroundImage: AssetImage('assets/nettyzencafe.png'),
-                        ),
                       ),
-                      const SizedBox(height: 24),
-                      Text(
-                        'Nettyzen Access',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: textDark,
-                        ),
->>>>>>> 22c10f33198202730c6f121f4a4ecc15410c0649
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Nettyzen Access',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: textDark,
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Cafe & UMKM Solution',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.grey[700],
-                          fontSize: 14,
-                          letterSpacing: 1.5,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text('Cafe & UMKM Solution',
+                        style: TextStyle(color: Colors.grey)),
+                  ],
+                ),
 
-<<<<<<< HEAD
                 const SizedBox(height: 50),
+
                 _buildCustomToggle(),
                 const SizedBox(height: 30),
 
+                /// EMAIL
                 _buildInputField(
                   label: "Email",
                   hint: "masukkan email",
                   icon: Icons.person_outline,
+                  controller: _emailController,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Email tidak boleh kosong';
+                    }
+                    if (!value.contains('@')) {
+                      return 'Format email tidak valid';
+                    }
+                    return null;
+                  },
                 ),
+
                 const SizedBox(height: 20),
+
+                /// PASSWORD
                 _buildInputField(
                   label: "Password",
-                  hint: "masukan password",
-                  icon: Icons.email_outlined,
+                  hint: "masukkan password",
+                  icon: Icons.lock_outline,
+                  controller: _passwordController,
+                  obscureText: _obscurePassword,
+                  isPassword: true,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Password tidak boleh kosong';
+                    }
+                    if (value.length < 6) {
+                      return 'Minimal 6 karakter';
+                    }
+                    return null;
+                  },
+                  onToggleObscure: () {
+                    setState(() {
+                      _obscurePassword = !_obscurePassword;
+                    });
+                  },
                 ),
 
                 _buildRememberAndForgot(),
                 const SizedBox(height: 40),
 
-                // Memasukkan context agar Navigator bisa bekerja
                 _buildLoginButton(context),
               ],
-=======
-                  const SizedBox(height: 50),
-                  _buildCustomToggle(),
-                  const SizedBox(height: 30),
-
-                  _buildInputField(
-                    label: "Email",
-                    hint: "masukkan email",
-                    icon: Icons.person_outline,
-                    controller: _emailController,
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Email tidak boleh kosong';
-                      }
-                      if (!value.contains('@')) {
-                        return 'Format email tidak valid';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  _buildInputField(
-                    label: "Password",
-                    hint: "masukan password",
-                    icon: Icons.lock_outline,
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    isPassword: true,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Password tidak boleh kosong';
-                      }
-                      if (value.length < 6) {
-                        return 'Password minimal 6 karakter';
-                      }
-                      return null;
-                    },
-                    onToggleObscure: () {
-                      setState(() {
-                        _obscurePassword = !_obscurePassword;
-                      });
-                    },
-                  ),
-
-                  _buildRememberAndForgot(),
-                  const SizedBox(height: 40),
-
-                  _buildLoginButton(context),
-                ],
-              ),
->>>>>>> 22c10f33198202730c6f121f4a4ecc15410c0649
             ),
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
-<<<<<<< HEAD
-  // === WIDGET HELPER ===
-
-=======
->>>>>>> 22c10f33198202730c6f121f4a4ecc15410c0649
   Widget _buildCustomToggle() {
     return Container(
-      width: double.infinity,
-      height: 55,
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
           )
         ],
       ),
@@ -300,18 +246,19 @@ class _LoginPageState extends State<LoginPage> {
           Expanded(
             child: GestureDetector(
               onTap: () => setState(() => isUserSelected = true),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
                   color: isUserSelected ? primary : Colors.transparent,
-                  borderRadius: const BorderRadius.horizontal(left: Radius.circular(30)),
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                alignment: Alignment.center,
-                child: Text(
-                  "User",
-                  style: TextStyle(
-                    color: isUserSelected ? Colors.white : textDark,
-                    fontWeight: FontWeight.w600,
+                child: Center(
+                  child: Text(
+                    'Pelanggan',
+                    style: TextStyle(
+                      color: isUserSelected ? Colors.white : textDark,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -320,18 +267,19 @@ class _LoginPageState extends State<LoginPage> {
           Expanded(
             child: GestureDetector(
               onTap: () => setState(() => isUserSelected = false),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
                   color: !isUserSelected ? primary : Colors.transparent,
-                  borderRadius: const BorderRadius.horizontal(right: Radius.circular(30)),
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                alignment: Alignment.center,
-                child: Text(
-                  "Admin",
-                  style: TextStyle(
-                    color: !isUserSelected ? Colors.white : textDark,
-                    fontWeight: FontWeight.w600,
+                child: Center(
+                  child: Text(
+                    'Admin',
+                    style: TextStyle(
+                      color: !isUserSelected ? Colors.white : textDark,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -382,28 +330,20 @@ class _LoginPageState extends State<LoginPage> {
             validator: validator,
             decoration: InputDecoration(
               hintText: hint,
-              prefixIcon: Icon(icon, color: primary, size: 22),
-<<<<<<< HEAD
+              prefixIcon: Icon(icon, color: primary),
               border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-=======
+              contentPadding: const EdgeInsets.symmetric(
+                  vertical: 16, horizontal: 20),
               suffixIcon: isPassword
                   ? IconButton(
                       icon: Icon(
-                        obscureText ? Icons.visibility_off : Icons.visibility,
-                        color: Colors.grey,
-                        size: 20,
+                        obscureText
+                            ? Icons.visibility_off
+                            : Icons.visibility,
                       ),
                       onPressed: onToggleObscure,
                     )
                   : null,
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-              errorStyle: const TextStyle(
-                fontSize: 12,
-                height: 0.5,
-              ),
->>>>>>> 22c10f33198202730c6f121f4a4ecc15410c0649
             ),
           ),
         ),
@@ -447,22 +387,10 @@ class _LoginPageState extends State<LoginPage> {
 
   Widget _buildLoginButton(BuildContext context) {
     return GestureDetector(
-<<<<<<< HEAD
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) => setState(() => _isPressed = false),
-      onTapCancel: () => setState(() => _isPressed = false),
-      onTap: () {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const PuBeranda()),
-        );
-      },
-=======
       onTapDown: _isLoading ? null : (_) => setState(() => _isPressed = true),
       onTapUp: _isLoading ? null : (_) => setState(() => _isPressed = false),
       onTapCancel: _isLoading ? null : () => setState(() => _isPressed = false),
       onTap: _isLoading ? null : _handleLogin,
->>>>>>> 22c10f33198202730c6f121f4a4ecc15410c0649
       child: AnimatedScale(
         scale: _isPressed ? 0.96 : 1.0,
         duration: const Duration(milliseconds: 150),
@@ -472,35 +400,12 @@ class _LoginPageState extends State<LoginPage> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(30),
             gradient: LinearGradient(
-<<<<<<< HEAD
-              colors: [primary.withOpacity(0.8), primary],
-=======
               colors: [
                 _isLoading ? primary.withOpacity(0.6) : primary.withOpacity(0.8),
-                primary
+                primary,
               ],
->>>>>>> 22c10f33198202730c6f121f4a4ecc15410c0649
             ),
-            boxShadow: [
-              BoxShadow(
-                color: primary.withOpacity(0.3),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
-              ),
-            ],
           ),
-<<<<<<< HEAD
-          child: const Center(
-            child: Text(
-              "LOGIN",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.2,
-              ),
-            ),
-=======
           child: Center(
             child: _isLoading
                 ? const SizedBox(
@@ -517,10 +422,8 @@ class _LoginPageState extends State<LoginPage> {
                       color: Colors.white,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      letterSpacing: 1.2,
                     ),
                   ),
->>>>>>> 22c10f33198202730c6f121f4a4ecc15410c0649
           ),
         ),
       ),

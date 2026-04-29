@@ -88,7 +88,7 @@ class PaMenuJenisMinuman extends StatefulWidget {
 
 class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
   final List<DrinkItem> _allDrinks = [
-    DrinkItem(name: 'Orange Noise', price: 'IDR 15.000', imageUrl: 'assets/Orange_Noise.png'),
+    DrinkItem(name: 'Orange Noise', price: 'IDR 15.000', imageUrl: 'assets/Orange Noise.png'),
     DrinkItem(name: 'Matcha Cheese', price: 'IDR 17.000', imageUrl: 'assets/matcha1.png'),
     DrinkItem(name: 'Choffe Cheese', price: 'IDR 12.000', imageUrl: 'assets/coffe_cheese.png'),
     DrinkItem(name: 'Vietnam Coffe', price: 'IDR 14.000', imageUrl: 'assets/vietnam_coffe.png'),
