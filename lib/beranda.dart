@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-// === TAMBAHKAN IMPORT INI ===
-import 'kategoriminuman.dart'; 
+import 'kategoriminuman.dart';
+import 'katergorimakanan.dart';
+import 'search.dart'; // ✅ Import halaman search
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -134,9 +135,42 @@ class _PuBerandaState extends State<PuBeranda> {
       );
   }
 
-  void _onNavTap(int index) {
+  void _onNavTap(int index) async {
     setState(() => _currentIndex = index);
     HapticFeedback.selectionClick();
+    
+    // ✅ LOGIKA NAVIGASI BOTTOM NAVIGATION BAR
+    if (index == 0) {
+      // Home - tetap di halaman ini (beranda)
+    } else if (index == 1) {
+      // Search - navigasi ke halaman search
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const SearchPage()),
+      );
+      // Optional: jika perlu refresh setelah kembali dari search
+      if (result == true) {
+        setState(() {});
+      }
+    } else if (index == 2) {
+      // Keranjang
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Fitur keranjang akan segera hadir'),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 1),
+        ),
+      );
+    } else if (index == 3) {
+      // Profil
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Fitur profil akan segera hadir'),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 1),
+        ),
+      );
+    }
   }
 
   int _getCrossAxisCount(double width) {
@@ -383,7 +417,30 @@ class _PuBerandaState extends State<PuBeranda> {
           final isSelected = _selectedCategory == label;
 
           return GestureDetector(
-            onTap: () => setState(() => _selectedCategory = label),
+            onTap: () {
+              // ✅ LOGIKA NAVIGASI KATEGORI
+              if (label == 'Makanan') {
+                HapticFeedback.lightImpact();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const MenuPage()),
+                );
+              } else if (label == 'Minuman') {
+                HapticFeedback.lightImpact();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const PaMenuJenisMinuman()),
+                );
+              } else if (label == 'Snack') {
+                HapticFeedback.lightImpact();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Fitur snack akan segera hadir')),
+                );
+              } else {
+                // Untuk kategori Semua, tetap filter di halaman ini
+                setState(() => _selectedCategory = label);
+              }
+            },
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -482,7 +539,6 @@ class _PuBerandaState extends State<PuBeranda> {
 }
 
 // ─── Product Card Widget ──────────────────────────────────────────────────────
-
 class _ProductCard extends StatelessWidget {
   final Product product;
   final VoidCallback onAddToCart;
@@ -534,9 +590,9 @@ class _ProductCard extends StatelessWidget {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.white.withOpacity(0),
-                      Colors.white.withOpacity(0.85),
-                      AppColors.white,
+                      AppColors.primary.withOpacity(0), // Transparan ke coklat
+                      AppColors.primary.withOpacity(0.85), // Mulai pekat
+                      AppColors.primary, // Coklat solid di bagian bawah
                     ],
                   ),
                 ),
@@ -544,16 +600,18 @@ class _ProductCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // --- NAMA MENU (PUTIH) ---
                     Text(
                       product.name,
-                      style: const TextStyle(color: AppColors.primary, fontSize: 13, fontWeight: FontWeight.w700),
+                      style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
+                    // --- HARGA / IDR (PUTIH) ---
                     Text(
                       product.price,
-                      style: TextStyle(color: AppColors.primary.withOpacity(0.6), fontSize: 11, fontWeight: FontWeight.w500),
+                      style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 11, fontWeight: FontWeight.w500),
                     ),
                     const SizedBox(height: 8),
                     Row(
@@ -564,10 +622,11 @@ class _ProductCard extends StatelessWidget {
                             Container(
                               width: 6,
                               height: 6,
-                              decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle),
+                              decoration: const BoxDecoration(color: Colors.greenAccent, shape: BoxShape.circle),
                             ),
                             const SizedBox(width: 4),
-                            Text('Tersedia', style: TextStyle(color: AppColors.primary.withOpacity(0.5), fontSize: 10)),
+                            // --- TERSEDIA (PUTIH) ---
+                            const Text('Tersedia', style: TextStyle(color: Colors.white, fontSize: 10)),
                           ],
                         ),
                         GestureDetector(
@@ -575,8 +634,9 @@ class _ProductCard extends StatelessWidget {
                           child: Container(
                             width: 28,
                             height: 28,
-                            decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
-                            child: const Icon(Icons.add, color: Colors.white, size: 18),
+                            // Diubah ke putih agar kontras dengan background coklat
+                            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                            child: const Icon(Icons.add, color: AppColors.primary, size: 18),
                           ),
                         ),
                       ],

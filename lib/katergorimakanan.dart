@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'beranda.dart';
+import 'search.dart';
+import 'detailkeranjang.dart';
+import 'profil_pelanggan.dart';
+
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -8,7 +13,7 @@ void main() {
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
-    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeLeft,  
     DeviceOrientation.landscapeRight,
   ]);
 
@@ -180,9 +185,49 @@ class _MenuPageState extends State<MenuPage> {
     );
   }
 
+  // ========== FUNGSI NAVIGASI DENGAN ANIMASI SMOUTH ==========
+  void _navigateWithAnimation(Widget page, {bool replace = false}) {
+    final route = PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) => page,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        const begin = Offset(1.0, 0.0);
+        const end = Offset.zero;
+        const curve = Curves.easeInOutCubic;
+        var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+        var offsetAnimation = animation.drive(tween);
+        return SlideTransition(position: offsetAnimation, child: child);
+      },
+      transitionDuration: const Duration(milliseconds: 400),
+    );
+    
+    if (replace) {
+      Navigator.pushReplacement(context, route);
+    } else {
+      Navigator.push(context, route);
+    }
+  }
+
   void _onNavTap(int index) {
-    setState(() => _currentIndex = index);
     HapticFeedback.selectionClick();
+    
+    if (index == 0) {
+      // Kembali ke halaman Beranda dengan animasi smooth
+      _navigateWithAnimation(const PuBeranda(), replace: true);
+    } else if (index == 1) {
+      // Buka halaman Search dengan animasi smooth
+      _navigateWithAnimation(const SearchPage());
+    } else if (index == 2) {
+      // Buka halaman Keranjang dengan animasi smooth
+      _navigateWithAnimation(const PuDetailKeranjang());
+    } else if (index == 3) {
+      // Buka halaman Profil dengan animasi smooth
+      _navigateWithAnimation(const ProfilPelanggan());
+    }
+    
+    // Update current index after navigation
+    Future.delayed(const Duration(milliseconds: 400), () {
+      if (mounted) setState(() => _currentIndex = index);
+    });
   }
 
   @override
@@ -211,20 +256,20 @@ class _MenuPageState extends State<MenuPage> {
     );
   }
 
-// Header Panah Kiri dan Panah Kanan (Di luar area grid menu, dipojok kanan atas header)
+// Header (HANYA PANAH KIRI, PANAH KANAN DIHAPUS)
   Widget _buildHeader(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // POJOK KIRI ATAS: Panah Kembali
+          // POJOK KIRI ATAS: Panah Kembali dengan animasi smooth
           Row(
             children: [
               GestureDetector(
                 onTap: () {
                   HapticFeedback.lightImpact();
-                  Navigator.pop(context);
+                  _navigateWithAnimation(const PuBeranda(), replace: true);
                 },
                 child: Container(
                   padding: const EdgeInsets.all(9),
@@ -253,26 +298,8 @@ class _MenuPageState extends State<MenuPage> {
             ],
           ),
           
-          // POJOK KANAN ATAS: Panah Ke Kanan (Diluar area grid menu)
-          GestureDetector(
-            onTap: () {
-              HapticFeedback.lightImpact();
-              // Tambahkan aksi navigasi di sini jika diperlukan
-            },
-            child: Container(
-              padding: const EdgeInsets.all(9),
-              decoration: BoxDecoration(
-                color: AppColors.primaryLighter,
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
-              ),
-              child: const Icon(
-                Icons.arrow_forward_ios_rounded,
-                color: AppColors.primary,
-                size: 16,
-              ),
-            ),
-          ),
+          // PANAH KANAN DIHAPUS - Biarkan kosong
+          const SizedBox(width: 10),
         ],
       ),
     );
@@ -452,7 +479,7 @@ class _MenuPageState extends State<MenuPage> {
   }
 }
 
-// ─── Food Card Widget (GAMBAR FULL COVER KE BACKGROUND) ──────────────────────
+// ─── Food Card Widget ──────────────────────────────────────────────────────
 
 class _FoodCard extends StatelessWidget {
   final MenuItem item;

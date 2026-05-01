@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-// === TAMBAHKAN IMPORT INI ===
 import 'katergorimakanan.dart';
+import 'beranda.dart'; // ✅ Import halaman beranda/home
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -88,7 +87,7 @@ class PaMenuJenisMinuman extends StatefulWidget {
 
 class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
   final List<DrinkItem> _allDrinks = [
-    DrinkItem(name: 'Orange Noise', price: 'IDR 15.000', imageUrl: 'assets/Orange_Noise.png'),
+    DrinkItem(name: 'Orange Noise', price: 'IDR 15.000', imageUrl: 'assets/Orange Noise.png'),
     DrinkItem(name: 'Matcha Cheese', price: 'IDR 17.000', imageUrl: 'assets/matcha1.png'),
     DrinkItem(name: 'Choffe Cheese', price: 'IDR 12.000', imageUrl: 'assets/coffe_cheese.png'),
     DrinkItem(name: 'Vietnam Coffe', price: 'IDR 14.000', imageUrl: 'assets/vietnam_coffe.png'),
@@ -101,7 +100,7 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
   final TextEditingController _searchController = TextEditingController();
 
   List<CartItem> _cartItems = [];
-  int _currentIndex = 0;
+  int _currentIndex = 1; // ✅ Set ke 1 karena halaman ini adalah search/minuman
   String _searchQuery = '';
 
   int get _totalCartItems {
@@ -153,9 +152,41 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
       );
   }
 
-  void _onNavTap(int index) {
-    setState(() => _currentIndex = index);
+  void _onNavTap(int index) async {
     HapticFeedback.selectionClick();
+    
+    // ✅ Navigasi berdasarkan index yang dipilih
+    if (index == 0) {
+      // Navigasi ke Home (Beranda)
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const PuBeranda()),
+      );
+    } else if (index == 1) {
+      // Tetap di halaman ini (Minuman)
+      setState(() => _currentIndex = index);
+    } else if (index == 2) {
+      // Keranjang
+      setState(() => _currentIndex = index);
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => CartPage(cartItems: _cartItems),
+        ),
+      ).then((_) {
+        // Refresh state setelah kembali dari cart
+        setState(() {});
+      });
+    } else if (index == 3) {
+      // Navigasi ke Profil
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Fitur profil akan segera hadir'),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 1),
+        ),
+      );
+    }
   }
 
   @override
@@ -199,7 +230,11 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
               GestureDetector(
                 onTap: () {
                   HapticFeedback.lightImpact();
-                  Navigator.pop(context);
+                  // ✅ Kembali ke halaman Home
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => const PuBeranda()),
+                  );
                 },
                 child: Container(
                   padding: const EdgeInsets.all(9),
@@ -690,7 +725,26 @@ class _CartPageState extends State<CartPage> {
         centerTitle: true,
       ),
       body: _localCartItems.isEmpty
-          ? const SizedBox()
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.shopping_bag_outlined,
+                    size: 80,
+                    color: AppColors.primary.withValues(alpha: 0.3),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Keranjang masih kosong',
+                    style: TextStyle(
+                      color: AppColors.primary.withValues(alpha: 0.5),
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+            )
           : Column(
               children: [
                 Expanded(
