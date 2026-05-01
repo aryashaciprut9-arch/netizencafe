@@ -11,7 +11,7 @@ class LoginResponse {
 }
 
 class ApiService {
-  static const String _baseUrl = 'http://127.0.0.1/api/login.php';
+  static const String _baseUrl = 'http://127.0.0.1/kasir_api/login.php';
 
   static Future<LoginResponse> login({
     required String email,

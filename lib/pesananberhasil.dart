@@ -3,10 +3,6 @@ import 'beranda.dart';
 import 'detailkeranjang.dart';
 import 'profil_pelanggan.dart';
 
-void main() {
-  runApp(const FigmaToCodeApp());
-}
-
 class FigmaToCodeApp extends StatelessWidget {
   const FigmaToCodeApp({super.key});
 
@@ -118,7 +114,7 @@ class PuPesananBerhasil extends StatelessWidget {
                         context,
                         MaterialPageRoute(
                           // DIUBAH: Menghapus 'const' agar tidak bentrok dengan class tujuan
-                          builder: (context) => ProfilPelanggan(),
+                          builder: (context) => ProfilePage(),
                         ),
                       );
                     },

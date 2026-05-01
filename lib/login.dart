@@ -42,7 +42,6 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
   final Color primary = const Color(0xFFB86B2B);
   final Color textDark = const Color(0xFF6D4C41);
 
@@ -76,7 +75,7 @@ class _LoginPageState extends State<LoginPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Selamat datang user'),
+          content: const Text('Selamat datang user'),
           backgroundColor: Colors.green,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -125,6 +124,7 @@ class _LoginPageState extends State<LoginPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // === LOGO & TITLE ===
                   Column(
                     children: [
                       Container(
@@ -164,7 +164,6 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 50),
                   _buildCustomToggle(),
                   const SizedBox(height: 30),
@@ -220,7 +219,7 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
-
+  
   Widget _buildCustomToggle() {
     return Container(
       width: double.infinity,
@@ -340,6 +339,8 @@ class _LoginPageState extends State<LoginPage> {
                 fontSize: 12,
                 height: 0.5,
               ),
+                  const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+              errorStyle: const TextStyle(fontSize: 12, height: 0.5),
             ),
           ),
         ),
@@ -360,12 +361,14 @@ class _LoginPageState extends State<LoginPage> {
                 width: 24,
                 child: Checkbox(
                   value: _isRememberMe,
-                  onChanged: (value) => setState(() => _isRememberMe = value ?? false),
+                  onChanged: (value) =>
+                      setState(() => _isRememberMe = value ?? false),
                   activeColor: primary,
                 ),
               ),
               const SizedBox(width: 10),
-              Text("Ingat Saya", style: TextStyle(color: textDark, fontSize: 13)),
+              Text("Ingat Saya",
+                  style: TextStyle(color: textDark, fontSize: 13)),
             ],
           ),
           Text(
@@ -398,7 +401,7 @@ class _LoginPageState extends State<LoginPage> {
             gradient: LinearGradient(
               colors: [
                 _isLoading ? primary.withOpacity(0.6) : primary.withOpacity(0.8),
-                primary
+                primary,
               ],
             ),
             boxShadow: [

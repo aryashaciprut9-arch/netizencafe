@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(const FoodApp());
-}
+
 
 class FoodApp extends StatelessWidget {
   const FoodApp({super.key});
@@ -185,7 +183,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocus = FocusNode();
 
-  List<String> _recentSearches = [
+  final List<String> _recentSearches = [
     'Gelato Matcha',
     'Risol Mayo',
     'Ricebowl Chicken Blackpaper',

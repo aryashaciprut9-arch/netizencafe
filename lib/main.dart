@@ -14,6 +14,8 @@ void main() {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+class FigmaToCodeApp extends StatelessWidget {
+  const FigmaToCodeApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +37,10 @@ class MyApp extends StatelessWidget {
         '/pesananberhasil':  (context) => const PuPesananBerhasil(),
         '/profil':           (context) => const ProfilPelanggan(),
       },
+        fontFamily: 'Geologica',
+        useMaterial3: true,
+      ),
+      home: const Scaffold(body: LoginPage()),
     );
   }
 }
