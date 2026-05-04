@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(const FigmaToCodeApp());
-}
-
 class FigmaToCodeApp extends StatelessWidget {
   const FigmaToCodeApp({super.key});
 
@@ -223,6 +219,40 @@ class PuPesananBerhasil extends StatelessWidget {
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
+
+                  IconButton(
+                    icon: const Icon(Icons.shopping_cart),
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          // DIUBAH: Menghapus 'const' agar tidak bentrok dengan class tujuan
+                          builder: (context) => PuDetailKeranjang(),
+                        ),
+                      );
+                    },
+                  ),
+
+                  IconButton(
+                    icon: const Icon(Icons.receipt),
+                    onPressed: () {
+                      // Tambahkan navigasi riwayat pesanan di sini jika sudah ada filenya
+                    },
+                  ),
+
+                  IconButton(
+                    icon: const Icon(Icons.person),
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          // DIUBAH: Menghapus 'const' agar tidak bentrok dengan class tujuan
+                          builder: (context) => ProfilePage(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
 

@@ -11,7 +11,7 @@ void main() {
     expect(find.text('0'), findsOneWidget);
     expect(find.text('1'), findsNothing);
 
-    // Tekan tombol '+' (ikon add) dan proses frame
+    
     await tester.tap(find.byIcon(Icons.add));
     await tester.pump();
 
