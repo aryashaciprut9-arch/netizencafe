@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import '../models/menu_models.dart';
 
 class ApiService {
- static const String baseUrl = 'http://172.16.202.76/kasir_api';
+ static const String baseUrl = 'http://127.0.0.1/kasir_api';
 
   static Future<List<MenuModel>> getMenu() async {
     try {
