@@ -104,15 +104,14 @@ class _PuBerandaState extends State<PuBeranda> {
   }
 
   void _onNavTap(int index) {
-  if (index == 0) {
-    // Sudah di beranda, scroll ke atas saja
-    setState(() => _currentIndex = 0);
+    if (index == 0) {
+      setState(() => _currentIndex = 0);
+      HapticFeedback.selectionClick();
+      return;
+    }
+    setState(() => _currentIndex = index);
     HapticFeedback.selectionClick();
-    return;
   }
-  setState(() => _currentIndex = index);
-  HapticFeedback.selectionClick();
-}
 
   void _navigateToCategory(String kategori) {
     HapticFeedback.lightImpact();
@@ -129,41 +128,41 @@ class _PuBerandaState extends State<PuBeranda> {
   //  UI / BUILD
   // =====================
   @override
-Widget build(BuildContext context) {
-  // Kalau profil, return ProfilePage langsung (dia punya navbar sendiri)
-  if (_currentIndex == 3) {
-    return const ProfilePage();
+  Widget build(BuildContext context) {
+    if (_currentIndex == 3) {
+      return const ProfilePage();
+    }
+
+    return Scaffold(
+      backgroundColor: AppColors.white,
+      body: SafeArea(
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+            : LayoutBuilder(
+                builder: (context, constraints) {
+                  return CustomScrollView(
+                    slivers: [
+                      SliverToBoxAdapter(child: _buildHeader(context)),
+                      const SliverToBoxAdapter(child: SizedBox(height: 10)),
+                      SliverToBoxAdapter(child: _buildSearchBar(context)),
+                      const SliverToBoxAdapter(child: SizedBox(height: 15)),
+                      SliverToBoxAdapter(child: _buildPromoBanner(context)),
+                      const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                      SliverToBoxAdapter(child: _buildCategories(context)),
+                      const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                      SliverToBoxAdapter(child: _buildSectionTitle(context)),
+                      const SliverToBoxAdapter(child: SizedBox(height: 10)),
+                      _buildProductGrid(context, constraints.maxWidth),
+                      const SliverToBoxAdapter(child: SizedBox(height: 80)),
+                    ],
+                  );
+                },
+              ),
+      ),
+      bottomNavigationBar: _buildBottomNavBar(),
+    );
   }
 
-  return Scaffold(
-    backgroundColor: AppColors.white,
-    body: SafeArea(
-      child: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : LayoutBuilder(
-              builder: (context, constraints) {
-                return CustomScrollView(
-                  slivers: [
-                    SliverToBoxAdapter(child: _buildHeader(context)),
-                    const SliverToBoxAdapter(child: SizedBox(height: 10)),
-                    SliverToBoxAdapter(child: _buildSearchBar(context)),
-                    const SliverToBoxAdapter(child: SizedBox(height: 15)),
-                    SliverToBoxAdapter(child: _buildPromoBanner(context)),
-                    const SliverToBoxAdapter(child: SizedBox(height: 20)),
-                    SliverToBoxAdapter(child: _buildCategories(context)),
-                    const SliverToBoxAdapter(child: SizedBox(height: 20)),
-                    SliverToBoxAdapter(child: _buildSectionTitle(context)),
-                    const SliverToBoxAdapter(child: SizedBox(height: 10)),
-                    _buildProductGrid(context, constraints.maxWidth),
-                    const SliverToBoxAdapter(child: SizedBox(height: 80)),
-                  ],
-                );
-              },
-            ),
-    ),
-    bottomNavigationBar: _buildBottomNavBar(),
-  );
-}
   Widget _buildHeader(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
@@ -195,7 +194,6 @@ Widget build(BuildContext context) {
               ],
             ),
           ),
-          // Tombol refresh
           GestureDetector(
             onTap: _loadData,
             child: Container(
@@ -343,7 +341,6 @@ Widget build(BuildContext context) {
           return GestureDetector(
             onTap: () {
               setState(() => _selectedCategory = label);
-              // Navigasi ke halaman kategori jika bukan 'Semua'
               if (label != 'Semua') _navigateToCategory(label);
             },
             child: Column(
@@ -534,9 +531,9 @@ class _MenuCard extends StatelessWidget {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      AppColors.primary.withOpacity(0), // Transparan ke coklat
-                      AppColors.primary.withOpacity(0.85), // Mulai pekat
-                      AppColors.primary, // Coklat solid di bagian bawah
+                      AppColors.primary.withOpacity(0),
+                      AppColors.primary.withOpacity(0.85),
+                      AppColors.primary,
                     ],
                   ),
                 ),
@@ -544,86 +541,60 @@ class _MenuCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // --- NAMA MENU (PUTIH) ---
+                    // Nama menu
                     Text(
-<<<<<<< HEAD
-                      product.name,
-                      style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700),
-=======
                       item.nama,
                       style: const TextStyle(
-                        color: AppColors.primary,
+                        color: Colors.white,
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                       ),
->>>>>>> efb1ba3028692d013ed4dd95a9d12260a8a864b4
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
-                    // --- HARGA / IDR (PUTIH) ---
+                    // Harga
                     Text(
-<<<<<<< HEAD
-                      product.price,
-                      style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 11, fontWeight: FontWeight.w500),
-=======
                       'IDR ${item.harga}',
                       style: TextStyle(
-                          color: AppColors.primary.withOpacity(0.6),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500),
->>>>>>> efb1ba3028692d013ed4dd95a9d12260a8a864b4
+                        color: Colors.white.withOpacity(0.85),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(  
+                        Row(
                           children: [
                             Container(
-<<<<<<< HEAD
-                              width: 6,
-                              height: 6,
-                              decoration: const BoxDecoration(color: Colors.greenAccent, shape: BoxShape.circle),
-                            ),
-                            const SizedBox(width: 4),
-                            // --- TERSEDIA (PUTIH) ---
-                            const Text('Tersedia', style: TextStyle(color: Colors.white, fontSize: 10)),
-=======
                               width: 6, height: 6,
                               decoration: BoxDecoration(
-                                color: item.tersedia ? Colors.green : Colors.red,
+                                color: item.tersedia ? Colors.greenAccent : Colors.redAccent,
                                 shape: BoxShape.circle,
                               ),
                             ),
                             const SizedBox(width: 4),
                             Text(
                               item.tersedia ? 'Tersedia' : 'Habis',
-                              style: TextStyle(
-                                  color: AppColors.primary.withOpacity(0.5),
-                                  fontSize: 10),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                              ),
                             ),
->>>>>>> efb1ba3028692d013ed4dd95a9d12260a8a864b4
                           ],
                         ),
                         GestureDetector(
                           onTap: onAddToCart,
                           child: Container(
-<<<<<<< HEAD
-                            width: 28,
-                            height: 28,
-                            // Diubah ke putih agar kontras dengan background coklat
-                            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                            child: const Icon(Icons.add, color: AppColors.primary, size: 18),
-
                             width: 28, height: 28,
                             decoration: const BoxDecoration(
-                              color: AppColors.primary,
+                              color: Colors.white,
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(Icons.add_rounded,
-                                color: Colors.white, size: 18),
->>>>>>> efb1ba3028692d013ed4dd95a9d12260a8a864b4
+                                color: AppColors.primary, size: 18),
                           ),
                         ),
                       ],
@@ -638,6 +609,7 @@ class _MenuCard extends StatelessWidget {
     );
   }
 }
+
 // ─── Nav Item Widget ─────────────────────────────────────────────────────────
 
 class _NavItem extends StatelessWidget {

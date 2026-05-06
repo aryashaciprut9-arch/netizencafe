@@ -145,7 +145,6 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
         children: [
           Row(
             children: [
-              // Panah kiri → ke halaman Makanan
               GestureDetector(
                 onTap: () {
                   HapticFeedback.lightImpact();
@@ -169,7 +168,6 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
                   style: TextStyle(color: Color(0xFF8A4607), fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: -0.3)),
             ],
           ),
-          // Panah kanan → ke halaman Snack
           GestureDetector(
             onTap: () {
               HapticFeedback.lightImpact();
@@ -305,7 +303,7 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
   }
 }
 
-// ─── Drink Card Widget (MODIFIED) ───────────────────────────────────────────
+// ─── Drink Card Widget ───────────────────────────────────────────────────────
 
 class _DrinkCard extends StatelessWidget {
   final MenuModel item;
@@ -328,28 +326,6 @@ class _DrinkCard extends StatelessWidget {
           children: [
             // Gambar Produk
             imageUrl.isNotEmpty
-<<<<<<< HEAD
-                ? Image.network(
-                    imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      color: AppColors.primaryLighter,
-                      child: Center(
-                        child: Icon(Icons.broken_image_rounded,
-                            color: AppColors.primary.withOpacity(0.3),
-                            size: 40),
-                      ),
-                    ),
-                  )
-                : Container(
-                    color: AppColors.primaryLighter,
-                    child: const Center(
-                        child: Icon(Icons.local_drink,
-                            color: AppColors.primary, size: 40)),
-                  ),
-
-            // Layer Overlay Coklat dan Teks
-=======
                 ? Image.network(imageUrl, fit: BoxFit.cover,
                     errorBuilder: (c, e, s) => Container(
                       color: const Color(0xFFFFF4E6),
@@ -357,7 +333,7 @@ class _DrinkCard extends StatelessWidget {
                     ))
                 : Container(color: const Color(0xFFFFF4E6),
                     child: const Center(child: Icon(Icons.local_drink, color: Color(0xFF8A4607), size: 40))),
->>>>>>> efb1ba3028692d013ed4dd95a9d12260a8a864b4
+            // Layer Overlay
             Positioned(
               bottom: 0, left: 0, right: 0,
               child: Container(
@@ -366,93 +342,20 @@ class _DrinkCard extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-<<<<<<< HEAD
-                    colors: [
-                      AppColors.primary.withOpacity(0),      // Transparan
-                      AppColors.primary.withOpacity(0.85),   // Mulai Coklat
-                      AppColors.primary,                     // Coklat Solid
-                    ],
-=======
                     colors: [Colors.white.withOpacity(0), Colors.white.withOpacity(0.85), Colors.white],
->>>>>>> efb1ba3028692d013ed4dd95a9d12260a8a864b4
                   ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-<<<<<<< HEAD
-                    // Nama Menu (Putih)
-                    Text(
-                      drink.nama,
-                      style: const TextStyle(
-                        color: Colors.white, // Diubah ke Putih
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    // Harga (Putih transparan)
-                    Text(
-                      'IDR ${drink.harga}',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.9), // Diubah ke Putih
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-=======
                     Text(item.nama, style: const TextStyle(color: Color(0xFF8A4607), fontSize: 13, fontWeight: FontWeight.w700), maxLines: 2, overflow: TextOverflow.ellipsis),
                     const SizedBox(height: 2),
                     Text('IDR ${item.harga}', style: TextStyle(color: const Color(0xFF8A4607).withOpacity(0.6), fontSize: 11, fontWeight: FontWeight.w500)),
->>>>>>> efb1ba3028692d013ed4dd95a9d12260a8a864b4
                     const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-<<<<<<< HEAD
-                        Row(
-                          children: [
-                            Container(
-                              width: 6,
-                              height: 6,
-                              decoration: BoxDecoration(
-                                // Menggunakan GreenAccent agar lebih kontras di coklat
-                                color: drink.tersedia
-                                    ? Colors.greenAccent 
-                                    : Colors.redAccent,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            // Status Tersedia (Putih)
-                            Text(
-                              drink.tersedia ? 'Tersedia' : 'Habis',
-                              style: const TextStyle(
-                                color: Colors.white, // Diubah ke Putih
-                                fontSize: 10,
-                              ),
-                            ),
-                          ],
-                        ),
-                        // Tombol Tambah (Putih dengan Icon Coklat)
-                        GestureDetector(
-                          onTap: onAddToCart,
-                          child: Container(
-                            width: 28,
-                            height: 28,
-                            decoration: const BoxDecoration(
-                              color: Colors.white, // Background Putih
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.add_rounded,
-                              color: AppColors.primary, // Icon Coklat
-                              size: 18,
-                            ),
-=======
                         Row(children: [
                           Container(width: 6, height: 6, decoration: BoxDecoration(color: item.tersedia ? Colors.green : Colors.red, shape: BoxShape.circle)),
                           const SizedBox(width: 4),
@@ -464,7 +367,6 @@ class _DrinkCard extends StatelessWidget {
                             width: 28, height: 28,
                             decoration: const BoxDecoration(color: Color(0xFF8A4607), shape: BoxShape.circle),
                             child: const Icon(Icons.add_rounded, color: Colors.white, size: 18),
->>>>>>> efb1ba3028692d013ed4dd95a9d12260a8a864b4
                           ),
                         ),
                       ],

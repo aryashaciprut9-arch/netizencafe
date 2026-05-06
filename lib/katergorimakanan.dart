@@ -380,7 +380,7 @@ class _MenuPageState extends State<MenuPage> {
   }
 }
 
-// ─── Food Card Widget (MODIFIED) ─────────────────────────────────────────────
+// ─── Food Card Widget ────────────────────────────────────────────────────────
 
 class _FoodCard extends StatelessWidget {
   final MenuModel item;
@@ -425,87 +425,20 @@ class _FoodCard extends StatelessWidget {
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-<<<<<<< HEAD
-                      colors: [
-                        AppColors.primary.withOpacity(0),       // Transparan
-                        AppColors.primary.withOpacity(0.85),    // Mulai Coklat
-                        AppColors.primary,                       // Coklat Solid
-                      ],
-=======
                       colors: [Colors.white.withOpacity(0), Colors.white.withOpacity(0.85), AppColors.white],
->>>>>>> efb1ba3028692d013ed4dd95a9d12260a8a864b4
                     ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-<<<<<<< HEAD
-                      Text(
-                        item.nama,
-                        style: const TextStyle(
-                          color: Colors.white, // Diubah ke Putih
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'IDR ${item.harga}',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.9), // Diubah ke Putih
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-=======
                       Text(item.nama, style: const TextStyle(color: AppColors.primary, fontSize: 13, fontWeight: FontWeight.w700), maxLines: 2, overflow: TextOverflow.ellipsis),
                       const SizedBox(height: 2),
                       Text('IDR ${item.harga}', style: TextStyle(color: AppColors.primary.withOpacity(0.6), fontSize: 11, fontWeight: FontWeight.w500)),
->>>>>>> efb1ba3028692d013ed4dd95a9d12260a8a864b4
                       const SizedBox(height: 8),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-<<<<<<< HEAD
-                          Row(
-                            children: [
-                              Container(
-                                width: 6,
-                                height: 6,
-                                decoration: BoxDecoration(
-                                  // Menggunakan GreenAccent agar lebih kontras di coklat
-                                  color: item.tersedia
-                                      ? Colors.greenAccent 
-                                      : Colors.redAccent,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                item.tersedia ? 'Tersedia' : 'Habis',
-                                style: const TextStyle(
-                                  color: Colors.white, // Diubah ke Putih
-                                  fontSize: 10,
-                                ),
-                              ),
-                            ],
-                          ),
-                          // Tombol Tambah (Putih dengan Icon Coklat)
-                          GestureDetector(
-                            onTap: onAddToCart,
-                            child: Container(
-                              width: 28,
-                              height: 28,
-                              decoration: const BoxDecoration(
-                                color: Colors.white, // Background Putih
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(Icons.add_rounded,
-                                  color: AppColors.primary, size: 18), // Icon Coklat
-=======
                           Row(children: [
                             Container(width: 6, height: 6, decoration: BoxDecoration(color: item.tersedia ? Colors.green : Colors.red, shape: BoxShape.circle)),
                             const SizedBox(width: 4),
@@ -517,7 +450,6 @@ class _FoodCard extends StatelessWidget {
                               width: 28, height: 28,
                               decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
                               child: const Icon(Icons.add_rounded, color: Colors.white, size: 18),
->>>>>>> efb1ba3028692d013ed4dd95a9d12260a8a864b4
                             ),
                           ),
                         ],
