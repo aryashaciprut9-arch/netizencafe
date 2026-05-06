@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'beranda.dart';
-import 'detailkeranjang.dart';
 import 'profil_pelanggan.dart';
 
 class FigmaToCodeApp extends StatelessWidget {
@@ -80,21 +79,20 @@ class PuPesananBerhasil extends StatelessWidget {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                          // DIUBAH: Menggunakan PuBeranda sesuai nama class di file beranda.dart
                           builder: (context) => const PuBeranda(),
                         ),
                       );
                     },
                   ),
 
+                  // Cart → kembali ke beranda saja
                   IconButton(
                     icon: const Icon(Icons.shopping_cart),
                     onPressed: () {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                          // DIUBAH: Menghapus 'const' agar tidak bentrok dengan class tujuan
-                          builder: (context) => PuDetailKeranjang(),
+                          builder: (context) => const PuBeranda(),
                         ),
                       );
                     },
@@ -103,7 +101,7 @@ class PuPesananBerhasil extends StatelessWidget {
                   IconButton(
                     icon: const Icon(Icons.receipt),
                     onPressed: () {
-                      // Tambahkan navigasi riwayat pesanan di sini jika sudah ada filenya
+                      // Tambahkan navigasi riwayat pesanan di sini jika sudah ada
                     },
                   ),
 
@@ -113,7 +111,6 @@ class PuPesananBerhasil extends StatelessWidget {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                          // DIUBAH: Menghapus 'const' agar tidak bentrok dengan class tujuan
                           builder: (context) => ProfilePage(),
                         ),
                       );

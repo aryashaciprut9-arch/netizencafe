@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:netizencafe/detailkeranjang.dart';
 import 'models/menu_models.dart';
 import 'services/api_services.dart';
 import 'kategoriminuman.dart';
@@ -14,7 +15,7 @@ class AppColors {
   static const Color white          = Colors.white;
 }
 
-// ─── Model Keranjang ─────────────────────────────────────────────────────────
+// ─── Model Keranjang (CartItem lokal, untuk detail sheet qty) ─────────────────
 
 class CartItem {
   final MenuModel product;
@@ -25,25 +26,27 @@ class CartItem {
 // ─── Halaman Makanan ─────────────────────────────────────────────────────────
 
 class MenuPage extends StatefulWidget {
-  const MenuPage({super.key});
+  final List<KeranjangItem> keranjang;
+  final void Function(MenuModel) onAddToCart;
+
+  const MenuPage({
+    super.key,
+    required this.keranjang,
+    required this.onAddToCart,
+  });
 
   @override
   State<MenuPage> createState() => _MenuPageState();
 }
 
 class _MenuPageState extends State<MenuPage> {
-  // =====================
-  //  STATE & DATA
-  // =====================
   List<MenuModel> _allMenuItems = [];
   bool _isLoading               = true;
-  List<CartItem> _cartItems     = [];
   int _currentIndex             = 0;
   String _searchQuery           = '';
   final TextEditingController _searchController = TextEditingController();
 
-  int get _totalCartItems =>
-      _cartItems.fold(0, (sum, item) => sum + item.quantity);
+  int get _keranjangCount => widget.keranjang.fold(0, (sum, item) => sum + item.qty);
 
   List<MenuModel> get _filteredMenuItems {
     final items = _allMenuItems
@@ -55,9 +58,6 @@ class _MenuPageState extends State<MenuPage> {
         .toList();
   }
 
-  // =====================
-  //  FUNGSI / LOGIKA
-  // =====================
   @override
   void initState() {
     super.initState();
@@ -99,14 +99,8 @@ class _MenuPageState extends State<MenuPage> {
   }
 
   void _addToCart(MenuModel item) {
-    setState(() {
-      int index = _cartItems.indexWhere((c) => c.product.id == item.id);
-      if (index != -1) {
-        _cartItems[index].quantity++;
-      } else {
-        _cartItems.add(CartItem(product: item));
-      }
-    });
+    widget.onAddToCart(item);
+      setState(() {}); // 🔥 paksa refresh UI
     HapticFeedback.lightImpact();
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -120,14 +114,9 @@ class _MenuPageState extends State<MenuPage> {
   }
 
   void _addToCartWithQty(MenuModel item, int quantity) {
-    setState(() {
-      int index = _cartItems.indexWhere((c) => c.product.id == item.id);
-      if (index != -1) {
-        _cartItems[index].quantity += quantity;
-      } else {
-        _cartItems.add(CartItem(product: item, quantity: quantity));
-      }
-    });
+    for (int i = 0; i < quantity; i++) {
+      widget.onAddToCart(item);
+    }
     HapticFeedback.lightImpact();
   }
 
@@ -149,7 +138,6 @@ class _MenuPageState extends State<MenuPage> {
 
   void _onNavTap(int index) {
     if (index == 0) {
-      // Tombol Home → kembali ke beranda
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const PuBeranda()),
@@ -157,13 +145,23 @@ class _MenuPageState extends State<MenuPage> {
       );
       return;
     }
+    if (index == 2) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PuDetailKeranjang(
+            items: List.from(widget.keranjang),
+            userId: 0,
+            namaPelanggan: 'User',
+          ),
+        ),
+      );
+      return;
+    }
     setState(() => _currentIndex = index);
     HapticFeedback.selectionClick();
   }
 
-  // =====================
-  //  UI / BUILD
-  // =====================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -200,7 +198,6 @@ class _MenuPageState extends State<MenuPage> {
         children: [
           Row(
             children: [
-              // Panah kiri → kembali ke beranda
               GestureDetector(
                 onTap: () {
                   HapticFeedback.lightImpact();
@@ -217,8 +214,7 @@ class _MenuPageState extends State<MenuPage> {
                     shape: BoxShape.circle,
                     border: Border.all(color: AppColors.primary.withOpacity(0.1)),
                   ),
-                  child: const Icon(Icons.arrow_back_ios_new,
-                      color: AppColors.primary, size: 16),
+                  child: const Icon(Icons.arrow_back_ios_new, color: AppColors.primary, size: 16),
                 ),
               ),
               const SizedBox(width: 15),
@@ -233,13 +229,17 @@ class _MenuPageState extends State<MenuPage> {
               ),
             ],
           ),
-          // Panah kanan → ke halaman Minuman
           GestureDetector(
             onTap: () {
               HapticFeedback.lightImpact();
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (_) => const PaMenuJenisMinuman()),
+                MaterialPageRoute(
+                  builder: (_) => PaMenuJenisMinuman(
+                    keranjang: widget.keranjang,
+                    onAddToCart: widget.onAddToCart,
+                  ),
+                ),
               );
             },
             child: Container(
@@ -249,8 +249,7 @@ class _MenuPageState extends State<MenuPage> {
                 shape: BoxShape.circle,
                 border: Border.all(color: AppColors.primary.withOpacity(0.1)),
               ),
-              child: const Icon(Icons.arrow_forward_ios_rounded,
-                  color: AppColors.primary, size: 16),
+              child: const Icon(Icons.arrow_forward_ios_rounded, color: AppColors.primary, size: 16),
             ),
           ),
         ],
@@ -326,8 +325,7 @@ class _MenuPageState extends State<MenuPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.search_off_rounded,
-                    size: 52, color: AppColors.primary.withOpacity(0.2)),
+                Icon(Icons.search_off_rounded, size: 52, color: AppColors.primary.withOpacity(0.2)),
                 const SizedBox(height: 10),
                 Text('Menu tidak ditemukan',
                     style: TextStyle(color: AppColors.primary.withOpacity(0.4), fontSize: 15)),
@@ -354,7 +352,7 @@ class _MenuPageState extends State<MenuPage> {
           crossAxisCount: crossAxisCount,
           mainAxisSpacing: 14,
           crossAxisSpacing: 14,
-          childAspectRatio: 0.8,
+          childAspectRatio: 0.75,
         ),
       ),
     );
@@ -372,7 +370,7 @@ class _MenuPageState extends State<MenuPage> {
         children: [
           _NavItem(icon: Icons.home_rounded,         index: 0, currentIndex: _currentIndex, onTap: _onNavTap),
           _NavItem(icon: Icons.search_rounded,       index: 1, currentIndex: _currentIndex, onTap: _onNavTap),
-          _NavItem(icon: Icons.shopping_bag_rounded, index: 2, currentIndex: _currentIndex, badgeCount: _totalCartItems, onTap: _onNavTap),
+          _NavItem(icon: Icons.shopping_bag_rounded, index: 2, currentIndex: _currentIndex, onTap: _onNavTap, badgeCount: _keranjangCount),
           _NavItem(icon: Icons.person_rounded,       index: 3, currentIndex: _currentIndex, onTap: _onNavTap),
         ],
       ),
@@ -402,7 +400,7 @@ class _FoodCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(18),
-          boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 12, offset: const Offset(0, 4))],
+          boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.15), blurRadius: 12, offset: const Offset(0, 4))],
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(18),
@@ -415,41 +413,68 @@ class _FoodCard extends StatelessWidget {
                         color: AppColors.primaryLighter,
                         child: Center(child: Icon(Icons.broken_image_rounded, color: AppColors.primary.withOpacity(0.3), size: 40)),
                       ))
-                  : Container(color: AppColors.primaryLighter,
+                  : Container(
+                      color: AppColors.primaryLighter,
                       child: const Center(child: Icon(Icons.fastfood, color: AppColors.primary, size: 40))),
               Positioned(
                 bottom: 0, left: 0, right: 0,
                 child: Container(
-                  padding: const EdgeInsets.fromLTRB(10, 30, 10, 10),
+                  padding: const EdgeInsets.fromLTRB(10, 40, 10, 10),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [Colors.white.withOpacity(0), Colors.white.withOpacity(0.85), AppColors.white],
+                      colors: [
+                        Colors.transparent,
+                        const Color(0xFF8A4607).withOpacity(0.6),
+                        const Color(0xFF5C2D00).withOpacity(0.92),
+                      ],
                     ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(item.nama, style: const TextStyle(color: AppColors.primary, fontSize: 13, fontWeight: FontWeight.w700), maxLines: 2, overflow: TextOverflow.ellipsis),
+                      Text(
+                        item.nama,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          shadows: [Shadow(color: Colors.black26, blurRadius: 4)],
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       const SizedBox(height: 2),
-                      Text('IDR ${item.harga}', style: TextStyle(color: AppColors.primary.withOpacity(0.6), fontSize: 11, fontWeight: FontWeight.w500)),
+                      Text(
+                        'IDR ${item.harga}',
+                        style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w500),
+                      ),
                       const SizedBox(height: 8),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Row(children: [
-                            Container(width: 6, height: 6, decoration: BoxDecoration(color: item.tersedia ? Colors.green : Colors.red, shape: BoxShape.circle)),
-                            const SizedBox(width: 4),
-                            Text(item.tersedia ? 'Tersedia' : 'Habis', style: TextStyle(color: AppColors.primary.withOpacity(0.5), fontSize: 10)),
+                            Container(
+                              width: 7, height: 7,
+                              decoration: BoxDecoration(
+                                color: item.tersedia ? Colors.greenAccent : Colors.redAccent,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              item.tersedia ? 'Tersedia' : 'Habis',
+                              style: const TextStyle(color: Colors.white70, fontSize: 10),
+                            ),
                           ]),
                           GestureDetector(
                             onTap: onAddToCart,
                             child: Container(
-                              width: 28, height: 28,
-                              decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
-                              child: const Icon(Icons.add_rounded, color: Colors.white, size: 18),
+                              width: 30, height: 30,
+                              decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                              child: const Icon(Icons.add_rounded, color: AppColors.primary, size: 20),
                             ),
                           ),
                         ],
@@ -541,12 +566,21 @@ class _DetailSheetState extends State<_DetailSheet> {
   Widget build(BuildContext context) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.60,
-      decoration: const BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
+      decoration: const BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
       child: Column(
         children: [
           Padding(
             padding: const EdgeInsets.only(top: 10),
-            child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.15), borderRadius: BorderRadius.circular(10))),
+            child: Container(
+              width: 40, height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
           ),
           Expanded(
             child: SingleChildScrollView(
@@ -567,24 +601,39 @@ class _DetailSheetState extends State<_DetailSheet> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(widget.item.nama, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.primary)),
+                        Text(widget.item.nama,
+                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.primary)),
                         const SizedBox(height: 5),
-                        Text('IDR ${widget.item.harga}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.primary)),
+                        Text('IDR ${widget.item.harga}',
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.primary)),
                         const SizedBox(height: 15),
-                        Text(widget.item.deskripsi.isNotEmpty ? widget.item.deskripsi : 'Tidak ada deskripsi.',
-                            style: TextStyle(color: AppColors.primary.withOpacity(0.6), height: 1.5, fontSize: 13)),
+                        Text(
+                          widget.item.deskripsi.isNotEmpty ? widget.item.deskripsi : 'Tidak ada deskripsi.',
+                          style: TextStyle(color: AppColors.primary.withOpacity(0.6), height: 1.5, fontSize: 13),
+                        ),
                         const SizedBox(height: 25),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('Jumlah', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.primary)),
+                            const Text('Jumlah',
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.primary)),
                             Container(
-                              decoration: BoxDecoration(color: AppColors.primaryLighter, borderRadius: BorderRadius.circular(10)),
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryLighter,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
                               child: Row(
                                 children: [
-                                  IconButton(onPressed: () => setState(() { if (_quantity > 1) _quantity--; }), icon: const Icon(Icons.remove, color: AppColors.primary)),
-                                  Text('$_quantity', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.primary)),
-                                  IconButton(onPressed: () => setState(() => _quantity++), icon: const Icon(Icons.add, color: AppColors.primary)),
+                                  IconButton(
+                                    onPressed: () => setState(() { if (_quantity > 1) _quantity--; }),
+                                    icon: const Icon(Icons.remove, color: AppColors.primary),
+                                  ),
+                                  Text('$_quantity',
+                                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.primary)),
+                                  IconButton(
+                                    onPressed: () => setState(() => _quantity++),
+                                    icon: const Icon(Icons.add, color: AppColors.primary),
+                                  ),
                                 ],
                               ),
                             ),
@@ -595,8 +644,13 @@ class _DetailSheetState extends State<_DetailSheet> {
                           width: double.infinity, height: 50,
                           child: ElevatedButton(
                             onPressed: () => widget.onAddToCart(_quantity),
-                            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
-                            child: const Text('Tambah ke Keranjang', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                            ),
+                            child: const Text('Tambah ke Keranjang',
+                                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
                           ),
                         ),
                       ],

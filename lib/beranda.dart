@@ -6,7 +6,7 @@ import 'katergorimakanan.dart' as makanan;
 import 'kategoriminuman.dart';
 import 'snack.dart' as snack;
 import 'profil_pelanggan.dart';
-import 'login.dart';
+import 'detailkeranjang.dart'; // sesuaikan path import
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -36,6 +36,11 @@ class _PuBerandaState extends State<PuBeranda> {
   String _searchQuery        = '';
   String _selectedCategory   = 'Semua';
   final TextEditingController _searchController = TextEditingController();
+
+  // ===== KERANJANG =====
+  final List<KeranjangItem> _keranjang = [];
+
+  int get _keranjangCount => _keranjang.fold(0, (sum, item) => sum + item.qty);
 
   List<MenuModel> get _filteredProducts {
     return _allMenus.where((m) {
@@ -89,7 +94,24 @@ class _PuBerandaState extends State<PuBeranda> {
   }
 
   void _addToCart(MenuModel item) {
+    if (!item.tersedia) return;
     HapticFeedback.lightImpact();
+
+    setState(() {
+      final existing = _keranjang.where((k) => k.menuId == item.id).toList();
+      if (existing.isNotEmpty) {
+        existing.first.qty++;
+      } else {
+        _keranjang.add(KeranjangItem(
+          menuId: int.tryParse(item.id) ?? 0,
+          namaMenu: item.nama,
+          harga: item.harga,
+          qty: 1,
+          foto: item.foto,
+        ));
+      }
+    });
+
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
@@ -104,24 +126,50 @@ class _PuBerandaState extends State<PuBeranda> {
   }
 
   void _onNavTap(int index) {
-  if (index == 0) {
-    // Sudah di beranda, scroll ke atas saja
-    setState(() => _currentIndex = 0);
     HapticFeedback.selectionClick();
-    return;
+    if (index == 2) {
+      // Buka keranjang
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PuDetailKeranjang(
+            items: List.from(_keranjang),
+            userId: 0,             // ganti dengan userId dari session/SharedPreferences
+            namaPelanggan: 'User', // ganti dengan nama user dari session
+          ),
+        ),
+      ).then((_) {
+         setState(() => _keranjang.clear());
+        // setState(() => _keranjang.clear());
+      });
+      return;
+    }
+    setState(() => _currentIndex = index);
   }
-  setState(() => _currentIndex = index);
-  HapticFeedback.selectionClick();
-}
 
   void _navigateToCategory(String kategori) {
     HapticFeedback.lightImpact();
     if (kategori == 'Makanan') {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const makanan.MenuPage()));
+      Navigator.push(context, MaterialPageRoute(
+        builder: (_) => makanan.MenuPage(
+          keranjang: _keranjang,
+          onAddToCart: _addToCart,
+        ),
+      ));
     } else if (kategori == 'Minuman') {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const PaMenuJenisMinuman()));
+      Navigator.push(context, MaterialPageRoute(
+        builder: (_) => PaMenuJenisMinuman(
+          keranjang: _keranjang,
+          onAddToCart: _addToCart,
+        ),
+      ));
     } else if (kategori == 'Snack') {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const snack.MenuPage()));
+      Navigator.push(context, MaterialPageRoute(
+        builder: (_) => snack.MenuPage(
+          keranjang: _keranjang,
+          onAddToCart: _addToCart,
+        ),
+      ));
     }
   }
 
@@ -129,41 +177,41 @@ class _PuBerandaState extends State<PuBeranda> {
   //  UI / BUILD
   // =====================
   @override
-Widget build(BuildContext context) {
-  // Kalau profil, return ProfilePage langsung (dia punya navbar sendiri)
-  if (_currentIndex == 3) {
-    return const ProfilePage();
+  Widget build(BuildContext context) {
+    if (_currentIndex == 3) {
+      return const ProfilePage();
+    }
+
+    return Scaffold(
+      backgroundColor: AppColors.white,
+      body: SafeArea(
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+            : LayoutBuilder(
+                builder: (context, constraints) {
+                  return CustomScrollView(
+                    slivers: [
+                      SliverToBoxAdapter(child: _buildHeader(context)),
+                      const SliverToBoxAdapter(child: SizedBox(height: 10)),
+                      SliverToBoxAdapter(child: _buildSearchBar(context)),
+                      const SliverToBoxAdapter(child: SizedBox(height: 15)),
+                      SliverToBoxAdapter(child: _buildPromoBanner(context)),
+                      const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                      SliverToBoxAdapter(child: _buildCategories(context)),
+                      const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                      SliverToBoxAdapter(child: _buildSectionTitle(context)),
+                      const SliverToBoxAdapter(child: SizedBox(height: 10)),
+                      _buildProductGrid(context, constraints.maxWidth),
+                      const SliverToBoxAdapter(child: SizedBox(height: 80)),
+                    ],
+                  );
+                },
+              ),
+      ),
+      bottomNavigationBar: _buildBottomNavBar(),
+    );
   }
 
-  return Scaffold(
-    backgroundColor: AppColors.white,
-    body: SafeArea(
-      child: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : LayoutBuilder(
-              builder: (context, constraints) {
-                return CustomScrollView(
-                  slivers: [
-                    SliverToBoxAdapter(child: _buildHeader(context)),
-                    const SliverToBoxAdapter(child: SizedBox(height: 10)),
-                    SliverToBoxAdapter(child: _buildSearchBar(context)),
-                    const SliverToBoxAdapter(child: SizedBox(height: 15)),
-                    SliverToBoxAdapter(child: _buildPromoBanner(context)),
-                    const SliverToBoxAdapter(child: SizedBox(height: 20)),
-                    SliverToBoxAdapter(child: _buildCategories(context)),
-                    const SliverToBoxAdapter(child: SizedBox(height: 20)),
-                    SliverToBoxAdapter(child: _buildSectionTitle(context)),
-                    const SliverToBoxAdapter(child: SizedBox(height: 10)),
-                    _buildProductGrid(context, constraints.maxWidth),
-                    const SliverToBoxAdapter(child: SizedBox(height: 80)),
-                  ],
-                );
-              },
-            ),
-    ),
-    bottomNavigationBar: _buildBottomNavBar(),
-  );
-}
   Widget _buildHeader(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
@@ -195,7 +243,6 @@ Widget build(BuildContext context) {
               ],
             ),
           ),
-          // Tombol refresh
           GestureDetector(
             onTap: _loadData,
             child: Container(
@@ -276,8 +323,9 @@ Widget build(BuildContext context) {
               child: Container(
                 width: 140, height: 140,
                 decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.06)),
+                  shape: BoxShape.circle,
+                  color: Colors.white.withOpacity(0.06),
+                ),
               ),
             ),
             Padding(
@@ -343,7 +391,6 @@ Widget build(BuildContext context) {
           return GestureDetector(
             onTap: () {
               setState(() => _selectedCategory = label);
-              // Navigasi ke halaman kategori jika bukan 'Semua'
               if (label != 'Semua') _navigateToCategory(label);
             },
             child: Column(
@@ -406,8 +453,8 @@ Widget build(BuildContext context) {
   }
 
   Widget _buildProductGrid(BuildContext context, double screenWidth) {
-    final products       = _filteredProducts;
-    int crossAxisCount   = _getCrossAxisCount(screenWidth);
+    final products     = _filteredProducts;
+    int crossAxisCount = _getCrossAxisCount(screenWidth);
 
     if (products.isEmpty) {
       return SliverToBoxAdapter(
@@ -444,7 +491,7 @@ Widget build(BuildContext context) {
           crossAxisCount: crossAxisCount,
           mainAxisSpacing: 14,
           crossAxisSpacing: 14,
-          childAspectRatio: 0.8,
+          childAspectRatio: 0.75,
         ),
       ),
     );
@@ -465,7 +512,7 @@ Widget build(BuildContext context) {
         children: [
           _NavItem(icon: Icons.home_rounded,         index: 0, currentIndex: _currentIndex, onTap: _onNavTap),
           _NavItem(icon: Icons.search_rounded,       index: 1, currentIndex: _currentIndex, onTap: _onNavTap),
-          _NavItem(icon: Icons.shopping_bag_rounded, index: 2, currentIndex: _currentIndex, onTap: _onNavTap),
+          _NavItem(icon: Icons.shopping_bag_rounded, index: 2, currentIndex: _currentIndex, onTap: _onNavTap, badgeCount: _keranjangCount),
           _NavItem(icon: Icons.person_rounded,       index: 3, currentIndex: _currentIndex, onTap: _onNavTap),
         ],
       ),
@@ -493,7 +540,7 @@ class _MenuCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.1),
+            color: AppColors.primary.withOpacity(0.15),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -504,7 +551,6 @@ class _MenuCard extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // Foto dari database
             imageUrl.isNotEmpty
                 ? Image.network(
                     imageUrl,
@@ -523,20 +569,18 @@ class _MenuCard extends StatelessWidget {
                       child: Icon(Icons.fastfood, color: AppColors.primary, size: 40),
                     ),
                   ),
-
-            // Gradient + info bawah
             Positioned(
               bottom: 0, left: 0, right: 0,
               child: Container(
-                padding: const EdgeInsets.fromLTRB(10, 30, 10, 10),
+                padding: const EdgeInsets.fromLTRB(10, 40, 10, 10),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.white.withOpacity(0),
-                      Colors.white.withOpacity(0.85),
-                      AppColors.white,
+                      Colors.transparent,
+                      const Color(0xFF8A4607).withOpacity(0.6),
+                      const Color(0xFF5C2D00).withOpacity(0.92),
                     ],
                   ),
                 ),
@@ -547,9 +591,10 @@ class _MenuCard extends StatelessWidget {
                     Text(
                       item.nama,
                       style: const TextStyle(
-                        color: AppColors.primary,
+                        color: Colors.white,
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
+                        shadows: [Shadow(color: Colors.black26, blurRadius: 4)],
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -557,10 +602,11 @@ class _MenuCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       'IDR ${item.harga}',
-                      style: TextStyle(
-                          color: AppColors.primary.withOpacity(0.6),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Row(
@@ -569,31 +615,29 @@ class _MenuCard extends StatelessWidget {
                         Row(
                           children: [
                             Container(
-                              width: 6, height: 6,
+                              width: 7, height: 7,
                               decoration: BoxDecoration(
-                                color: item.tersedia ? Colors.green : Colors.red,
+                                color: item.tersedia ? Colors.greenAccent : Colors.redAccent,
                                 shape: BoxShape.circle,
                               ),
                             ),
-                            const SizedBox(width: 4),
+                            const SizedBox(width: 5),
                             Text(
                               item.tersedia ? 'Tersedia' : 'Habis',
-                              style: TextStyle(
-                                  color: AppColors.primary.withOpacity(0.5),
-                                  fontSize: 10),
+                              style: const TextStyle(color: Colors.white70, fontSize: 10),
                             ),
                           ],
                         ),
                         GestureDetector(
                           onTap: onAddToCart,
                           child: Container(
-                            width: 28, height: 28,
+                            width: 30, height: 30,
                             decoration: const BoxDecoration(
-                              color: AppColors.primary,
+                              color: Colors.white,
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(Icons.add_rounded,
-                                color: Colors.white, size: 18),
+                                color: AppColors.primary, size: 20),
                           ),
                         ),
                       ],
@@ -658,7 +702,9 @@ class _NavItem extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(4),
                   decoration: const BoxDecoration(
-                      color: Colors.red, shape: BoxShape.circle),
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
                   child: Text('$badgeCount',
                       style: const TextStyle(
                           color: Colors.white,

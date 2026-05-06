@@ -1,56 +1,43 @@
 import 'package:flutter/material.dart';
-import 'beranda.dart';
-import 'kasiradmin.dart';
 import 'services/api_service.dart';
 import 'utils/session_manager.dart';
-import 'register.dart';
+import 'beranda.dart';
+import 'login.dart';
 
-class FigmaToCodeApp extends StatelessWidget {
-  const FigmaToCodeApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        fontFamily: 'Poppins',
-        useMaterial3: true,
-      ),
-      home: const Scaffold(
-        body: LoginPage(),
-      ),
-    );
-  }
-}
-
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class RegisterPage extends StatefulWidget {
+  const RegisterPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
-  bool isUserSelected = true;
-  bool _isPressed = false;
-  bool _isRememberMe = false;
-  bool _isLoading = false;
+class _RegisterPageState extends State<RegisterPage> {
+  bool isUserSelected   = true;
+  bool _isPressed       = false;
+  bool _isRememberMe    = false;
+  bool _isLoading       = false;
   bool _obscurePassword = true;
+  bool _obscureConfirm  = true;
 
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final Color primary = const Color(0xFFB86B2B);
+  final TextEditingController _namaCtrl    = TextEditingController();
+  final TextEditingController _emailCtrl   = TextEditingController();
+  final TextEditingController _passCtrl    = TextEditingController();
+  final TextEditingController _confirmCtrl = TextEditingController();
+  final GlobalKey<FormState> _formKey      = GlobalKey<FormState>();
+
+  final Color primary  = const Color(0xFFB86B2B);
   final Color textDark = const Color(0xFF6D4C41);
 
   @override
   void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
+    _namaCtrl.dispose();
+    _emailCtrl.dispose();
+    _passCtrl.dispose();
+    _confirmCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _handleLogin() async {
+  Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
 
     FocusScope.of(context).unfocus();
@@ -58,9 +45,10 @@ class _LoginPageState extends State<LoginPage> {
 
     String role = isUserSelected ? 'user' : 'admin';
 
-    final response = await ApiService.login(
-      email: _emailController.text.trim(),
-      password: _passwordController.text,
+    final response = await ApiService.register(
+      namaLengkap: _namaCtrl.text.trim(),
+      email: _emailCtrl.text.trim(),
+      password: _passCtrl.text,
       role: role,
     );
 
@@ -73,24 +61,17 @@ class _LoginPageState extends State<LoginPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(role == 'admin' ? 'Selamat datang Admin' : 'Selamat datang user'),
+          content: const Text('Registrasi berhasil!'),
           backgroundColor: Colors.green,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
 
-      if (role == 'admin') {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const KasirPage()),
-        );
-      } else {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const PuBeranda()),
-        );
-      }
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const PuBeranda()),
+      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -136,8 +117,7 @@ class _LoginPageState extends State<LoginPage> {
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(
-                              color: primary.withOpacity(0.2), width: 2),
+                          border: Border.all(color: primary.withOpacity(0.2), width: 2),
                           color: Colors.white,
                         ),
                         child: const CircleAvatar(
@@ -148,7 +128,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 24),
                       Text(
-                        'Nettyzen Access',
+                        'PU- Register',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 28,
@@ -169,72 +149,95 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 50),
-                  _buildCustomToggle(),
-                  const SizedBox(height: 30),
-
-                  _buildInputField(
-                    label: "Email",
-                    hint: "masukkan email",
-                    icon: Icons.person_outline,
-                    controller: _emailController,
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Email tidak boleh kosong';
-                      }
-                      if (!value.contains('@')) {
-                        return 'Format email tidak valid';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  _buildInputField(
-                    label: "Password",
-                    hint: "masukan password",
-                    icon: Icons.lock_outline,
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    isPassword: true,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Password tidak boleh kosong';
-                      }
-                      if (value.length < 6) {
-                        return 'Password minimal 6 karakter';
-                      }
-                      return null;
-                    },
-                    onToggleObscure: () {
-                      setState(() {
-                        _obscurePassword = !_obscurePassword;
-                      });
-                    },
-                  ),
-
-                  _buildRememberAndForgot(),
                   const SizedBox(height: 40),
 
-                  _buildLoginButton(context),
+                  // === TOGGLE USER / ADMIN ===
+                  _buildCustomToggle(),
+                  const SizedBox(height: 25),
 
-                  // === REGISTER LINK ===
+                  // === FIELD NAMA LENGKAP ===
+                  _buildInputField(
+                    label: "Nama Lengkap",
+                    hint: "Masukkan nama lengkap anda",
+                    icon: Icons.person_outline,
+                    controller: _namaCtrl,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Nama tidak boleh kosong';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  // === FIELD EMAIL ===
+                  _buildInputField(
+                    label: "Email",
+                    hint: "ambarya@gmail.com",
+                    icon: Icons.email_outlined,
+                    controller: _emailCtrl,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) return 'Email tidak boleh kosong';
+                      if (!value.contains('@')) return 'Format email tidak valid';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  // === FIELD PASSWORD ===
+                  _buildInputField(
+                    label: "Password",
+                    hint: "Masukkan password anda",
+                    icon: Icons.lock_outline,
+                    controller: _passCtrl,
+                    obscureText: _obscurePassword,
+                    isPassword: true,
+                    onToggleObscure: () => setState(() => _obscurePassword = !_obscurePassword),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) return 'Password tidak boleh kosong';
+                      if (value.length < 6) return 'Password minimal 6 karakter';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  // === FIELD KONFIRMASI PASSWORD ===
+                  _buildInputField(
+                    label: "Konfirmasi Password",
+                    hint: "Konfirmasi password",
+                    icon: Icons.lock_outline,
+                    controller: _confirmCtrl,
+                    obscureText: _obscureConfirm,
+                    isPassword: true,
+                    onToggleObscure: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) return 'Konfirmasi password tidak boleh kosong';
+                      if (value != _passCtrl.text) return 'Password tidak cocok';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  // === INGAT SAYA ===
+                  _buildRememberMe(),
+                  const SizedBox(height: 30),
+
+                  // === TOMBOL DAFTAR ===
+                  _buildRegisterButton(),
                   const SizedBox(height: 20),
+
+                  // === SUDAH PUNYA AKUN ===
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        'Belum punya akun? ',
-                        style: TextStyle(color: textDark, fontSize: 13),
-                      ),
+                      Text('Sudah punya akun? ', style: TextStyle(color: textDark, fontSize: 13)),
                       GestureDetector(
-                        onTap: () => Navigator.push(
+                        onTap: () => Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(
-                            builder: (_) => const Scaffold(body: RegisterPage()),
-                          ),
+                          MaterialPageRoute(builder: (_) => const Scaffold(body: LoginPage())),
                         ),
                         child: Text(
-                          'Daftar',
+                          'Login',
                           style: TextStyle(
                             color: primary,
                             fontSize: 13,
@@ -244,6 +247,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
@@ -260,13 +264,7 @@ class _LoginPageState extends State<LoginPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          )
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Row(
         children: [
@@ -280,13 +278,10 @@ class _LoginPageState extends State<LoginPage> {
                   borderRadius: const BorderRadius.horizontal(left: Radius.circular(30)),
                 ),
                 alignment: Alignment.center,
-                child: Text(
-                  "User",
-                  style: TextStyle(
-                    color: isUserSelected ? Colors.white : textDark,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                child: Text('User',
+                    style: TextStyle(
+                        color: isUserSelected ? Colors.white : textDark,
+                        fontWeight: FontWeight.w600)),
               ),
             ),
           ),
@@ -300,13 +295,10 @@ class _LoginPageState extends State<LoginPage> {
                   borderRadius: const BorderRadius.horizontal(right: Radius.circular(30)),
                 ),
                 alignment: Alignment.center,
-                child: Text(
-                  "Admin",
-                  style: TextStyle(
-                    color: !isUserSelected ? Colors.white : textDark,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                child: Text('Admin',
+                    style: TextStyle(
+                        color: !isUserSelected ? Colors.white : textDark,
+                        fontWeight: FontWeight.w600)),
               ),
             ),
           ),
@@ -321,33 +313,20 @@ class _LoginPageState extends State<LoginPage> {
     required IconData icon,
     TextEditingController? controller,
     String? Function(String?)? validator,
-    bool obscureText = false,
-    bool isPassword = false,
+    bool obscureText    = false,
+    bool isPassword     = false,
     VoidCallback? onToggleObscure,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: textDark,
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-          ),
-        ),
+        Text(label, style: TextStyle(color: textDark, fontWeight: FontWeight.bold, fontSize: 14)),
         const SizedBox(height: 10),
         Container(
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 5,
-                offset: const Offset(0, 2),
-              )
-            ],
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5, offset: const Offset(0, 2))],
           ),
           child: TextFormField(
             controller: controller,
@@ -358,17 +337,13 @@ class _LoginPageState extends State<LoginPage> {
               prefixIcon: Icon(icon, color: primary, size: 22),
               suffixIcon: isPassword
                   ? IconButton(
-                      icon: Icon(
-                        obscureText ? Icons.visibility_off : Icons.visibility,
-                        color: Colors.grey,
-                        size: 20,
-                      ),
+                      icon: Icon(obscureText ? Icons.visibility_off : Icons.visibility,
+                          color: Colors.grey, size: 20),
                       onPressed: onToggleObscure,
                     )
                   : null,
               border: InputBorder.none,
-              contentPadding:
-                  const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+              contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
               errorStyle: const TextStyle(fontSize: 12, height: 0.5),
             ),
           ),
@@ -377,35 +352,30 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _buildRememberAndForgot() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 15.0),
-      child: Row(
-        children: [
-          SizedBox(
-            height: 24,
-            width: 24,
-            child: Checkbox(
-              value: _isRememberMe,
-              onChanged: (value) =>
-                  setState(() => _isRememberMe = value ?? false),
-              activeColor: primary,
-            ),
+  Widget _buildRememberMe() {
+    return Row(
+      children: [
+        SizedBox(
+          height: 24,
+          width: 24,
+          child: Checkbox(
+            value: _isRememberMe,
+            onChanged: (value) => setState(() => _isRememberMe = value ?? false),
+            activeColor: primary,
           ),
-          const SizedBox(width: 10),
-          Text("Ingat Saya",
-              style: TextStyle(color: textDark, fontSize: 13)),
-        ],
-      ),
+        ),
+        const SizedBox(width: 10),
+        Text("Ingat Saya", style: TextStyle(color: textDark, fontSize: 13)),
+      ],
     );
   }
 
-  Widget _buildLoginButton(BuildContext context) {
+  Widget _buildRegisterButton() {
     return GestureDetector(
       onTapDown: _isLoading ? null : (_) => setState(() => _isPressed = true),
       onTapUp: _isLoading ? null : (_) => setState(() => _isPressed = false),
       onTapCancel: _isLoading ? null : () => setState(() => _isPressed = false),
-      onTap: _isLoading ? null : _handleLogin,
+      onTap: _isLoading ? null : _handleRegister,
       child: AnimatedScale(
         scale: _isPressed ? 0.96 : 1.0,
         duration: const Duration(milliseconds: 150),
@@ -420,26 +390,17 @@ class _LoginPageState extends State<LoginPage> {
                 primary,
               ],
             ),
-            boxShadow: [
-              BoxShadow(
-                color: primary.withOpacity(0.3),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
-              ),
-            ],
+            boxShadow: [BoxShadow(color: primary.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))],
           ),
           child: Center(
             child: _isLoading
                 ? const SizedBox(
                     width: 24,
                     height: 24,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2.5,
-                    ),
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
                   )
                 : const Text(
-                    "LOGIN",
+                    "DAFTAR",
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 16,
