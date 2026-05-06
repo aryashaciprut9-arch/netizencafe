@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'beranda.dart'; // TAMBAH IMPORT
 
 // ─── Data Model ───────────────────────────────────────────────
 class ProfileMenuItem {
@@ -80,13 +81,11 @@ class _ProfilePageState extends State<ProfilePage> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFB50000),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             child: const Text(
               'Keluar',
-              style:
-                  TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -150,7 +149,6 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // ── Main Content ──
   Widget _buildContent(double padding) {
     return SingleChildScrollView(
       padding: EdgeInsets.symmetric(horizontal: padding, vertical: 24),
@@ -171,7 +169,6 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // ── Header ──
   Widget _buildHeader() {
     return Column(
       children: [
@@ -190,8 +187,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ],
           ),
-          child: const Icon(Icons.person_rounded,
-              size: 44, color: Color(0xFF8A4607)),
+          child: const Icon(Icons.person_rounded, size: 44, color: Color(0xFF8A4607)),
         ),
         const SizedBox(height: 14),
         Text(
@@ -215,8 +211,7 @@ class _ProfilePageState extends State<ProfilePage> {
         GestureDetector(
           onTap: () => _showSnackBar('Membuka Edit Profil...'),
           child: Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 7),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 7),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(25),
@@ -243,7 +238,6 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // ── Stats Row ──
   Widget _buildStatsRow() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8),
@@ -269,23 +263,9 @@ class _ProfilePageState extends State<ProfilePage> {
     return Expanded(
       child: Column(
         children: [
-          Text(
-            value,
-            style: const TextStyle(
-              color: Color(0xFF8A4607),
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+          Text(value, style: const TextStyle(color: Color(0xFF8A4607), fontSize: 20, fontWeight: FontWeight.w700)),
           const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Color(0xFF8A4607),
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          Text(label, style: const TextStyle(color: Color(0xFF8A4607), fontSize: 13, fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -295,7 +275,6 @@ class _ProfilePageState extends State<ProfilePage> {
     return Container(height: 40, width: 1, color: const Color(0xFFEAEAEA));
   }
 
-  // ── Menu List ──
   Widget _buildMenuList() {
     return Container(
       decoration: BoxDecoration(
@@ -315,44 +294,32 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _menuTile(ProfileMenuItem item, bool isLast) {
     final isNotification = item.label == 'Notifikasi';
-
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: item.onTap,
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: isLast
               ? null
               : const BoxDecoration(
-                  border: Border(
-                      bottom:
-                          BorderSide(color: Color(0xFFF0E8E4), width: 1)),
+                  border: Border(bottom: BorderSide(color: Color(0xFFF0E8E4), width: 1)),
                 ),
           child: Row(
             children: [
               Container(
-                width: 38,
-                height: 38,
+                width: 38, height: 38,
                 decoration: BoxDecoration(
                   color: const Color(0xFFF5CC9E).withOpacity(0.4),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(item.icon,
-                    size: 20, color: const Color(0xFF8A4607)),
+                child: Icon(item.icon, size: 20, color: const Color(0xFF8A4607)),
               ),
               const SizedBox(width: 14),
               Expanded(
-                child: Text(
-                  item.label,
-                  style: const TextStyle(
-                    color: Color(0xFF8A4607),
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+                child: Text(item.label,
+                    style: const TextStyle(color: Color(0xFF8A4607), fontSize: 15, fontWeight: FontWeight.w500)),
               ),
               if (isNotification) ...[
                 AnimatedSwitch(
@@ -361,8 +328,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   activeColor: const Color(0xFF8A4607),
                 ),
               ] else ...[
-                const Icon(Icons.chevron_right_rounded,
-                    size: 22, color: Color(0xFF8B6C60)),
+                const Icon(Icons.chevron_right_rounded, size: 22, color: Color(0xFF8B6C60)),
               ],
             ],
           ),
@@ -371,20 +337,17 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // ── Quick Access Cards ──
   Widget _buildQuickAccessCards() {
     return Row(
       children: [
-        Expanded(
-            child: _quickCard(
+        Expanded(child: _quickCard(
           icon: Icons.receipt_long_rounded,
           title: 'Pesanan Saya',
           subtitle: 'Lihat Riwayat',
           onTap: () => _showSnackBar('Membuka Pesanan Saya...'),
         )),
         const SizedBox(width: 12),
-        Expanded(
-            child: _quickCard(
+        Expanded(child: _quickCard(
           icon: Icons.favorite_outline_rounded,
           title: 'Favorite',
           subtitle: 'Menu Kesukaan',
@@ -403,57 +366,33 @@ class _ProfilePageState extends State<ProfilePage> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 6,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 6, offset: const Offset(0, 4))],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              width: 44,
-              height: 36,
+              width: 44, height: 36,
               decoration: BoxDecoration(
                 color: const Color(0xFFF5CC9E).withOpacity(0.4),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child:
-                  Icon(icon, size: 22, color: const Color(0xFF8A4607)),
+              child: Icon(icon, size: 22, color: const Color(0xFF8A4607)),
             ),
             const SizedBox(height: 10),
-            Text(
-              title,
-              style: const TextStyle(
-                color: Color(0xFF8A4607),
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            Text(title, style: const TextStyle(color: Color(0xFF8A4607), fontSize: 15, fontWeight: FontWeight.w600)),
             const SizedBox(height: 2),
-            Text(
-              subtitle,
-              style: const TextStyle(
-                color: Color(0xFFA47C7A),
-                fontSize: 10,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
+            Text(subtitle, style: const TextStyle(color: Color(0xFFA47C7A), fontSize: 10, fontWeight: FontWeight.w500)),
           ],
         ),
       ),
     );
   }
 
-  // ── Logout Button ──
   Widget _buildLogoutButton() {
     return GestureDetector(
       onTap: _showLogoutDialog,
@@ -463,83 +402,59 @@ class _ProfilePageState extends State<ProfilePage> {
         decoration: BoxDecoration(
           color: const Color(0xFFB50000),
           borderRadius: BorderRadius.circular(30),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFFB50000).withOpacity(0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          boxShadow: [BoxShadow(color: const Color(0xFFB50000).withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))],
         ),
         child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.logout_rounded, color: Colors.white, size: 22),
             SizedBox(width: 8),
-            Text(
-              'KELUAR',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.5,
-              ),
-            ),
+            Text('KELUAR', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700, letterSpacing: 1.5)),
           ],
         ),
       ),
     );
   }
 
-  // ── Bottom Navigation ──
   Widget _buildBottomNav() {
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 4, 12, 12),
       decoration: ShapeDecoration(
         color: const Color(0xFFF5CC9E),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(35),
-        ),
-        shadows: const [
-          BoxShadow(
-            color: Color(0x3F000000),
-            blurRadius: 6,
-            offset: Offset(0, 4),
-          ),
-        ],
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(35)),
+        shadows: const [BoxShadow(color: Color(0x3F000000), blurRadius: 6, offset: Offset(0, 4))],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _navItem(Icons.home_outlined, Icons.home_rounded, 'Home', 0),
-          _navItem(
-              Icons.search_outlined, Icons.search_rounded, 'Cari', 1),
-          _navItem(Icons.shopping_cart_outlined,
-              Icons.shopping_cart_rounded, 'Keranjang', 2),
-          _navItem(Icons.person_outline_rounded, Icons.person_rounded,
-              'Profil', 3),
+          _navItem(Icons.home_outlined,         Icons.home_rounded,         'Home',      0),
+          _navItem(Icons.search_outlined,        Icons.search_rounded,       'Cari',      1),
+          _navItem(Icons.shopping_cart_outlined, Icons.shopping_cart_rounded,'Keranjang', 2),
+          _navItem(Icons.person_outline_rounded, Icons.person_rounded,       'Profil',    3),
         ],
       ),
     );
   }
 
-  Widget _navItem(
-      IconData inactive, IconData active, String label, int index) {
+  Widget _navItem(IconData inactive, IconData active, String label, int index) {
     final isSelected = _selectedNavIndex == index;
     return GestureDetector(
       onTap: () {
-        setState(() => _selectedNavIndex = index);
-        if (index != 3) {
-          _showSnackBar('Halaman $label (segera hadir)');
+        // DIFIX: Home → kembali ke beranda
+        if (index == 0) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (_) => const PuBeranda()),
+            (route) => false,
+          );
+          return;
         }
+        setState(() => _selectedNavIndex = index);
       },
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected
-              ? const Color(0xFF8A4607).withOpacity(0.15)
-              : Colors.transparent,
+          color: isSelected ? const Color(0xFF8A4607).withOpacity(0.15) : Colors.transparent,
           shape: BoxShape.circle,
         ),
         child: Column(
@@ -556,8 +471,7 @@ class _ProfilePageState extends State<ProfilePage> {
               style: TextStyle(
                 color: const Color(0xFF8A4607),
                 fontSize: 10,
-                fontWeight:
-                    isSelected ? FontWeight.w700 : FontWeight.w400,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
               ),
             ),
           ],
