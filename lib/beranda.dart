@@ -1,18 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-<<<<<<< HEAD
-import 'kategoriminuman.dart';
-import 'katergorimakanan.dart';
-import 'search.dart'; // ✅ Import halaman search
-=======
 import 'services/api_services.dart';
 import 'models/menu_models.dart';
 import 'katergorimakanan.dart' as makanan;
 import 'kategoriminuman.dart';
 import 'snack.dart' as snack;
-import 'profil_pelanggan.dart';
-import 'login.dart';
->>>>>>> efb1ba3028692d013ed4dd95a9d12260a8a864b4
+import 'profil_pelanggan.dart'as Profil;  // as di luar petik;
+import 'search.dart'; // IMPORT SEARCH PAGE
+import 'detailkeranjang.dart'; // IMPORT HALAMAN KERANJANG
+import 'cart_provider.dart';  // IMPORT CART PROVIDER
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -96,6 +92,8 @@ class _PuBerandaState extends State<PuBeranda> {
 
   void _addToCart(MenuModel item) {
     HapticFeedback.lightImpact();
+    CartProvider().addFromMenu(item, imageUrl: _buildImageUrl(item.foto));
+    setState(() {}); // refresh badge
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
@@ -109,53 +107,52 @@ class _PuBerandaState extends State<PuBeranda> {
       );
   }
 
-<<<<<<< HEAD
-  void _onNavTap(int index) async {
-    setState(() => _currentIndex = index);
+  // FUNGSI NAVIGASI KE HALAMAN SEARCH
+  void _navigateToSearchPage({String? initialQuery}) {
+    HapticFeedback.lightImpact();
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SearchPage(initialSearchQuery: initialQuery),
+      ),
+    );
+  }
+
+  // FUNGSI NAVIGASI KE HALAMAN PROFIL
+ void _navigateToProfile() {
+  HapticFeedback.lightImpact();
+  Navigator.push(
+    context,
+    MaterialPageRoute(builder: (context) => const Profil.ProfilePage()),
+  ).then((_) {
+    _loadData();
+  });
+}
+
+  void _onNavTap(int index) {
     HapticFeedback.selectionClick();
     
-    // ✅ LOGIKA NAVIGASI BOTTOM NAVIGATION BAR
     if (index == 0) {
-      // Home - tetap di halaman ini (beranda)
+      // Home - tetap di halaman ini
+      setState(() => _currentIndex = 0);
     } else if (index == 1) {
       // Search - navigasi ke halaman search
-      final result = await Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const SearchPage()),
-      );
-      // Optional: jika perlu refresh setelah kembali dari search
-      if (result == true) {
-        setState(() {});
-      }
+      _navigateToSearchPage();
     } else if (index == 2) {
-      // Keranjang
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Fitur keranjang akan segera hadir'),
-          behavior: SnackBarBehavior.floating,
-          duration: Duration(seconds: 1),
-        ),
-      );
+      // Cart - navigasi ke halaman detail keranjang
+      setState(() => _currentIndex = index);
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const PuDetailKeranjang()),
+      ).then((_) {
+        // Kembali ke index home setelah kembali dari keranjang
+        setState(() => _currentIndex = 0);
+      });
     } else if (index == 3) {
-      // Profil
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Fitur profil akan segera hadir'),
-          behavior: SnackBarBehavior.floating,
-          duration: Duration(seconds: 1),
-        ),
-      );
-=======
-  void _onNavTap(int index) {
-  if (index == 0) {
-    // Sudah di beranda, scroll ke atas saja
-    setState(() => _currentIndex = 0);
-    HapticFeedback.selectionClick();
-    return;
+      // Profile - navigasi ke halaman profil
+      _navigateToProfile();
+    }
   }
-  setState(() => _currentIndex = index);
-  HapticFeedback.selectionClick();
-}
 
   void _navigateToCategory(String kategori) {
     HapticFeedback.lightImpact();
@@ -165,7 +162,6 @@ class _PuBerandaState extends State<PuBeranda> {
       Navigator.push(context, MaterialPageRoute(builder: (_) => const PaMenuJenisMinuman()));
     } else if (kategori == 'Snack') {
       Navigator.push(context, MaterialPageRoute(builder: (_) => const snack.MenuPage()));
->>>>>>> efb1ba3028692d013ed4dd95a9d12260a8a864b4
     }
   }
 
@@ -173,41 +169,37 @@ class _PuBerandaState extends State<PuBeranda> {
   //  UI / BUILD
   // =====================
   @override
-Widget build(BuildContext context) {
-  // Kalau profil, return ProfilePage langsung (dia punya navbar sendiri)
-  if (_currentIndex == 3) {
-    return const ProfilePage();
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.white,
+      body: SafeArea(
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+            : LayoutBuilder(
+                builder: (context, constraints) {
+                  return CustomScrollView(
+                    slivers: [
+                      SliverToBoxAdapter(child: _buildHeader(context)),
+                      const SliverToBoxAdapter(child: SizedBox(height: 10)),
+                      SliverToBoxAdapter(child: _buildSearchBar(context)),
+                      const SliverToBoxAdapter(child: SizedBox(height: 15)),
+                      SliverToBoxAdapter(child: _buildPromoBanner(context)),
+                      const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                      SliverToBoxAdapter(child: _buildCategories(context)),
+                      const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                      SliverToBoxAdapter(child: _buildSectionTitle(context)),
+                      const SliverToBoxAdapter(child: SizedBox(height: 10)),
+                      _buildProductGrid(context, constraints.maxWidth),
+                      const SliverToBoxAdapter(child: SizedBox(height: 80)),
+                    ],
+                  );
+                },
+              ),
+      ),
+      bottomNavigationBar: _buildBottomNavBar(),
+    );
   }
 
-  return Scaffold(
-    backgroundColor: AppColors.white,
-    body: SafeArea(
-      child: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : LayoutBuilder(
-              builder: (context, constraints) {
-                return CustomScrollView(
-                  slivers: [
-                    SliverToBoxAdapter(child: _buildHeader(context)),
-                    const SliverToBoxAdapter(child: SizedBox(height: 10)),
-                    SliverToBoxAdapter(child: _buildSearchBar(context)),
-                    const SliverToBoxAdapter(child: SizedBox(height: 15)),
-                    SliverToBoxAdapter(child: _buildPromoBanner(context)),
-                    const SliverToBoxAdapter(child: SizedBox(height: 20)),
-                    SliverToBoxAdapter(child: _buildCategories(context)),
-                    const SliverToBoxAdapter(child: SizedBox(height: 20)),
-                    SliverToBoxAdapter(child: _buildSectionTitle(context)),
-                    const SliverToBoxAdapter(child: SizedBox(height: 10)),
-                    _buildProductGrid(context, constraints.maxWidth),
-                    const SliverToBoxAdapter(child: SizedBox(height: 80)),
-                  ],
-                );
-              },
-            ),
-    ),
-    bottomNavigationBar: _buildBottomNavBar(),
-  );
-}
   Widget _buildHeader(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
@@ -239,7 +231,6 @@ Widget build(BuildContext context) {
               ],
             ),
           ),
-          // Tombol refresh
           GestureDetector(
             onTap: _loadData,
             child: Container(
@@ -258,35 +249,60 @@ Widget build(BuildContext context) {
   }
 
   Widget _buildSearchBar(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+    // MEMBUAT SEARCH BAR MENJADI GESTURE DETECTOR UNTUK NAVIGASI KE SEARCH PAGE
+    return GestureDetector(
+      onTap: () {
+        // Jika ada teks pencarian, bawa sebagai parameter
+        if (_searchQuery.isNotEmpty) {
+          _navigateToSearchPage(initialQuery: _searchQuery);
+        } else {
+          _navigateToSearchPage();
+        }
+      },
       child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 20),
         height: 50,
         decoration: BoxDecoration(
           color: AppColors.primaryLighter,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AppColors.primary.withOpacity(0.15)),
         ),
-        child: TextField(
-          controller: _searchController,
-          onChanged: (value) => setState(() => _searchQuery = value),
-          style: const TextStyle(color: AppColors.primary, fontSize: 14),
-          decoration: InputDecoration(
-            hintText: 'Cari makanan, minuman...',
-            hintStyle: TextStyle(color: AppColors.primary.withOpacity(0.4), fontSize: 14),
-            prefixIcon: const Icon(Icons.search, color: AppColors.primary, size: 22),
-            suffixIcon: _searchQuery.isNotEmpty
-                ? IconButton(
-                    icon: const Icon(Icons.close, color: AppColors.primary, size: 18),
-                    onPressed: () {
-                      _searchController.clear();
-                      setState(() => _searchQuery = '');
-                    },
-                  )
-                : null,
-            border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(vertical: 15),
-          ),
+        child: Row(
+          children: [
+            const SizedBox(width: 16),
+            const Icon(Icons.search, color: AppColors.primary, size: 22),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                _searchQuery.isNotEmpty ? _searchQuery : 'Cari makanan, minuman...',
+                style: TextStyle(
+                  color: _searchQuery.isNotEmpty 
+                      ? AppColors.primary 
+                      : AppColors.primary.withOpacity(0.4),
+                  fontSize: 14,
+                ),
+              ),
+            ),
+            if (_searchQuery.isNotEmpty)
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _searchQuery = '';
+                    _searchController.clear();
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  margin: const EdgeInsets.only(right: 8),
+                  decoration: const BoxDecoration(
+                    color: Colors.transparent,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.close, color: AppColors.primary.withOpacity(0.6), size: 18),
+                ),
+              ),
+            const SizedBox(width: 8),
+          ],
         ),
       ),
     );
@@ -320,8 +336,9 @@ Widget build(BuildContext context) {
               child: Container(
                 width: 140, height: 140,
                 decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.06)),
+                  shape: BoxShape.circle,
+                  color: Colors.white.withOpacity(0.06),
+                ),
               ),
             ),
             Padding(
@@ -386,34 +403,8 @@ Widget build(BuildContext context) {
 
           return GestureDetector(
             onTap: () {
-<<<<<<< HEAD
-              // ✅ LOGIKA NAVIGASI KATEGORI
-              if (label == 'Makanan') {
-                HapticFeedback.lightImpact();
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const MenuPage()),
-                );
-              } else if (label == 'Minuman') {
-                HapticFeedback.lightImpact();
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const PaMenuJenisMinuman()),
-                );
-              } else if (label == 'Snack') {
-                HapticFeedback.lightImpact();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Fitur snack akan segera hadir')),
-                );
-              } else {
-                // Untuk kategori Semua, tetap filter di halaman ini
-                setState(() => _selectedCategory = label);
-              }
-=======
               setState(() => _selectedCategory = label);
-              // Navigasi ke halaman kategori jika bukan 'Semua'
               if (label != 'Semua') _navigateToCategory(label);
->>>>>>> efb1ba3028692d013ed4dd95a9d12260a8a864b4
             },
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -475,8 +466,8 @@ Widget build(BuildContext context) {
   }
 
   Widget _buildProductGrid(BuildContext context, double screenWidth) {
-    final products       = _filteredProducts;
-    int crossAxisCount   = _getCrossAxisCount(screenWidth);
+    final products     = _filteredProducts;
+    int crossAxisCount = _getCrossAxisCount(screenWidth);
 
     if (products.isEmpty) {
       return SliverToBoxAdapter(
@@ -513,38 +504,41 @@ Widget build(BuildContext context) {
           crossAxisCount: crossAxisCount,
           mainAxisSpacing: 14,
           crossAxisSpacing: 14,
-          childAspectRatio: 0.8,
+          childAspectRatio: 0.75,
         ),
       ),
     );
   }
 
   // =====================
-  //  NAVBAR BAWAH
+  //  NAVBAR BAWAH — TAMPILAN DIUPDATE (dengan label teks)
   // =====================
   Widget _buildBottomNavBar() {
     return Container(
       height: 70,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.primaryLight,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _NavItem(icon: Icons.home_rounded,         index: 0, currentIndex: _currentIndex, onTap: _onNavTap),
-          _NavItem(icon: Icons.search_rounded,       index: 1, currentIndex: _currentIndex, onTap: _onNavTap),
-          _NavItem(icon: Icons.shopping_bag_rounded, index: 2, currentIndex: _currentIndex, onTap: _onNavTap),
-          _NavItem(icon: Icons.person_rounded,       index: 3, currentIndex: _currentIndex, onTap: _onNavTap),
+          _NavItem(icon: Icons.home_rounded,         label: 'Home',      index: 0, currentIndex: _currentIndex, onTap: _onNavTap),
+          _NavItem(icon: Icons.search_rounded,       label: 'Cari',      index: 1, currentIndex: _currentIndex, onTap: _onNavTap),
+          _NavItem(icon: Icons.shopping_bag_rounded, label: 'Keranjang', index: 2, currentIndex: _currentIndex, onTap: _onNavTap, badgeCount: CartProvider().totalItems),
+          _NavItem(icon: Icons.person_rounded,       label: 'Profil',    index: 3, currentIndex: _currentIndex, onTap: _onNavTap),
         ],
       ),
     );
   }
 }
-
-// ─── Product Card Widget ──────────────────────────────────────────────────────
-class _ProductCard extends StatelessWidget {
-  final Product product;
 
 // ─── Menu Card Widget ─────────────────────────────────────────────────────────
 
@@ -566,7 +560,7 @@ class _MenuCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.1),
+            color: AppColors.primary.withOpacity(0.15),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -577,7 +571,7 @@ class _MenuCard extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // Foto dari database
+            // === FOTO ===
             imageUrl.isNotEmpty
                 ? Image.network(
                     imageUrl,
@@ -597,19 +591,19 @@ class _MenuCard extends StatelessWidget {
                     ),
                   ),
 
-            // Gradient + info bawah
+            // === GRADIENT GELAP DI BAWAH ===
             Positioned(
               bottom: 0, left: 0, right: 0,
               child: Container(
-                padding: const EdgeInsets.fromLTRB(10, 30, 10, 10),
+                padding: const EdgeInsets.fromLTRB(10, 40, 10, 10),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      AppColors.primary.withOpacity(0), // Transparan ke coklat
-                      AppColors.primary.withOpacity(0.85), // Mulai pekat
-                      AppColors.primary, // Coklat solid di bagian bawah
+                      Colors.transparent,
+                      const Color(0xFF8A4607).withOpacity(0.6),
+                      const Color(0xFF5C2D00).withOpacity(0.92),
                     ],
                   ),
                 ),
@@ -617,74 +611,64 @@ class _MenuCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // --- NAMA MENU (PUTIH) ---
+                    // Nama menu
                     Text(
-                      product.name,
-                      style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700),
                       item.nama,
                       style: const TextStyle(
-                        color: AppColors.primary,
+                        color: Colors.white,
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
+                        shadows: [
+                          Shadow(color: Colors.black26, blurRadius: 4),
+                        ],
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
-                    // --- HARGA / IDR (PUTIH) ---
+                    // Harga
                     Text(
-                      product.price,
-                      style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 11, fontWeight: FontWeight.w500),
                       'IDR ${item.harga}',
-                      style: TextStyle(
-                          color: AppColors.primary.withOpacity(0.6),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                     const SizedBox(height: 8),
+                    // Status & tombol +
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Row(
                           children: [
                             Container(
-                              width: 6,
-                              height: 6,
-                              decoration: const BoxDecoration(color: Colors.greenAccent, shape: BoxShape.circle),
-                            ),
-                            const SizedBox(width: 4),
-                            // --- TERSEDIA (PUTIH) ---
-                            const Text('Tersedia', style: TextStyle(color: Colors.white, fontSize: 10)),
-                              width: 6, height: 6,
+                              width: 7, height: 7,
                               decoration: BoxDecoration(
-                                color: item.tersedia ? Colors.green : Colors.red,
+                                color: item.tersedia ? Colors.greenAccent : Colors.redAccent,
                                 shape: BoxShape.circle,
                               ),
                             ),
-                            const SizedBox(width: 4),
+                            const SizedBox(width: 5),
                             Text(
                               item.tersedia ? 'Tersedia' : 'Habis',
-                              style: TextStyle(
-                                  color: AppColors.primary.withOpacity(0.5),
-                                  fontSize: 10),
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 10,
+                              ),
                             ),
                           ],
                         ),
                         GestureDetector(
                           onTap: onAddToCart,
                           child: Container(
-                            width: 28,
-                            height: 28,
-                            // Diubah ke putih agar kontras dengan background coklat
-                            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                            child: const Icon(Icons.add, color: AppColors.primary, size: 18),
-                            width: 28, height: 28,
+                            width: 30, height: 30,
                             decoration: const BoxDecoration(
-                              color: AppColors.primary,
+                              color: Colors.white,
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(Icons.add_rounded,
-                                color: Colors.white, size: 18),
+                                color: AppColors.primary, size: 20),
                           ),
                         ),
                       ],
@@ -700,10 +684,11 @@ class _MenuCard extends StatelessWidget {
   }
 }
 
-// ─── Nav Item Widget ─────────────────────────────────────────────────────────
+// ─── Nav Item Widget — TAMPILAN DIUPDATE ─────────────────────────────────────
 
 class _NavItem extends StatelessWidget {
   final IconData icon;
+  final String label;           // ← label teks di bawah icon
   final int index;
   final int currentIndex;
   final int badgeCount;
@@ -711,6 +696,7 @@ class _NavItem extends StatelessWidget {
 
   const _NavItem({
     required this.icon,
+    required this.label,
     required this.index,
     required this.currentIndex,
     required this.onTap,
@@ -724,37 +710,66 @@ class _NavItem extends StatelessWidget {
       onTap: () => onTap(index),
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
-        width: 56, height: 56,
+        width: 72,
+        height: 70,
         child: Stack(
           alignment: Alignment.center,
           clipBehavior: Clip.none,
           children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: isSelected ? 48 : 36,
-              height: isSelected ? 48 : 36,
-              decoration: BoxDecoration(
-                color: isSelected ? AppColors.primary : Colors.transparent,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon,
-                  size: 24,
-                  color: isSelected
-                      ? Colors.white
-                      : AppColors.primary.withOpacity(0.35)),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Icon dengan background circle transparan saat selected
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: isSelected ? 44 : 36,
+                  height: isSelected ? 44 : 36,
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppColors.primary.withOpacity(0.15)
+                        : Colors.transparent,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    icon,
+                    size: 22,
+                    color: isSelected
+                        ? AppColors.primary
+                        : AppColors.primary.withOpacity(0.45),
+                  ),
+                ),
+                const SizedBox(height: 3),
+                // Label teks di bawah icon
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: isSelected
+                        ? AppColors.primary
+                        : AppColors.primary.withOpacity(0.45),
+                    fontSize: 10,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+                  ),
+                ),
+              ],
             ),
+            // Badge (tidak diubah fungsinya)
             if (badgeCount > 0)
               Positioned(
-                top: 4, right: 4,
+                top: 8, right: 8,
                 child: Container(
                   padding: const EdgeInsets.all(4),
                   decoration: const BoxDecoration(
-                      color: Colors.red, shape: BoxShape.circle),
-                  child: Text('$badgeCount',
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold)),
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    '$badgeCount',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ),
           ],

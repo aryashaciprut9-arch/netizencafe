@@ -4,6 +4,8 @@ import 'services/api_services.dart';
 import 'models/menu_models.dart';
 import 'kategoriminuman.dart';
 import 'beranda.dart';
+import 'cart_provider.dart';
+import 'detailkeranjang.dart';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -100,6 +102,13 @@ class _MenuPageState extends State<MenuPage> {
         MaterialPageRoute(builder: (_) => const PuBeranda()),
         (route) => false,
       );
+      return;
+    }
+    if (index == 2) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const PuDetailKeranjang()),
+      ).then((_) => setState(() {}));
       return;
     }
     setState(() => _selectedNavIndex = index);
@@ -289,7 +298,18 @@ class _MenuPageState extends State<MenuPage> {
             item: items[index],
             imageUrl: _buildImageUrl(items[index].foto),
             onAddToCart: () {
-              // TODO: tambah ke keranjang
+              CartProvider().addFromMenu(items[index], imageUrl: _buildImageUrl(items[index].foto));
+              setState(() {});
+              HapticFeedback.lightImpact();
+              ScaffoldMessenger.of(context)
+                ..hideCurrentSnackBar()
+                ..showSnackBar(SnackBar(
+                  content: Text('${items[index].nama} ditambahkan ke keranjang'),
+                  backgroundColor: _AppColors.primary,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  duration: const Duration(seconds: 1),
+                ));
             },
           ),
           childCount: items.length,
@@ -319,7 +339,7 @@ class _MenuPageState extends State<MenuPage> {
         children: [
           _NavItem(icon: Icons.home_rounded,         index: 0, currentIndex: _selectedNavIndex, onTap: _onNavTap),
           _NavItem(icon: Icons.search_rounded,       index: 1, currentIndex: _selectedNavIndex, onTap: _onNavTap),
-          _NavItem(icon: Icons.shopping_bag_rounded, index: 2, currentIndex: _selectedNavIndex, onTap: _onNavTap),
+          _NavItem(icon: Icons.shopping_bag_rounded, index: 2, currentIndex: _selectedNavIndex, badgeCount: CartProvider().totalItems, onTap: _onNavTap),
           _NavItem(icon: Icons.person_rounded,       index: 3, currentIndex: _selectedNavIndex, onTap: _onNavTap),
         ],
       ),
@@ -410,6 +430,7 @@ class _NavItem extends StatelessWidget {
   final IconData icon;
   final int index;
   final int currentIndex;
+  final int badgeCount;
   final ValueChanged<int> onTap;
 
   const _NavItem({
@@ -417,6 +438,7 @@ class _NavItem extends StatelessWidget {
     required this.index,
     required this.currentIndex,
     required this.onTap,
+    this.badgeCount = 0,
   });
 
   @override
@@ -427,15 +449,30 @@ class _NavItem extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
         width: 56, height: 56,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          width: isSelected ? 48 : 36,
-          height: isSelected ? 48 : 36,
-          decoration: BoxDecoration(
-            color: isSelected ? _AppColors.primary : Colors.transparent,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, size: 24, color: isSelected ? Colors.white : _AppColors.primary.withOpacity(0.35)),
+        child: Stack(
+          alignment: Alignment.center,
+          clipBehavior: Clip.none,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: isSelected ? 48 : 36,
+              height: isSelected ? 48 : 36,
+              decoration: BoxDecoration(
+                color: isSelected ? _AppColors.primary : Colors.transparent,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 24, color: isSelected ? Colors.white : _AppColors.primary.withOpacity(0.35)),
+            ),
+            if (badgeCount > 0)
+              Positioned(
+                top: 4, right: 4,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                  child: Text('$badgeCount', style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+                ),
+              ),
+          ],
         ),
       ),
     );

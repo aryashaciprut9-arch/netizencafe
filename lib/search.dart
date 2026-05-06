@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-
-
 class FoodApp extends StatelessWidget {
   const FoodApp({super.key});
 
@@ -31,13 +29,13 @@ class MainWrapper extends StatefulWidget {
 }
 
 class _MainWrapperState extends State<MainWrapper> {
-  int _currentIndex = 1; // Default ke Search (index 1)
+  int _currentIndex = 0;
   
   final List<Widget> _pages = [
-    const HomePage(),      // 0: Home
-    const SearchPage(),    // 1: Search
-    const CartPage(),      // 2: Cart
-    const ProfilePage(),   // 3: Profile
+    const HomePage(),
+    const SearchPage(),
+    const CartPage(),
+    const ProfilePage(),
   ];
 
   void _onTabChanged(int index) {
@@ -46,11 +44,28 @@ class _MainWrapperState extends State<MainWrapper> {
     });
   }
 
+  void goBackToHome() {
+    setState(() {
+      _currentIndex = 0;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _pages[_currentIndex],
-      bottomNavigationBar: _buildBottomNav(),
+    return WillPopScope(
+      onWillPop: () async {
+        if (_currentIndex == 0) {
+          return true;
+        }
+        setState(() {
+          _currentIndex = 0;
+        });
+        return false;
+      },
+      child: Scaffold(
+        body: _pages[_currentIndex],
+        bottomNavigationBar: _buildBottomNav(),
+      ),
     );
   }
 
@@ -173,7 +188,9 @@ class FoodItem {
 
 // ─── Search Page ─────────────────────────────────────────────────────────────
 class SearchPage extends StatefulWidget {
-  const SearchPage({super.key});
+  final String? initialSearchQuery;
+  
+  const SearchPage({super.key, this.initialSearchQuery});
 
   @override
   State<SearchPage> createState() => _SearchPageState();
@@ -183,7 +200,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocus = FocusNode();
 
-  final List<String> _recentSearches = [
+  List<String> _recentSearches = [
     'Gelato Matcha',
     'Risol Mayo',
     'Ricebowl Chicken Blackpaper',
@@ -231,6 +248,11 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
     super.initState();
     _fabController = AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
     _fabController.forward();
+    
+    if (widget.initialSearchQuery != null && widget.initialSearchQuery!.isNotEmpty) {
+      _searchQuery = widget.initialSearchQuery!;
+      _searchController.text = widget.initialSearchQuery!;
+    }
   }
 
   @override
@@ -309,6 +331,15 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
     );
   }
 
+  void _goBack() {
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    } else {
+      final mainWrapper = context.findAncestorStateOfType<_MainWrapperState>();
+      mainWrapper?.goBackToHome();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -321,16 +352,12 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
           children: [
             _buildSearchBar(horizontalPadding),
             _buildFilterChips(),
-            _buildDivider(),
+            const Divider(height: 1),
             Expanded(child: _buildContent(horizontalPadding)),
           ],
         ),
       ),
     );
-  }
-
-  Widget _buildDivider() {
-    return Divider(height: 1, color: Colors.black.withOpacity(0.05));
   }
 
   Widget _buildSearchBar(double padding) {
@@ -355,12 +382,10 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
-        onTap: () {
-          final mainWrapper = context.findAncestorStateOfType<_MainWrapperState>();
-          mainWrapper?._onTabChanged(0);
-        },
+        onTap: _goBack,
         child: Container(
-          width: 38, height: 38,
+          width: 38,
+          height: 38,
           decoration: BoxDecoration(color: const Color(0xFFF8F8F8), borderRadius: BorderRadius.circular(10)),
           child: const Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: Color(0xFF8A4607)),
         ),
@@ -410,7 +435,8 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
         borderRadius: BorderRadius.circular(20),
         onTap: _clearSearch,
         child: Container(
-          width: 38, height: 38,
+          width: 38,
+          height: 38,
           decoration: BoxDecoration(color: const Color(0xFFB50000).withOpacity(0.1), shape: BoxShape.circle),
           child: const Icon(Icons.close_rounded, size: 20, color: Color(0xFFB50000)),
         ),
@@ -461,7 +487,7 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
           ] else ...[
             _buildSearchResultSection(),
           ],
-          const SizedBox(height: 80), // ✅ Tambahan space agar tidak tertutup bottom nav
+          const SizedBox(height: 80),
         ],
       ),
     );
@@ -470,26 +496,22 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
   Widget _buildRecentSearchesSection() {
     if (_recentSearches.isEmpty) return const SizedBox.shrink();
 
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Pencarian terakhir', style: TextStyle(color: Color(0xFF8A4607), fontSize: 20, fontWeight: FontWeight.w700)),
-              GestureDetector(
-                onTap: _clearAllRecentSearches,
-                child: const Text('Hapus semua', style: TextStyle(color: Color(0xFFB50000), fontSize: 13, fontWeight: FontWeight.w500)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          ...List.generate(_recentSearches.length, (i) => _recentSearchTile(_recentSearches[i], i)),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('Pencarian terakhir', style: TextStyle(color: Color(0xFF8A4607), fontSize: 20, fontWeight: FontWeight.w700)),
+            GestureDetector(
+              onTap: _clearAllRecentSearches,
+              child: const Text('Hapus semua', style: TextStyle(color: Color(0xFFB50000), fontSize: 13, fontWeight: FontWeight.w500)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ...List.generate(_recentSearches.length, (i) => _recentSearchTile(_recentSearches[i], i)),
+      ],
     );
   }
 
@@ -498,7 +520,13 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
       key: ValueKey('recent_$text'),
       direction: DismissDirection.endToStart,
       onDismissed: (_) => _removeRecentSearch(index),
-      background: _dismissBackground(),
+      background: Container(
+        margin: const EdgeInsets.symmetric(vertical: 4),
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        decoration: BoxDecoration(color: const Color(0xFFB50000), borderRadius: BorderRadius.circular(10)),
+        child: const Icon(Icons.delete_sweep_rounded, color: Colors.white, size: 24),
+      ),
       child: InkWell(
         onTap: () => _tapRecentSearch(text),
         borderRadius: BorderRadius.circular(10),
@@ -521,38 +549,23 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _dismissBackground() {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      alignment: Alignment.centerRight,
-      padding: const EdgeInsets.only(right: 20),
-      decoration: BoxDecoration(color: const Color(0xFFB50000), borderRadius: BorderRadius.circular(10)),
-      child: const Icon(Icons.delete_sweep_rounded, color: Colors.white, size: 24),
-    );
-  }
-
   Widget _buildTrendingSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text('Sedang Trending 🔥', style: TextStyle(color: Color(0xFF8A4607), fontSize: 20, fontWeight: FontWeight.w700)),
         const SizedBox(height: 14),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final cardWidth = (constraints.maxWidth - 12) / 2;
-            return GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: cardWidth / (cardWidth * 1.10),
-              ),
-              itemCount: _trendingItems.length,
-              itemBuilder: (context, index) => _foodCard(_trendingItems[index], index),
-            );
-          },
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 0.9,
+          ),
+          itemCount: _trendingItems.length,
+          itemBuilder: (context, index) => _foodCard(_trendingItems[index], index),
         ),
       ],
     );
@@ -584,22 +597,17 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
           ),
         ] else ...[
           const SizedBox(height: 14),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final cardWidth = (constraints.maxWidth - 12) / 2;
-              return GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: cardWidth / (cardWidth * 1.10),
-                ),
-                itemCount: items.length,
-                itemBuilder: (context, index) => _foodCard(items[index], index),
-              );
-            },
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 0.9,
+            ),
+            itemCount: items.length,
+            itemBuilder: (context, index) => _foodCard(items[index], index),
           ),
         ],
       ],
@@ -625,7 +633,6 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Image
               Expanded(
                 flex: 6,
                 child: ClipRRect(
@@ -642,7 +649,6 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                           return Container(color: const Color(0xFF6B3605), child: Center(child: CircularProgressIndicator(strokeWidth: 2, value: progress.expectedTotalBytes != null ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes! : null, color: const Color(0xFFF5CC9E))));
                         },
                       ),
-                      // Rating badge
                       Positioned(
                         top: 8, left: 8,
                         child: Container(
@@ -657,7 +663,6 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                           ),
                         ),
                       ),
-                      // Favorite icon
                       Positioned(
                         top: 6, right: 6,
                         child: Material(
@@ -677,7 +682,6 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
                   ),
                 ),
               ),
-              // Info
               Expanded(
                 flex: 4,
                 child: Padding(
@@ -718,7 +722,8 @@ class _SearchPageState extends State<SearchPage> with TickerProviderStateMixin {
         borderRadius: BorderRadius.circular(14),
         onTap: () => _addToCart(item),
         child: Container(
-          width: 28, height: 28,
+          width: 28,
+          height: 28,
           decoration: const ShapeDecoration(color: Colors.white, shape: OvalBorder()),
           child: const Center(child: Text('+', style: TextStyle(color: Color(0xFF8A4607), fontSize: 22, fontWeight: FontWeight.w800, height: 1))),
         ),
@@ -784,11 +789,34 @@ class ProfilePage extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const CircleAvatar(radius: 50, backgroundColor: Color(0xFFF5CC9E), child: Icon(Icons.person, size: 50, color: Color(0xFF8A4607))),
+              const CircleAvatar(
+                radius: 50,
+                backgroundColor: Color(0xFFF5CC9E),
+                child: Icon(Icons.person, size: 50, color: Color(0xFF8A4607)),
+              ),
               const SizedBox(height: 16),
-              const Text('Halo, Pengguna!', style: TextStyle(color: Color(0xFF8A4607), fontSize: 20, fontWeight: FontWeight.bold)),
+              const Text(
+                'Halo, Pengguna!',
+                style: TextStyle(color: Color(0xFF8A4607), fontSize: 20, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 8),
-              Text('Fitur profil sedang dalam pengembangan', style: TextStyle(color: Colors.grey.shade500)),
+              Text(
+                'Fitur profil sedang dalam pengembangan',
+                style: TextStyle(color: Colors.grey.shade500),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () {
+                  final mainWrapper = context.findAncestorStateOfType<_MainWrapperState>();
+                  mainWrapper?.goBackToHome();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF8A4607),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text('Kembali ke Beranda'),
+              ),
             ],
           ),
         ),
@@ -804,7 +832,12 @@ class _DetailSheet extends StatelessWidget {
   final VoidCallback onAdd;
   final VoidCallback onToggleWishlist;
 
-  const _DetailSheet({required this.item, required this.isInWishlist, required this.onAdd, required this.onToggleWishlist});
+  const _DetailSheet({
+    required this.item,
+    required this.isInWishlist,
+    required this.onAdd,
+    required this.onToggleWishlist,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -820,17 +853,31 @@ class _DetailSheet extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(16),
-                child: Image.network(item.image, height: 200, width: double.infinity, fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(height: 200, color: const Color(0xFF6B3605), child: const Icon(Icons.broken_image_rounded, color: Colors.white38, size: 48))),
+                child: Image.network(
+                  item.image,
+                  height: 200,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    height: 200,
+                    color: const Color(0xFF6B3605),
+                    child: const Icon(Icons.broken_image_rounded, color: Colors.white38, size: 48),
+                  ),
+                ),
               ),
               Positioned(
-                top: 12, right: 12,
+                top: 12,
+                right: 12,
                 child: GestureDetector(
                   onTap: onToggleWishlist,
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(color: Colors.white.withOpacity(0.9), shape: BoxShape.circle),
-                    child: Icon(isInWishlist ? Icons.favorite : Icons.favorite_border, color: isInWishlist ? Colors.red : const Color(0xFFB50000), size: 20),
+                    child: Icon(
+                      isInWishlist ? Icons.favorite : Icons.favorite_border,
+                      color: isInWishlist ? Colors.red : const Color(0xFFB50000),
+                      size: 20,
+                    ),
                   ),
                 ),
               ),

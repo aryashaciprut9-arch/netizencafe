@@ -3,10 +3,6 @@ import 'beranda.dart';
 import 'services/api_service.dart';
 import 'utils/session_manager.dart';
 
-void main() {
-  runApp(const FigmaToCodeApp());
-}
-
 class FigmaToCodeApp extends StatelessWidget {
   const FigmaToCodeApp({super.key});
 
@@ -18,9 +14,7 @@ class FigmaToCodeApp extends StatelessWidget {
         fontFamily: 'Poppins',
         useMaterial3: true,
       ),
-      home: const Scaffold(
-        body: LoginPage(),
-      ),
+      home: const LoginPage(),  // ← LANGSUNG LoginPage, tanpa Scaffold
     );
   }
 }
@@ -101,117 +95,118 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Color(0xFFFFF8F2),
-            Color(0xFFF3E5D8),
-            Color(0xFFE8CBB0),
-          ],
-          stops: [0.2, 0.6, 1.0],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
+    return Scaffold(  // ← PINDAHKAN SCAFFOLD KE SINI
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFFFFF8F2),
+              Color(0xFFF3E5D8),
+              Color(0xFFE8CBB0),
+            ],
+            stops: [0.2, 0.6, 1.0],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
         ),
-      ),
-      child: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 40.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // === LOGO & TITLE ===
-                  Column(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                              color: primary.withOpacity(0.2), width: 2),
-                          color: Colors.white,
+        child: SafeArea(
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 40.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // === LOGO & TITLE ===
+                    Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: primary.withOpacity(0.2), width: 2),
+                            color: Colors.white,
+                          ),
+                          child: const CircleAvatar(
+                            radius: 50,
+                            backgroundColor: Colors.transparent,
+                            backgroundImage: AssetImage('assets/nettyzencafe.png'),
+                          ),
                         ),
-                        child: const CircleAvatar(
-                          radius: 50,
-                          backgroundColor: Colors.transparent,
-                          backgroundImage: AssetImage('assets/nettyzencafe.png'),
+                        const SizedBox(height: 24),
+                        Text(
+                          'Nettyzen Access',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: textDark,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 24),
-                      Text(
-                        'Nettyzen Access',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: textDark,
+                        const SizedBox(height: 8),
+                        Text(
+                          'Cafe & UMKM Solution',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.grey[700],
+                            fontSize: 14,
+                            letterSpacing: 1.5,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Cafe & UMKM Solution',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.grey[700],
-                          fontSize: 14,
-                          letterSpacing: 1.5,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 50),
-                  _buildCustomToggle(),
-                  const SizedBox(height: 30),
+                      ],
+                    ),
+                    const SizedBox(height: 50),
+                    _buildCustomToggle(),
+                    const SizedBox(height: 30),
 
-                  _buildInputField(
-                    label: "Email",
-                    hint: "masukkan email",
-                    icon: Icons.person_outline,
-                    controller: _emailController,
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Email tidak boleh kosong';
-                      }
-                      if (!value.contains('@')) {
-                        return 'Format email tidak valid';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  _buildInputField(
-                    label: "Password",
-                    hint: "masukan password",
-                    icon: Icons.lock_outline,
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    isPassword: true,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Password tidak boleh kosong';
-                      }
-                      if (value.length < 6) {
-                        return 'Password minimal 6 karakter';
-                      }
-                      return null;
-                    },
-                    onToggleObscure: () {
-                      setState(() {
-                        _obscurePassword = !_obscurePassword;
-                      });
-                    },
-                  ),
+                    _buildInputField(
+                      label: "Email",
+                      hint: "masukkan email",
+                      icon: Icons.person_outline,
+                      controller: _emailController,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Email tidak boleh kosong';
+                        }
+                        if (!value.contains('@')) {
+                          return 'Format email tidak valid';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    _buildInputField(
+                      label: "Password",
+                      hint: "masukan password",
+                      icon: Icons.lock_outline,
+                      controller: _passwordController,
+                      obscureText: _obscurePassword,
+                      isPassword: true,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Password tidak boleh kosong';
+                        }
+                        if (value.length < 6) {
+                          return 'Password minimal 6 karakter';
+                        }
+                        return null;
+                      },
+                      onToggleObscure: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
+                    ),
 
-                  _buildRememberAndForgot(),
-                  const SizedBox(height: 40),
+                    _buildRememberAndForgot(),
+                    const SizedBox(height: 40),
 
-                  _buildLoginButton(context),
-                ],
+                    _buildLoginButton(context),
+                  ],
+                ),
               ),
             ),
           ),
@@ -219,7 +214,8 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
-  
+
+  // === WIDGET HELPER ===
   Widget _buildCustomToggle() {
     return Container(
       width: double.infinity,
@@ -334,11 +330,7 @@ class _LoginPageState extends State<LoginPage> {
                     )
                   : null,
               border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-              errorStyle: const TextStyle(
-                fontSize: 12,
-                height: 0.5,
-              ),
+              contentPadding:
                   const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
               errorStyle: const TextStyle(fontSize: 12, height: 0.5),
             ),

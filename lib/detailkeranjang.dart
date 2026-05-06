@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'cart_provider.dart';
 
 class FigmaToCodeApp extends StatelessWidget {
   const FigmaToCodeApp({super.key});
@@ -19,7 +21,7 @@ class FigmaToCodeApp extends StatelessWidget {
 }
 
 // ==================== KONSISTENSI WARNA ====================
-class AppColors {
+class CartAppColors {
   static const Color primaryDark = Color(0xFF5C2E00);
   static const Color primary = Color(0xFF8A4607);
   static const Color primaryMedium = Color(0xFFA85A1B);
@@ -51,30 +53,17 @@ class PuDetailKeranjang extends StatefulWidget {
 }
 
 class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
-  // Data item pesanan dengan state yang bisa berubah
-  List<CartItem> cartItems = [
-    CartItem(
-      id: '1',
-      name: 'Chicken Teriyaki',
-      pricePerItem: 20000,
-      quantity: 2,
-      image: 'https://placehold.co/120x120/F5CC9E/8A4607?text=CT',
-    ),
-    CartItem(
-      id: '2',
-      name: 'Bakso Special',
-      pricePerItem: 15000,
-      quantity: 1,
-      image: 'https://placehold.co/120x120/F5CC9E/8A4607?text=BS',
-    ),
-  ];
+  // Ambil data dari CartProvider (singleton global)
+  CartProvider get _cart => CartProvider();
+
+  List<CartItemData> get cartItems => _cart.items.toList();
 
   // State untuk snackbar feedback
   void showCustomSnackbar(String message, {bool isSuccess = true}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: isSuccess ? AppColors.success : AppColors.danger,
+        backgroundColor: isSuccess ? CartAppColors.success : CartAppColors.danger,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -84,38 +73,26 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
 
   // Update quantity item
   void updateQuantity(String id, int newQuantity) {
-    setState(() {
-      final index = cartItems.indexWhere((item) => item.id == id);
-      if (index != -1) {
-        if (newQuantity <= 0) {
-          // Hapus item jika quantity 0
-          cartItems.removeAt(index);
-          showCustomSnackbar('${cartItems[index].name} dihapus dari keranjang');
-        } else {
-          cartItems[index].quantity = newQuantity;
-        }
-      }
-    });
+    _cart.updateQuantity(id, newQuantity);
+    setState(() {});
+    if (newQuantity <= 0) {
+      showCustomSnackbar('Item dihapus dari keranjang');
+    }
   }
 
   // Hapus semua item
   void clearAllItems() {
     if (cartItems.isEmpty) return;
-    setState(() {
-      cartItems.clear();
-    });
+    _cart.clearAll();
+    setState(() {});
     showCustomSnackbar('Semua item dihapus dari keranjang');
   }
 
   // Hitung subtotal
-  int getSubtotal() {
-    return cartItems.fold(0, (sum, item) => sum + (item.pricePerItem * item.quantity));
-  }
+  int getSubtotal() => _cart.totalHarga;
 
   // Total pembayaran (tanpa diskon)
-  int getTotalPayment() {
-    return getSubtotal();
-  }
+  int getTotalPayment() => _cart.totalHarga;
 
   // Fungsi pesan sekarang
   void placeOrder() {
@@ -131,7 +108,7 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: const Column(
           children: [
-            Icon(Icons.check_circle_rounded, color: AppColors.success, size: 56),
+            Icon(Icons.check_circle_rounded, color: CartAppColors.success, size: 56),
             SizedBox(height: 12),
             Text('Konfirmasi Pesanan', style: TextStyle(fontWeight: FontWeight.bold)),
           ],
@@ -140,20 +117,20 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Batal', style: TextStyle(color: AppColors.textMuted)),
+            child: const Text('Batal', style: TextStyle(color: CartAppColors.textMuted)),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
+              _cart.clearAll();
+              setState(() {});
               showCustomSnackbar('Pesanan berhasil dibuat! Terima kasih 🙏');
-              // Reset keranjang (opsional)
-              // setState(() => cartItems.clear());
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
+              backgroundColor: CartAppColors.primary,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            child: const Text('Pesan Sekarang'),
+            child: const Text('Pesan Sekarang',style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -167,7 +144,7 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.accentPale,
+      backgroundColor: CartAppColors.accentPale,
       body: SafeArea(
         child: Column(
           children: [
@@ -191,8 +168,6 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
                         _buildPaymentMethod(),
                         const SizedBox(height: 24),
                         _buildOrderButton(),
-                        const SizedBox(height: 16),
-                        _buildBottomNav(),
                         const SizedBox(height: 20),
                       ],
                     ),
@@ -209,16 +184,16 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.shopping_cart_outlined, size: 80, color: AppColors.textLight),
+          Icon(Icons.shopping_cart_outlined, size: 80, color: CartAppColors.textLight),
           const SizedBox(height: 16),
           Text(
             'Keranjang Kosong',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textDark),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: CartAppColors.textDark),
           ),
           const SizedBox(height: 8),
           Text(
             'Yuk tambahin pesanan kamu!',
-            style: TextStyle(color: AppColors.textMuted),
+            style: TextStyle(color: CartAppColors.textMuted),
           ),
           const SizedBox(height: 24),
           ElevatedButton(
@@ -226,10 +201,10 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
               showCustomSnackbar('Fitur akan segera hadir 🚀');
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
+              backgroundColor: CartAppColors.primary,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
-            child: const Text('Mulai Belanja'),
+            child: const Text('Mulai Belanja',style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -241,7 +216,7 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: const BoxDecoration(
-        color: AppColors.surface,
+        color: CartAppColors.surface,
         boxShadow: [BoxShadow(color: Color(0x0D000000), blurRadius: 8, offset: Offset(0, 2))],
       ),
       child: Row(
@@ -254,12 +229,12 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
             child: Container(
               width: 38,
               height: 38,
-              decoration: BoxDecoration(color: AppColors.accentSoft, borderRadius: BorderRadius.circular(12)),
-              child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: AppColors.primary),
+              decoration: BoxDecoration(color: CartAppColors.accentSoft, borderRadius: BorderRadius.circular(12)),
+              child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: CartAppColors.primary),
             ),
           ),
           const SizedBox(width: 16),
-          const Text('Detail Pesanan', style: TextStyle(color: AppColors.textDark, fontSize: 20, fontWeight: FontWeight.w700)),
+          const Text('Detail Pesanan', style: TextStyle(color: CartAppColors.textDark, fontSize: 20, fontWeight: FontWeight.w700)),
           const Spacer(),
           if (cartItems.isNotEmpty)
             GestureDetector(
@@ -271,15 +246,15 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
                     content: const Text('Item di keranjang akan dihapus permanen.'),
                     actions: [
                       TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
-                      TextButton(onPressed: () { Navigator.pop(context); clearAllItems(); }, child: const Text('Hapus', style: TextStyle(color: AppColors.danger))),
+                      TextButton(onPressed: () { Navigator.pop(context); clearAllItems(); }, child: const Text('Hapus', style: TextStyle(color: CartAppColors.danger))),
                     ],
                   ),
                 );
               },
               child: Container(
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: AppColors.accentSoft, borderRadius: BorderRadius.circular(12)),
-                child: const Icon(Icons.delete_outline_rounded, size: 20, color: AppColors.danger),
+                decoration: BoxDecoration(color: CartAppColors.accentSoft, borderRadius: BorderRadius.circular(12)),
+                child: const Icon(Icons.delete_outline_rounded, size: 20, color: CartAppColors.danger),
               ),
             ),
         ],
@@ -288,15 +263,15 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
   }
 
   // ==================== FOOD ITEM CARD ====================
-  Widget _buildFoodItem(CartItem item) {
+  Widget _buildFoodItem(CartItemData item) {
     return Hero(
       tag: 'food_${item.id}',
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: CartAppColors.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border, width: 1),
+          border: Border.all(color: CartAppColors.border, width: 1),
           boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 2))],
         ),
         child: Row(
@@ -306,8 +281,8 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
               child: Image.network(item.image, width: 72, height: 72, fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => Container(
                   width: 72, height: 72,
-                  decoration: BoxDecoration(color: AppColors.accentSoft, borderRadius: BorderRadius.circular(12)),
-                  child: const Icon(Icons.restaurant, color: AppColors.primaryLight),
+                  decoration: BoxDecoration(color: CartAppColors.accentSoft, borderRadius: BorderRadius.circular(12)),
+                  child: const Icon(Icons.restaurant, color: CartAppColors.primaryLight),
                 ),
               ),
             ),
@@ -316,15 +291,15 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(item.name, style: const TextStyle(color: AppColors.textDark, fontSize: 14, fontWeight: FontWeight.w600)),
+                  Text(item.name, style: const TextStyle(color: CartAppColors.textDark, fontSize: 14, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 2),
-                  Text('@ ${formatRupiah(item.pricePerItem)}', style: const TextStyle(color: AppColors.textMuted, fontSize: 12)),
+                  Text('@ ${formatRupiah(item.pricePerItem)}', style: const TextStyle(color: CartAppColors.textMuted, fontSize: 12)),
                   const SizedBox(height: 10),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Container(
-                        decoration: BoxDecoration(color: AppColors.accentSoft, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppColors.border)),
+                        decoration: BoxDecoration(color: CartAppColors.accentSoft, borderRadius: BorderRadius.circular(10), border: Border.all(color: CartAppColors.border)),
                         child: Row(
                           children: [
                             _stepperButton(Icons.remove_rounded, () {
@@ -332,12 +307,12 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
                               else updateQuantity(item.id, 0);
                             }),
                             Container(width: 36, alignment: Alignment.center,
-                              child: Text('${item.quantity}', style: const TextStyle(color: AppColors.primaryDark, fontSize: 14, fontWeight: FontWeight.w700))),
+                              child: Text('${item.quantity}', style: const TextStyle(color: CartAppColors.primaryDark, fontSize: 14, fontWeight: FontWeight.w700))),
                             _stepperButton(Icons.add_rounded, () => updateQuantity(item.id, item.quantity + 1)),
                           ],
                         ),
                       ),
-                      Text(formatRupiah(item.pricePerItem * item.quantity), style: const TextStyle(color: AppColors.primaryDark, fontSize: 14, fontWeight: FontWeight.w700)),
+                      Text(formatRupiah(item.pricePerItem * item.quantity), style: const TextStyle(color: CartAppColors.primaryDark, fontSize: 14, fontWeight: FontWeight.w700)),
                     ],
                   ),
                 ],
@@ -353,7 +328,7 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
     return Material(color: Colors.transparent, child: InkWell(
       borderRadius: BorderRadius.circular(8),
       onTap: onTap,
-      child: Container(width: 30, height: 30, alignment: Alignment.center, child: Icon(icon, size: 16, color: AppColors.primary)),
+      child: Container(width: 30, height: 30, alignment: Alignment.center, child: Icon(icon, size: 16, color: CartAppColors.primary)),
     ));
   }
 
@@ -361,20 +336,20 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
   Widget _buildRincianSection() {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
+      decoration: BoxDecoration(color: CartAppColors.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: CartAppColors.border)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Rincian', style: TextStyle(color: AppColors.textDark, fontSize: 16, fontWeight: FontWeight.w700)),
-              Text('INV/III/2026/001', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
+              const Text('Rincian', style: TextStyle(color: CartAppColors.textDark, fontSize: 16, fontWeight: FontWeight.w700)),
+              Text('INV/III/2026/001', style: TextStyle(color: CartAppColors.textMuted, fontSize: 12)),
             ],
           ),
           const SizedBox(height: 16),
           _rincianRow('Subtotal (${cartItems.length} item)', formatRupiah(getSubtotal())),
-          const Padding(padding: EdgeInsets.symmetric(vertical: 10), child: Divider(color: AppColors.divider, height: 1)),
+          const Padding(padding: EdgeInsets.symmetric(vertical: 10), child: Divider(color: CartAppColors.divider, height: 1)),
           _rincianRow('Biaya Layanan', 'Rp -'),
         ],
       ),
@@ -385,8 +360,8 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(color: AppColors.textMuted, fontSize: 14)),
-        Text(value, style: const TextStyle(color: AppColors.textDark, fontSize: 14, fontWeight: FontWeight.w500)),
+        Text(label, style: const TextStyle(color: CartAppColors.textMuted, fontSize: 14)),
+        Text(value, style: const TextStyle(color: CartAppColors.textDark, fontSize: 14, fontWeight: FontWeight.w500)),
       ],
     );
   }
@@ -397,14 +372,14 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
       duration: const Duration(milliseconds: 300),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [AppColors.primaryDark, AppColors.primary], begin: Alignment.centerLeft, end: Alignment.centerRight),
+        gradient: const LinearGradient(colors: [CartAppColors.primaryDark, CartAppColors.primary], begin: Alignment.centerLeft, end: Alignment.centerRight),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: CartAppColors.primary.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 4))],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text('Total Pembayaran', style: TextStyle(color: AppColors.accent, fontSize: 15, fontWeight: FontWeight.w500)),
+          const Text('Total Pembayaran', style: TextStyle(color: CartAppColors.accent, fontSize: 15, fontWeight: FontWeight.w500)),
           Text(formatRupiah(getTotalPayment()), style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800)),
         ],
       ),
@@ -415,34 +390,34 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
   Widget _buildPaymentMethod() {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
+      decoration: BoxDecoration(color: CartAppColors.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: CartAppColors.border)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Metode Pembayaran', style: TextStyle(color: AppColors.textDark, fontSize: 15, fontWeight: FontWeight.w600)),
+          const Text('Metode Pembayaran', style: TextStyle(color: CartAppColors.textDark, fontSize: 15, fontWeight: FontWeight.w600)),
           const SizedBox(height: 14),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color: AppColors.accentPale,
+              color: CartAppColors.accentPale,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+              border: Border.all(color: CartAppColors.primary.withOpacity(0.3)),
             ),
             child: Row(
               children: [
                 Container(
                   width: 20, height: 20,
-                  decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.primary, width: 2)),
-                  child: Container(margin: const EdgeInsets.all(3), decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.primary)),
+                  decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: CartAppColors.primary, width: 2)),
+                  child: Container(margin: const EdgeInsets.all(3), decoration: const BoxDecoration(shape: BoxShape.circle, color: CartAppColors.primary)),
                 ),
                 const SizedBox(width: 12),
                 Container(
                   padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(color: AppColors.accent, borderRadius: BorderRadius.circular(8)),
-                  child: const Icon(Icons.payments_rounded, size: 18, color: AppColors.primaryDark),
+                  decoration: BoxDecoration(color: CartAppColors.accent, borderRadius: BorderRadius.circular(8)),
+                  child: const Icon(Icons.payments_rounded, size: 18, color: CartAppColors.primaryDark),
                 ),
                 const SizedBox(width: 10),
-                const Text('Tunai', style: TextStyle(color: AppColors.textDark, fontSize: 14, fontWeight: FontWeight.w600)),
+                const Text('Tunai', style: TextStyle(color: CartAppColors.textDark, fontSize: 14, fontWeight: FontWeight.w600)),
               ],
             ),
           ),
@@ -459,9 +434,9 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
         width: double.infinity,
         height: 54,
         decoration: BoxDecoration(
-          gradient: const LinearGradient(colors: [AppColors.primary, AppColors.primaryMedium], begin: Alignment.centerLeft, end: Alignment.centerRight),
+          gradient: const LinearGradient(colors: [CartAppColors.primary, CartAppColors.primaryMedium], begin: Alignment.centerLeft, end: Alignment.centerRight),
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.35), blurRadius: 14, offset: const Offset(0, 6))],
+          boxShadow: [BoxShadow(color: CartAppColors.primary.withOpacity(0.35), blurRadius: 14, offset: const Offset(0, 6))],
         ),
         child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -479,7 +454,7 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
   Widget _buildBottomNav() {
     return Container(
       height: 60,
-      decoration: BoxDecoration(color: AppColors.primaryDark, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: AppColors.primaryDark.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 4))]),
+      decoration: BoxDecoration(color: CartAppColors.primaryDark, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: CartAppColors.primaryDark.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 4))]),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
@@ -493,9 +468,16 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
   }
 
   Widget _navItem(IconData icon, String label, bool isActive) {
-    final color = isActive ? AppColors.accent : AppColors.accent.withOpacity(0.45);
+    final color = isActive ? CartAppColors.accent : CartAppColors.accent.withOpacity(0.45);
     return GestureDetector(
-      onTap: () => showCustomSnackbar('Navigasi ke $label'),
+      onTap: () {
+        HapticFeedback.selectionClick();
+        if (label == 'Home') {
+          Navigator.pop(context); // Kembali ke Beranda
+        } else {
+          showCustomSnackbar('Navigasi ke $label');
+        }
+      },
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -506,21 +488,4 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
       ),
     );
   }
-}
-
-// ==================== MODEL CART ITEM ====================
-class CartItem {
-  final String id;
-  final String name;
-  final int pricePerItem;
-  int quantity;
-  final String image;
-
-  CartItem({
-    required this.id,
-    required this.name,
-    required this.pricePerItem,
-    required this.quantity,
-    required this.image,
-  });
 }

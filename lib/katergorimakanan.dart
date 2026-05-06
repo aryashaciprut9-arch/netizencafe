@@ -1,54 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-<<<<<<< HEAD
-import 'beranda.dart';
-import 'search.dart';
-import 'detailkeranjang.dart';
-import 'profil_pelanggan.dart';
-
-
-void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  // === PENGATURAN ORIENTASI (AUTO-ROTATE) ===
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-    DeviceOrientation.landscapeLeft,  
-    DeviceOrientation.landscapeRight,
-  ]);
-
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-    ),
-  );
-  runApp(const MyApp());
-}
-
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        fontFamily: 'Geologica',
-        primaryColor: AppColors.primary,
-        useMaterial3: true,
-      ),
-      home: const MenuPage(),
-    );
-  }
-}
-=======
 import 'models/menu_models.dart';
 import 'services/api_services.dart';
 import 'kategoriminuman.dart';
 import 'beranda.dart';
+import 'cart_provider.dart';
+import 'detailkeranjang.dart';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -144,14 +101,8 @@ class _MenuPageState extends State<MenuPage> {
   }
 
   void _addToCart(MenuModel item) {
-    setState(() {
-      int index = _cartItems.indexWhere((c) => c.product.id == item.id);
-      if (index != -1) {
-        _cartItems[index].quantity++;
-      } else {
-        _cartItems.add(CartItem(product: item));
-      }
-    });
+    CartProvider().addFromMenu(item, imageUrl: _buildImageUrl(item.foto));
+    setState(() {}); // refresh badge
     HapticFeedback.lightImpact();
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -165,14 +116,8 @@ class _MenuPageState extends State<MenuPage> {
   }
 
   void _addToCartWithQty(MenuModel item, int quantity) {
-    setState(() {
-      int index = _cartItems.indexWhere((c) => c.product.id == item.id);
-      if (index != -1) {
-        _cartItems[index].quantity += quantity;
-      } else {
-        _cartItems.add(CartItem(product: item, quantity: quantity));
-      }
-    });
+    CartProvider().addFromMenu(item, quantity: quantity, imageUrl: _buildImageUrl(item.foto));
+    setState(() {});
     HapticFeedback.lightImpact();
   }
 
@@ -192,31 +137,8 @@ class _MenuPageState extends State<MenuPage> {
     );
   }
 
-  // ========== FUNGSI NAVIGASI DENGAN ANIMASI SMOUTH ==========
-  void _navigateWithAnimation(Widget page, {bool replace = false}) {
-    final route = PageRouteBuilder(
-      pageBuilder: (context, animation, secondaryAnimation) => page,
-      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        const begin = Offset(1.0, 0.0);
-        const end = Offset.zero;
-        const curve = Curves.easeInOutCubic;
-        var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-        var offsetAnimation = animation.drive(tween);
-        return SlideTransition(position: offsetAnimation, child: child);
-      },
-      transitionDuration: const Duration(milliseconds: 400),
-    );
-    
-    if (replace) {
-      Navigator.pushReplacement(context, route);
-    } else {
-      Navigator.push(context, route);
-    }
-  }
-
   void _onNavTap(int index) {
     if (index == 0) {
-      // Tombol Home → kembali ke beranda
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const PuBeranda()),
@@ -224,27 +146,15 @@ class _MenuPageState extends State<MenuPage> {
       );
       return;
     }
+    if (index == 2) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const PuDetailKeranjang()),
+      ).then((_) => setState(() {}));
+      return;
+    }
     setState(() => _currentIndex = index);
     HapticFeedback.selectionClick();
-    
-    if (index == 0) {
-      // Kembali ke halaman Beranda dengan animasi smooth
-      _navigateWithAnimation(const PuBeranda(), replace: true);
-    } else if (index == 1) {
-      // Buka halaman Search dengan animasi smooth
-      _navigateWithAnimation(const SearchPage());
-    } else if (index == 2) {
-      // Buka halaman Keranjang dengan animasi smooth
-      _navigateWithAnimation(const PuDetailKeranjang());
-    } else if (index == 3) {
-      // Buka halaman Profil dengan animasi smooth
-      _navigateWithAnimation(const ProfilPelanggan());
-    }
-    
-    // Update current index after navigation
-    Future.delayed(const Duration(milliseconds: 400), () {
-      if (mounted) setState(() => _currentIndex = index);
-    });
   }
 
   // =====================
@@ -284,14 +194,11 @@ class _MenuPageState extends State<MenuPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-
           Row(
             children: [
-              // Panah kiri → kembali ke beranda
               GestureDetector(
                 onTap: () {
                   HapticFeedback.lightImpact();
-                  _navigateWithAnimation(const PuBeranda(), replace: true);
                   Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(builder: (_) => const PuBeranda()),
@@ -305,8 +212,7 @@ class _MenuPageState extends State<MenuPage> {
                     shape: BoxShape.circle,
                     border: Border.all(color: AppColors.primary.withOpacity(0.1)),
                   ),
-                  child: const Icon(Icons.arrow_back_ios_new,
-                      color: AppColors.primary, size: 16),
+                  child: const Icon(Icons.arrow_back_ios_new, color: AppColors.primary, size: 16),
                 ),
               ),
               const SizedBox(width: 15),
@@ -321,7 +227,6 @@ class _MenuPageState extends State<MenuPage> {
               ),
             ],
           ),
-          const SizedBox(width: 10),
           GestureDetector(
             onTap: () {
               HapticFeedback.lightImpact();
@@ -337,8 +242,7 @@ class _MenuPageState extends State<MenuPage> {
                 shape: BoxShape.circle,
                 border: Border.all(color: AppColors.primary.withOpacity(0.1)),
               ),
-              child: const Icon(Icons.arrow_forward_ios_rounded,
-                  color: AppColors.primary, size: 16),
+              child: const Icon(Icons.arrow_forward_ios_rounded, color: AppColors.primary, size: 16),
             ),
           ),
         ],
@@ -414,8 +318,7 @@ class _MenuPageState extends State<MenuPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.search_off_rounded,
-                    size: 52, color: AppColors.primary.withOpacity(0.2)),
+                Icon(Icons.search_off_rounded, size: 52, color: AppColors.primary.withOpacity(0.2)),
                 const SizedBox(height: 10),
                 Text('Menu tidak ditemukan',
                     style: TextStyle(color: AppColors.primary.withOpacity(0.4), fontSize: 15)),
@@ -442,7 +345,7 @@ class _MenuPageState extends State<MenuPage> {
           crossAxisCount: crossAxisCount,
           mainAxisSpacing: 14,
           crossAxisSpacing: 14,
-          childAspectRatio: 0.8,
+          childAspectRatio: 0.75,
         ),
       ),
     );
@@ -460,7 +363,7 @@ class _MenuPageState extends State<MenuPage> {
         children: [
           _NavItem(icon: Icons.home_rounded,         index: 0, currentIndex: _currentIndex, onTap: _onNavTap),
           _NavItem(icon: Icons.search_rounded,       index: 1, currentIndex: _currentIndex, onTap: _onNavTap),
-          _NavItem(icon: Icons.shopping_bag_rounded, index: 2, currentIndex: _currentIndex, badgeCount: _totalCartItems, onTap: _onNavTap),
+          _NavItem(icon: Icons.shopping_bag_rounded, index: 2, currentIndex: _currentIndex, badgeCount: CartProvider().totalItems, onTap: _onNavTap),
           _NavItem(icon: Icons.person_rounded,       index: 3, currentIndex: _currentIndex, onTap: _onNavTap),
         ],
       ),
@@ -468,6 +371,7 @@ class _MenuPageState extends State<MenuPage> {
   }
 }
 
+// ─── Food Card Widget ─────────────────────────────────────────────────────────
 
 class _FoodCard extends StatelessWidget {
   final MenuModel item;
@@ -489,54 +393,84 @@ class _FoodCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(18),
-          boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 12, offset: const Offset(0, 4))],
+          boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.15), blurRadius: 12, offset: const Offset(0, 4))],
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(18),
           child: Stack(
             fit: StackFit.expand,
             children: [
+              // === FOTO ===
               imageUrl.isNotEmpty
                   ? Image.network(imageUrl, fit: BoxFit.cover,
                       errorBuilder: (c, e, s) => Container(
                         color: AppColors.primaryLighter,
                         child: Center(child: Icon(Icons.broken_image_rounded, color: AppColors.primary.withOpacity(0.3), size: 40)),
                       ))
-                  : Container(color: AppColors.primaryLighter,
+                  : Container(
+                      color: AppColors.primaryLighter,
                       child: const Center(child: Icon(Icons.fastfood, color: AppColors.primary, size: 40))),
+
+              // === GRADIENT GELAP DI BAWAH ===
               Positioned(
                 bottom: 0, left: 0, right: 0,
                 child: Container(
-                  padding: const EdgeInsets.fromLTRB(10, 30, 10, 10),
+                  padding: const EdgeInsets.fromLTRB(10, 40, 10, 10),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [Colors.white.withOpacity(0), Colors.white.withOpacity(0.85), AppColors.white],
+                      colors: [
+                        Colors.transparent,
+                        const Color(0xFF8A4607).withOpacity(0.6),
+                        const Color(0xFF5C2D00).withOpacity(0.92),
+                      ],
                     ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(item.nama, style: const TextStyle(color: AppColors.primary, fontSize: 13, fontWeight: FontWeight.w700), maxLines: 2, overflow: TextOverflow.ellipsis),
+                      Text(
+                        item.nama,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          shadows: [Shadow(color: Colors.black26, blurRadius: 4)],
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       const SizedBox(height: 2),
-                      Text('IDR ${item.harga}', style: TextStyle(color: AppColors.primary.withOpacity(0.6), fontSize: 11, fontWeight: FontWeight.w500)),
+                      Text(
+                        'IDR ${item.harga}',
+                        style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w500),
+                      ),
                       const SizedBox(height: 8),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Row(children: [
-                            Container(width: 6, height: 6, decoration: BoxDecoration(color: item.tersedia ? Colors.green : Colors.red, shape: BoxShape.circle)),
-                            const SizedBox(width: 4),
-                            Text(item.tersedia ? 'Tersedia' : 'Habis', style: TextStyle(color: AppColors.primary.withOpacity(0.5), fontSize: 10)),
+                            Container(
+                              width: 7, height: 7,
+                              decoration: BoxDecoration(
+                                color: item.tersedia ? Colors.greenAccent : Colors.redAccent,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              item.tersedia ? 'Tersedia' : 'Habis',
+                              style: const TextStyle(color: Colors.white70, fontSize: 10),
+                            ),
                           ]),
                           GestureDetector(
                             onTap: onAddToCart,
                             child: Container(
-                              width: 28, height: 28,
-                              decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
-                              child: const Icon(Icons.add_rounded, color: Colors.white, size: 18),
+                              width: 30, height: 30,
+                              decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                              child: const Icon(Icons.add_rounded, color: AppColors.primary, size: 20),
                             ),
                           ),
                         ],
