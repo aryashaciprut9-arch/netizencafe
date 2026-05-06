@@ -373,7 +373,7 @@ class _MenuPageState extends State<MenuPage> {
   }
 }
 
-// ─── Food Card Widget ─────────────────────────────────────────────────────────
+// ─── Food Card Widget (MODIFIED) ─────────────────────────────────────────────
 
 class _FoodCard extends StatelessWidget {
   final MenuModel item;
@@ -442,9 +442,9 @@ class _FoodCard extends StatelessWidget {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        Colors.white.withOpacity(0),
-                        Colors.white.withOpacity(0.85),
-                        AppColors.white,
+                        AppColors.primary.withOpacity(0),       // Transparan
+                        AppColors.primary.withOpacity(0.85),    // Mulai Coklat
+                        AppColors.primary,                       // Coklat Solid
                       ],
                     ),
                   ),
@@ -455,7 +455,7 @@ class _FoodCard extends StatelessWidget {
                       Text(
                         item.nama,
                         style: const TextStyle(
-                          color: AppColors.primary,
+                          color: Colors.white, // Diubah ke Putih
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
                         ),
@@ -466,7 +466,7 @@ class _FoodCard extends StatelessWidget {
                       Text(
                         'IDR ${item.harga}',
                         style: TextStyle(
-                          color: AppColors.primary.withOpacity(0.6),
+                          color: Colors.white.withOpacity(0.9), // Diubah ke Putih
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
                         ),
@@ -481,33 +481,35 @@ class _FoodCard extends StatelessWidget {
                                 width: 6,
                                 height: 6,
                                 decoration: BoxDecoration(
+                                  // Menggunakan GreenAccent agar lebih kontras di coklat
                                   color: item.tersedia
-                                      ? Colors.green
-                                      : Colors.red,
+                                      ? Colors.greenAccent 
+                                      : Colors.redAccent,
                                   shape: BoxShape.circle,
                                 ),
                               ),
                               const SizedBox(width: 4),
                               Text(
                                 item.tersedia ? 'Tersedia' : 'Habis',
-                                style: TextStyle(
-                                  color: AppColors.primary.withOpacity(0.5),
+                                style: const TextStyle(
+                                  color: Colors.white, // Diubah ke Putih
                                   fontSize: 10,
                                 ),
                               ),
                             ],
                           ),
+                          // Tombol Tambah (Putih dengan Icon Coklat)
                           GestureDetector(
                             onTap: onAddToCart,
                             child: Container(
                               width: 28,
                               height: 28,
                               decoration: const BoxDecoration(
-                                color: AppColors.primary,
+                                color: Colors.white, // Background Putih
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(Icons.add_rounded,
-                                  color: Colors.white, size: 18),
+                                  color: AppColors.primary, size: 18), // Icon Coklat
                             ),
                           ),
                         ],

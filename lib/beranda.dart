@@ -534,9 +534,9 @@ class _ProductCard extends StatelessWidget {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.white.withOpacity(0),
-                      Colors.white.withOpacity(0.85),
-                      AppColors.white,
+                      AppColors.primary.withOpacity(0), // Transparan ke coklat
+                      AppColors.primary.withOpacity(0.85), // Mulai pekat
+                      AppColors.primary, // Coklat solid di bagian bawah
                     ],
                   ),
                 ),
@@ -544,30 +544,33 @@ class _ProductCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // --- NAMA MENU (PUTIH) ---
                     Text(
                       product.name,
-                      style: const TextStyle(color: AppColors.primary, fontSize: 13, fontWeight: FontWeight.w700),
+                      style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
+                    // --- HARGA / IDR (PUTIH) ---
                     Text(
                       product.price,
-                      style: TextStyle(color: AppColors.primary.withOpacity(0.6), fontSize: 11, fontWeight: FontWeight.w500),
+                      style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 11, fontWeight: FontWeight.w500),
                     ),
                     const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
+                        Row(  
                           children: [
                             Container(
                               width: 6,
                               height: 6,
-                              decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle),
+                              decoration: const BoxDecoration(color: Colors.greenAccent, shape: BoxShape.circle),
                             ),
                             const SizedBox(width: 4),
-                            Text('Tersedia', style: TextStyle(color: AppColors.primary.withOpacity(0.5), fontSize: 10)),
+                            // --- TERSEDIA (PUTIH) ---
+                            const Text('Tersedia', style: TextStyle(color: Colors.white, fontSize: 10)),
                           ],
                         ),
                         GestureDetector(
@@ -575,8 +578,9 @@ class _ProductCard extends StatelessWidget {
                           child: Container(
                             width: 28,
                             height: 28,
-                            decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
-                            child: const Icon(Icons.add, color: Colors.white, size: 18),
+                            // Diubah ke putih agar kontras dengan background coklat
+                            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                            child: const Icon(Icons.add, color: AppColors.primary, size: 18),
                           ),
                         ),
                       ],
@@ -591,7 +595,6 @@ class _ProductCard extends StatelessWidget {
     );
   }
 }
-
 // ─── Nav Item Widget ─────────────────────────────────────────────────────────
 
 class _NavItem extends StatelessWidget {

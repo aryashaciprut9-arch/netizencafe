@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import 'models/menu_models.dart';
 import 'services/api_services.dart';
 import 'katergorimakanan.dart';
@@ -330,7 +331,7 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
   }
 }
 
-// ─── Drink Card Widget ────────────────────────────────────────────────────────
+// ─── Drink Card Widget (MODIFIED) ───────────────────────────────────────────
 
 class _DrinkCard extends StatelessWidget {
   final MenuModel drink;
@@ -361,6 +362,7 @@ class _DrinkCard extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
+            // Gambar Produk
             imageUrl.isNotEmpty
                 ? Image.network(
                     imageUrl,
@@ -380,6 +382,8 @@ class _DrinkCard extends StatelessWidget {
                         child: Icon(Icons.local_drink,
                             color: AppColors.primary, size: 40)),
                   ),
+
+            // Layer Overlay Coklat dan Teks
             Positioned(
               bottom: 0,
               left: 0,
@@ -391,9 +395,9 @@ class _DrinkCard extends StatelessWidget {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.white.withOpacity(0),
-                      Colors.white.withOpacity(0.85),
-                      AppColors.white,
+                      AppColors.primary.withOpacity(0),      // Transparan
+                      AppColors.primary.withOpacity(0.85),   // Mulai Coklat
+                      AppColors.primary,                     // Coklat Solid
                     ],
                   ),
                 ),
@@ -401,10 +405,11 @@ class _DrinkCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // Nama Menu (Putih)
                     Text(
                       drink.nama,
                       style: const TextStyle(
-                        color: AppColors.primary,
+                        color: Colors.white, // Diubah ke Putih
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                       ),
@@ -412,10 +417,11 @@ class _DrinkCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
+                    // Harga (Putih transparan)
                     Text(
                       'IDR ${drink.harga}',
                       style: TextStyle(
-                        color: AppColors.primary.withOpacity(0.6),
+                        color: Colors.white.withOpacity(0.9), // Diubah ke Putih
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
                       ),
@@ -430,33 +436,39 @@ class _DrinkCard extends StatelessWidget {
                               width: 6,
                               height: 6,
                               decoration: BoxDecoration(
+                                // Menggunakan GreenAccent agar lebih kontras di coklat
                                 color: drink.tersedia
-                                    ? Colors.green
-                                    : Colors.red,
+                                    ? Colors.greenAccent 
+                                    : Colors.redAccent,
                                 shape: BoxShape.circle,
                               ),
                             ),
                             const SizedBox(width: 4),
+                            // Status Tersedia (Putih)
                             Text(
                               drink.tersedia ? 'Tersedia' : 'Habis',
-                              style: TextStyle(
-                                color: AppColors.primary.withOpacity(0.5),
+                              style: const TextStyle(
+                                color: Colors.white, // Diubah ke Putih
                                 fontSize: 10,
                               ),
                             ),
                           ],
                         ),
+                        // Tombol Tambah (Putih dengan Icon Coklat)
                         GestureDetector(
                           onTap: onAddToCart,
                           child: Container(
                             width: 28,
                             height: 28,
                             decoration: const BoxDecoration(
-                              color: AppColors.primary,
+                              color: Colors.white, // Background Putih
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.add_rounded,
-                                color: Colors.white, size: 18),
+                            child: const Icon(
+                              Icons.add_rounded,
+                              color: AppColors.primary, // Icon Coklat
+                              size: 18,
+                            ),
                           ),
                         ),
                       ],
