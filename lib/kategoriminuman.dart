@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 import 'models/menu_models.dart';
 import 'services/api_services.dart';
 import 'katergorimakanan.dart' as makanan;
@@ -145,6 +144,7 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
         children: [
           Row(
             children: [
+              // Panah kiri → ke halaman Makanan
               GestureDetector(
                 onTap: () {
                   HapticFeedback.lightImpact();
@@ -168,6 +168,7 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
                   style: TextStyle(color: Color(0xFF8A4607), fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: -0.3)),
             ],
           ),
+          // Panah kanan → ke halaman Snack
           GestureDetector(
             onTap: () {
               HapticFeedback.lightImpact();
@@ -303,7 +304,7 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
   }
 }
 
-// ─── Drink Card Widget ───────────────────────────────────────────────────────
+// ─── Drink Card Widget ────────────────────────────────────────────────────────
 
 class _DrinkCard extends StatelessWidget {
   final MenuModel item;
@@ -324,7 +325,6 @@ class _DrinkCard extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // Gambar Produk
             imageUrl.isNotEmpty
                 ? Image.network(imageUrl, fit: BoxFit.cover,
                     errorBuilder: (c, e, s) => Container(
@@ -333,7 +333,6 @@ class _DrinkCard extends StatelessWidget {
                     ))
                 : Container(color: const Color(0xFFFFF4E6),
                     child: const Center(child: Icon(Icons.local_drink, color: Color(0xFF8A4607), size: 40))),
-            // Layer Overlay
             Positioned(
               bottom: 0, left: 0, right: 0,
               child: Container(

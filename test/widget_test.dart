@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
-import 'package:netizencafe/main.dart'; // sesuaikan dengan nama project Anda
+import 'login.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Bangun widget MyApp
-    await tester.pumpWidget(const MyApp());
+  runApp(const FigmaToCodeApp());
+}
 
-    // Pastikan counter dimulai dari 0
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+class FigmaToCodeApp extends StatelessWidget {
+  const FigmaToCodeApp({super.key});
 
-    
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Pastikan counter bertambah menjadi 1
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
-  });
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        fontFamily: 'Geologica',
+        useMaterial3: true,
+      ),
+      home: const Scaffold(body: LoginPage()),
+    );
+  }
 }

@@ -104,14 +104,15 @@ class _PuBerandaState extends State<PuBeranda> {
   }
 
   void _onNavTap(int index) {
-    if (index == 0) {
-      setState(() => _currentIndex = 0);
-      HapticFeedback.selectionClick();
-      return;
-    }
-    setState(() => _currentIndex = index);
+  if (index == 0) {
+    // Sudah di beranda, scroll ke atas saja
+    setState(() => _currentIndex = 0);
     HapticFeedback.selectionClick();
+    return;
   }
+  setState(() => _currentIndex = index);
+  HapticFeedback.selectionClick();
+}
 
   void _navigateToCategory(String kategori) {
     HapticFeedback.lightImpact();
@@ -128,41 +129,41 @@ class _PuBerandaState extends State<PuBeranda> {
   //  UI / BUILD
   // =====================
   @override
-  Widget build(BuildContext context) {
-    if (_currentIndex == 3) {
-      return const ProfilePage();
-    }
-
-    return Scaffold(
-      backgroundColor: AppColors.white,
-      body: SafeArea(
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-            : LayoutBuilder(
-                builder: (context, constraints) {
-                  return CustomScrollView(
-                    slivers: [
-                      SliverToBoxAdapter(child: _buildHeader(context)),
-                      const SliverToBoxAdapter(child: SizedBox(height: 10)),
-                      SliverToBoxAdapter(child: _buildSearchBar(context)),
-                      const SliverToBoxAdapter(child: SizedBox(height: 15)),
-                      SliverToBoxAdapter(child: _buildPromoBanner(context)),
-                      const SliverToBoxAdapter(child: SizedBox(height: 20)),
-                      SliverToBoxAdapter(child: _buildCategories(context)),
-                      const SliverToBoxAdapter(child: SizedBox(height: 20)),
-                      SliverToBoxAdapter(child: _buildSectionTitle(context)),
-                      const SliverToBoxAdapter(child: SizedBox(height: 10)),
-                      _buildProductGrid(context, constraints.maxWidth),
-                      const SliverToBoxAdapter(child: SizedBox(height: 80)),
-                    ],
-                  );
-                },
-              ),
-      ),
-      bottomNavigationBar: _buildBottomNavBar(),
-    );
+Widget build(BuildContext context) {
+  // Kalau profil, return ProfilePage langsung (dia punya navbar sendiri)
+  if (_currentIndex == 3) {
+    return const ProfilePage();
   }
 
+  return Scaffold(
+    backgroundColor: AppColors.white,
+    body: SafeArea(
+      child: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                return CustomScrollView(
+                  slivers: [
+                    SliverToBoxAdapter(child: _buildHeader(context)),
+                    const SliverToBoxAdapter(child: SizedBox(height: 10)),
+                    SliverToBoxAdapter(child: _buildSearchBar(context)),
+                    const SliverToBoxAdapter(child: SizedBox(height: 15)),
+                    SliverToBoxAdapter(child: _buildPromoBanner(context)),
+                    const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                    SliverToBoxAdapter(child: _buildCategories(context)),
+                    const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                    SliverToBoxAdapter(child: _buildSectionTitle(context)),
+                    const SliverToBoxAdapter(child: SizedBox(height: 10)),
+                    _buildProductGrid(context, constraints.maxWidth),
+                    const SliverToBoxAdapter(child: SizedBox(height: 80)),
+                  ],
+                );
+              },
+            ),
+    ),
+    bottomNavigationBar: _buildBottomNavBar(),
+  );
+}
   Widget _buildHeader(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
@@ -194,6 +195,7 @@ class _PuBerandaState extends State<PuBeranda> {
               ],
             ),
           ),
+          // Tombol refresh
           GestureDetector(
             onTap: _loadData,
             child: Container(
@@ -341,6 +343,7 @@ class _PuBerandaState extends State<PuBeranda> {
           return GestureDetector(
             onTap: () {
               setState(() => _selectedCategory = label);
+              // Navigasi ke halaman kategori jika bukan 'Semua'
               if (label != 'Semua') _navigateToCategory(label);
             },
             child: Column(
@@ -531,9 +534,9 @@ class _MenuCard extends StatelessWidget {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      AppColors.primary.withOpacity(0),
-                      AppColors.primary.withOpacity(0.85),
-                      AppColors.primary,
+                      Colors.white.withOpacity(0),
+                      Colors.white.withOpacity(0.85),
+                      AppColors.white,
                     ],
                   ),
                 ),
@@ -541,11 +544,10 @@ class _MenuCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Nama menu
                     Text(
                       item.nama,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: AppColors.primary,
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                       ),
@@ -553,14 +555,12 @@ class _MenuCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
-                    // Harga
                     Text(
                       'IDR ${item.harga}',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.85),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                      ),
+                          color: AppColors.primary.withOpacity(0.6),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500),
                     ),
                     const SizedBox(height: 8),
                     Row(
@@ -571,17 +571,16 @@ class _MenuCard extends StatelessWidget {
                             Container(
                               width: 6, height: 6,
                               decoration: BoxDecoration(
-                                color: item.tersedia ? Colors.greenAccent : Colors.redAccent,
+                                color: item.tersedia ? Colors.green : Colors.red,
                                 shape: BoxShape.circle,
                               ),
                             ),
                             const SizedBox(width: 4),
                             Text(
                               item.tersedia ? 'Tersedia' : 'Habis',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                              ),
+                              style: TextStyle(
+                                  color: AppColors.primary.withOpacity(0.5),
+                                  fontSize: 10),
                             ),
                           ],
                         ),
@@ -590,11 +589,11 @@ class _MenuCard extends StatelessWidget {
                           child: Container(
                             width: 28, height: 28,
                             decoration: const BoxDecoration(
-                              color: Colors.white,
+                              color: AppColors.primary,
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(Icons.add_rounded,
-                                color: AppColors.primary, size: 18),
+                                color: Colors.white, size: 18),
                           ),
                         ),
                       ],
