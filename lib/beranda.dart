@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:netizencafe/search.dart';
 import 'services/api_services.dart';
 import 'models/menu_models.dart';
 import 'katergorimakanan.dart' as makanan;
 import 'kategoriminuman.dart';
 import 'snack.dart' as snack;
-import 'profil_pelanggan.dart'as Profil;  // as di luar petik;
-import 'search.dart'; // IMPORT SEARCH PAGE
-import 'detailkeranjang.dart'; // IMPORT HALAMAN KERANJANG
-import 'cart_provider.dart';  // IMPORT CART PROVIDER
-
+import 'profil_pelanggan.dart';
+import 'detailkeranjang.dart';
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 class AppColors {
@@ -38,6 +36,11 @@ class _PuBerandaState extends State<PuBeranda> {
   String _searchQuery        = '';
   String _selectedCategory   = 'Semua';
   final TextEditingController _searchController = TextEditingController();
+
+  // ===== KERANJANG =====
+  final List<KeranjangItem> _keranjang = [];
+
+  int get _keranjangCount => _keranjang.fold(0, (sum, item) => sum + item.qty);
 
   List<MenuModel> get _filteredProducts {
     return _allMenus.where((m) {
@@ -91,9 +94,24 @@ class _PuBerandaState extends State<PuBeranda> {
   }
 
   void _addToCart(MenuModel item) {
+    if (!item.tersedia) return;
     HapticFeedback.lightImpact();
-    CartProvider().addFromMenu(item, imageUrl: _buildImageUrl(item.foto));
-    setState(() {}); // refresh badge
+
+    setState(() {
+      final existing = _keranjang.where((k) => k.menuId == item.id).toList();
+      if (existing.isNotEmpty) {
+        existing.first.qty++;
+      } else {
+        _keranjang.add(KeranjangItem(
+          menuId: int.tryParse(item.id) ?? 0,
+          namaMenu: item.nama,
+          harga: item.harga,
+          qty: 1,
+          foto: item.foto,
+        ));
+      }
+    });
+
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
@@ -107,61 +125,76 @@ class _PuBerandaState extends State<PuBeranda> {
       );
   }
 
-  // FUNGSI NAVIGASI KE HALAMAN SEARCH
-  void _navigateToSearchPage({String? initialQuery}) {
-    HapticFeedback.lightImpact();
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SearchPage(initialSearchQuery: initialQuery),
-      ),
-    );
-  }
-
-  // FUNGSI NAVIGASI KE HALAMAN PROFIL
- void _navigateToProfile() {
-  HapticFeedback.lightImpact();
-  Navigator.push(
-    context,
-    MaterialPageRoute(builder: (context) => const Profil.ProfilePage()),
-  ).then((_) {
-    _loadData();
-  });
-}
-
   void _onNavTap(int index) {
     HapticFeedback.selectionClick();
-    
-    if (index == 0) {
-      // Home - tetap di halaman ini
-      setState(() => _currentIndex = 0);
-    } else if (index == 1) {
-      // Search - navigasi ke halaman search
-      _navigateToSearchPage();
-    } else if (index == 2) {
-      // Cart - navigasi ke halaman detail keranjang
-      setState(() => _currentIndex = index);
+    if (index == 1) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const PuDetailKeranjang()),
-      ).then((_) {
-        // Kembali ke index home setelah kembali dari keranjang
-        setState(() => _currentIndex = 0);
-      });
-    } else if (index == 3) {
-      // Profile - navigasi ke halaman profil
-      _navigateToProfile();
+        MaterialPageRoute(
+          builder: (_) => PuSearch(
+            keranjang: _keranjang,
+            onTambahKeranjang: (menuId, namaMenu, harga, foto) {
+              setState(() {
+                final existing = _keranjang.where((k) => k.menuId == menuId).toList();
+                if (existing.isNotEmpty) {
+                  existing.first.qty++;
+                } else {
+                  _keranjang.add(KeranjangItem(
+                    menuId: menuId,
+                    namaMenu: namaMenu,
+                    harga: harga,
+                    qty: 1,
+                    foto: foto,
+                  ));
+                }
+              });
+            },
+          ),
+        ),
+      ).then((_) => setState(() {}));
+      return;
     }
+    if (index == 2) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PuDetailKeranjang(
+            items: List.from(_keranjang),
+            userId: 0,
+            namaPelanggan: 'User',
+          ),
+        ),
+      ).then((_) {
+        setState(() => _keranjang.clear());
+      });
+      return;
+    }
+    setState(() => _currentIndex = index);
   }
 
   void _navigateToCategory(String kategori) {
     HapticFeedback.lightImpact();
     if (kategori == 'Makanan') {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const makanan.MenuPage()));
+      Navigator.push(context, MaterialPageRoute(
+        builder: (_) => makanan.MenuPage(
+          keranjang: _keranjang,
+          onAddToCart: _addToCart,
+        ),
+      ));
     } else if (kategori == 'Minuman') {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const PaMenuJenisMinuman()));
+      Navigator.push(context, MaterialPageRoute(
+        builder: (_) => PaMenuJenisMinuman(
+          keranjang: _keranjang,
+          onAddToCart: _addToCart,
+        ),
+      ));
     } else if (kategori == 'Snack') {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const snack.MenuPage()));
+      Navigator.push(context, MaterialPageRoute(
+        builder: (_) => snack.MenuPage(
+          keranjang: _keranjang,
+          onAddToCart: _addToCart,
+        ),
+      ));
     }
   }
 
@@ -170,6 +203,10 @@ class _PuBerandaState extends State<PuBeranda> {
   // =====================
   @override
   Widget build(BuildContext context) {
+    if (_currentIndex == 3) {
+      return const ProfilePage();
+    }
+
     return Scaffold(
       backgroundColor: AppColors.white,
       body: SafeArea(
@@ -249,60 +286,35 @@ class _PuBerandaState extends State<PuBeranda> {
   }
 
   Widget _buildSearchBar(BuildContext context) {
-    // MEMBUAT SEARCH BAR MENJADI GESTURE DETECTOR UNTUK NAVIGASI KE SEARCH PAGE
-    return GestureDetector(
-      onTap: () {
-        // Jika ada teks pencarian, bawa sebagai parameter
-        if (_searchQuery.isNotEmpty) {
-          _navigateToSearchPage(initialQuery: _searchQuery);
-        } else {
-          _navigateToSearchPage();
-        }
-      },
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 20),
         height: 50,
         decoration: BoxDecoration(
           color: AppColors.primaryLighter,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AppColors.primary.withOpacity(0.15)),
         ),
-        child: Row(
-          children: [
-            const SizedBox(width: 16),
-            const Icon(Icons.search, color: AppColors.primary, size: 22),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                _searchQuery.isNotEmpty ? _searchQuery : 'Cari makanan, minuman...',
-                style: TextStyle(
-                  color: _searchQuery.isNotEmpty 
-                      ? AppColors.primary 
-                      : AppColors.primary.withOpacity(0.4),
-                  fontSize: 14,
-                ),
-              ),
-            ),
-            if (_searchQuery.isNotEmpty)
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _searchQuery = '';
-                    _searchController.clear();
-                  });
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  margin: const EdgeInsets.only(right: 8),
-                  decoration: const BoxDecoration(
-                    color: Colors.transparent,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.close, color: AppColors.primary.withOpacity(0.6), size: 18),
-                ),
-              ),
-            const SizedBox(width: 8),
-          ],
+        child: TextField(
+          controller: _searchController,
+          onChanged: (value) => setState(() => _searchQuery = value),
+          style: const TextStyle(color: AppColors.primary, fontSize: 14),
+          decoration: InputDecoration(
+            hintText: 'Cari makanan, minuman...',
+            hintStyle: TextStyle(color: AppColors.primary.withOpacity(0.4), fontSize: 14),
+            prefixIcon: const Icon(Icons.search, color: AppColors.primary, size: 22),
+            suffixIcon: _searchQuery.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.close, color: AppColors.primary, size: 18),
+                    onPressed: () {
+                      _searchController.clear();
+                      setState(() => _searchQuery = '');
+                    },
+                  )
+                : null,
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(vertical: 15),
+          ),
         ),
       ),
     );
@@ -511,29 +523,22 @@ class _PuBerandaState extends State<PuBeranda> {
   }
 
   // =====================
-  //  NAVBAR BAWAH — TAMPILAN DIUPDATE (dengan label teks)
+  //  NAVBAR BAWAH
   // =====================
   Widget _buildBottomNavBar() {
     return Container(
       height: 70,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppColors.primaryLight,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _NavItem(icon: Icons.home_rounded,         label: 'Home',      index: 0, currentIndex: _currentIndex, onTap: _onNavTap),
-          _NavItem(icon: Icons.search_rounded,       label: 'Cari',      index: 1, currentIndex: _currentIndex, onTap: _onNavTap),
-          _NavItem(icon: Icons.shopping_bag_rounded, label: 'Keranjang', index: 2, currentIndex: _currentIndex, onTap: _onNavTap, badgeCount: CartProvider().totalItems),
-          _NavItem(icon: Icons.person_rounded,       label: 'Profil',    index: 3, currentIndex: _currentIndex, onTap: _onNavTap),
+          _NavItem(icon: Icons.home_rounded,         index: 0, currentIndex: _currentIndex, onTap: _onNavTap),
+          _NavItem(icon: Icons.search_rounded,       index: 1, currentIndex: _currentIndex, onTap: _onNavTap),
+          _NavItem(icon: Icons.shopping_bag_rounded, index: 2, currentIndex: _currentIndex, onTap: _onNavTap, badgeCount: _keranjangCount),
+          _NavItem(icon: Icons.person_rounded,       index: 3, currentIndex: _currentIndex, onTap: _onNavTap),
         ],
       ),
     );
@@ -571,7 +576,6 @@ class _MenuCard extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // === FOTO ===
             imageUrl.isNotEmpty
                 ? Image.network(
                     imageUrl,
@@ -590,8 +594,6 @@ class _MenuCard extends StatelessWidget {
                       child: Icon(Icons.fastfood, color: AppColors.primary, size: 40),
                     ),
                   ),
-
-            // === GRADIENT GELAP DI BAWAH ===
             Positioned(
               bottom: 0, left: 0, right: 0,
               child: Container(
@@ -611,22 +613,18 @@ class _MenuCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Nama menu
                     Text(
                       item.nama,
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        shadows: [
-                          Shadow(color: Colors.black26, blurRadius: 4),
-                        ],
+                        shadows: [Shadow(color: Colors.black26, blurRadius: 4)],
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
-                    // Harga
                     Text(
                       'IDR ${item.harga}',
                       style: const TextStyle(
@@ -636,7 +634,6 @@ class _MenuCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    // Status & tombol +
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -652,10 +649,7 @@ class _MenuCard extends StatelessWidget {
                             const SizedBox(width: 5),
                             Text(
                               item.tersedia ? 'Tersedia' : 'Habis',
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 10,
-                              ),
+                              style: const TextStyle(color: Colors.white70, fontSize: 10),
                             ),
                           ],
                         ),
@@ -684,11 +678,10 @@ class _MenuCard extends StatelessWidget {
   }
 }
 
-// ─── Nav Item Widget — TAMPILAN DIUPDATE ─────────────────────────────────────
+// ─── Nav Item Widget ─────────────────────────────────────────────────────────
 
 class _NavItem extends StatelessWidget {
   final IconData icon;
-  final String label;           // ← label teks di bawah icon
   final int index;
   final int currentIndex;
   final int badgeCount;
@@ -696,7 +689,6 @@ class _NavItem extends StatelessWidget {
 
   const _NavItem({
     required this.icon,
-    required this.label,
     required this.index,
     required this.currentIndex,
     required this.onTap,
@@ -710,66 +702,39 @@ class _NavItem extends StatelessWidget {
       onTap: () => onTap(index),
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
-        width: 72,
-        height: 70,
+        width: 56, height: 56,
         child: Stack(
           alignment: Alignment.center,
           clipBehavior: Clip.none,
           children: [
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Icon dengan background circle transparan saat selected
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: isSelected ? 44 : 36,
-                  height: isSelected ? 44 : 36,
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? AppColors.primary.withOpacity(0.15)
-                        : Colors.transparent,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    icon,
-                    size: 22,
-                    color: isSelected
-                        ? AppColors.primary
-                        : AppColors.primary.withOpacity(0.45),
-                  ),
-                ),
-                const SizedBox(height: 3),
-                // Label teks di bawah icon
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: isSelected
-                        ? AppColors.primary
-                        : AppColors.primary.withOpacity(0.45),
-                    fontSize: 10,
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
-                  ),
-                ),
-              ],
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: isSelected ? 48 : 36,
+              height: isSelected ? 48 : 36,
+              decoration: BoxDecoration(
+                color: isSelected ? AppColors.primary : Colors.transparent,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon,
+                  size: 24,
+                  color: isSelected
+                      ? Colors.white
+                      : AppColors.primary.withOpacity(0.35)),
             ),
-            // Badge (tidak diubah fungsinya)
             if (badgeCount > 0)
               Positioned(
-                top: 8, right: 8,
+                top: 4, right: 4,
                 child: Container(
                   padding: const EdgeInsets.all(4),
                   decoration: const BoxDecoration(
                     color: Colors.red,
                     shape: BoxShape.circle,
                   ),
-                  child: Text(
-                    '$badgeCount',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 9,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  child: Text('$badgeCount',
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold)),
                 ),
               ),
           ],

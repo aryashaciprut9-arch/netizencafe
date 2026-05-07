@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:netizencafe/detailkeranjang.dart';
 import 'models/menu_models.dart';
 import 'services/api_services.dart';
 import 'kategoriminuman.dart';
 import 'beranda.dart';
-import 'cart_provider.dart';
-import 'detailkeranjang.dart';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -16,7 +15,7 @@ class AppColors {
   static const Color white          = Colors.white;
 }
 
-// ─── Model Keranjang ─────────────────────────────────────────────────────────
+// ─── Model Keranjang (CartItem lokal, untuk detail sheet qty) ─────────────────
 
 class CartItem {
   final MenuModel product;
@@ -27,25 +26,27 @@ class CartItem {
 // ─── Halaman Makanan ─────────────────────────────────────────────────────────
 
 class MenuPage extends StatefulWidget {
-  const MenuPage({super.key});
+  final List<KeranjangItem> keranjang;
+  final void Function(MenuModel) onAddToCart;
+
+  const MenuPage({
+    super.key,
+    required this.keranjang,
+    required this.onAddToCart,
+  });
 
   @override
   State<MenuPage> createState() => _MenuPageState();
 }
 
 class _MenuPageState extends State<MenuPage> {
-  // =====================
-  //  STATE & DATA
-  // =====================
   List<MenuModel> _allMenuItems = [];
   bool _isLoading               = true;
-  List<CartItem> _cartItems     = [];
   int _currentIndex             = 0;
   String _searchQuery           = '';
   final TextEditingController _searchController = TextEditingController();
 
-  int get _totalCartItems =>
-      _cartItems.fold(0, (sum, item) => sum + item.quantity);
+  int get _keranjangCount => widget.keranjang.fold(0, (sum, item) => sum + item.qty);
 
   List<MenuModel> get _filteredMenuItems {
     final items = _allMenuItems
@@ -57,9 +58,6 @@ class _MenuPageState extends State<MenuPage> {
         .toList();
   }
 
-  // =====================
-  //  FUNGSI / LOGIKA
-  // =====================
   @override
   void initState() {
     super.initState();
@@ -101,8 +99,8 @@ class _MenuPageState extends State<MenuPage> {
   }
 
   void _addToCart(MenuModel item) {
-    CartProvider().addFromMenu(item, imageUrl: _buildImageUrl(item.foto));
-    setState(() {}); // refresh badge
+    widget.onAddToCart(item);
+      setState(() {}); // 🔥 paksa refresh UI
     HapticFeedback.lightImpact();
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -116,8 +114,9 @@ class _MenuPageState extends State<MenuPage> {
   }
 
   void _addToCartWithQty(MenuModel item, int quantity) {
-    CartProvider().addFromMenu(item, quantity: quantity, imageUrl: _buildImageUrl(item.foto));
-    setState(() {});
+    for (int i = 0; i < quantity; i++) {
+      widget.onAddToCart(item);
+    }
     HapticFeedback.lightImpact();
   }
 
@@ -149,17 +148,20 @@ class _MenuPageState extends State<MenuPage> {
     if (index == 2) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const PuDetailKeranjang()),
-      ).then((_) => setState(() {}));
+        MaterialPageRoute(
+          builder: (_) => PuDetailKeranjang(
+            items: List.from(widget.keranjang),
+            userId: 0,
+            namaPelanggan: 'User',
+          ),
+        ),
+      );
       return;
     }
     setState(() => _currentIndex = index);
     HapticFeedback.selectionClick();
   }
 
-  // =====================
-  //  UI / BUILD
-  // =====================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -232,7 +234,12 @@ class _MenuPageState extends State<MenuPage> {
               HapticFeedback.lightImpact();
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (_) => const PaMenuJenisMinuman()),
+                MaterialPageRoute(
+                  builder: (_) => PaMenuJenisMinuman(
+                    keranjang: widget.keranjang,
+                    onAddToCart: widget.onAddToCart,
+                  ),
+                ),
               );
             },
             child: Container(
@@ -363,7 +370,7 @@ class _MenuPageState extends State<MenuPage> {
         children: [
           _NavItem(icon: Icons.home_rounded,         index: 0, currentIndex: _currentIndex, onTap: _onNavTap),
           _NavItem(icon: Icons.search_rounded,       index: 1, currentIndex: _currentIndex, onTap: _onNavTap),
-          _NavItem(icon: Icons.shopping_bag_rounded, index: 2, currentIndex: _currentIndex, badgeCount: CartProvider().totalItems, onTap: _onNavTap),
+          _NavItem(icon: Icons.shopping_bag_rounded, index: 2, currentIndex: _currentIndex, onTap: _onNavTap, badgeCount: _keranjangCount),
           _NavItem(icon: Icons.person_rounded,       index: 3, currentIndex: _currentIndex, onTap: _onNavTap),
         ],
       ),
@@ -400,7 +407,6 @@ class _FoodCard extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // === FOTO ===
               imageUrl.isNotEmpty
                   ? Image.network(imageUrl, fit: BoxFit.cover,
                       errorBuilder: (c, e, s) => Container(
@@ -410,8 +416,6 @@ class _FoodCard extends StatelessWidget {
                   : Container(
                       color: AppColors.primaryLighter,
                       child: const Center(child: Icon(Icons.fastfood, color: AppColors.primary, size: 40))),
-
-              // === GRADIENT GELAP DI BAWAH ===
               Positioned(
                 bottom: 0, left: 0, right: 0,
                 child: Container(
@@ -562,12 +566,21 @@ class _DetailSheetState extends State<_DetailSheet> {
   Widget build(BuildContext context) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.60,
-      decoration: const BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
+      decoration: const BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
       child: Column(
         children: [
           Padding(
             padding: const EdgeInsets.only(top: 10),
-            child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.15), borderRadius: BorderRadius.circular(10))),
+            child: Container(
+              width: 40, height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
           ),
           Expanded(
             child: SingleChildScrollView(
@@ -588,24 +601,39 @@ class _DetailSheetState extends State<_DetailSheet> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(widget.item.nama, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.primary)),
+                        Text(widget.item.nama,
+                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.primary)),
                         const SizedBox(height: 5),
-                        Text('IDR ${widget.item.harga}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.primary)),
+                        Text('IDR ${widget.item.harga}',
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.primary)),
                         const SizedBox(height: 15),
-                        Text(widget.item.deskripsi.isNotEmpty ? widget.item.deskripsi : 'Tidak ada deskripsi.',
-                            style: TextStyle(color: AppColors.primary.withOpacity(0.6), height: 1.5, fontSize: 13)),
+                        Text(
+                          widget.item.deskripsi.isNotEmpty ? widget.item.deskripsi : 'Tidak ada deskripsi.',
+                          style: TextStyle(color: AppColors.primary.withOpacity(0.6), height: 1.5, fontSize: 13),
+                        ),
                         const SizedBox(height: 25),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('Jumlah', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.primary)),
+                            const Text('Jumlah',
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.primary)),
                             Container(
-                              decoration: BoxDecoration(color: AppColors.primaryLighter, borderRadius: BorderRadius.circular(10)),
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryLighter,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
                               child: Row(
                                 children: [
-                                  IconButton(onPressed: () => setState(() { if (_quantity > 1) _quantity--; }), icon: const Icon(Icons.remove, color: AppColors.primary)),
-                                  Text('$_quantity', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.primary)),
-                                  IconButton(onPressed: () => setState(() => _quantity++), icon: const Icon(Icons.add, color: AppColors.primary)),
+                                  IconButton(
+                                    onPressed: () => setState(() { if (_quantity > 1) _quantity--; }),
+                                    icon: const Icon(Icons.remove, color: AppColors.primary),
+                                  ),
+                                  Text('$_quantity',
+                                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.primary)),
+                                  IconButton(
+                                    onPressed: () => setState(() => _quantity++),
+                                    icon: const Icon(Icons.add, color: AppColors.primary),
+                                  ),
                                 ],
                               ),
                             ),
@@ -616,8 +644,13 @@ class _DetailSheetState extends State<_DetailSheet> {
                           width: double.infinity, height: 50,
                           child: ElevatedButton(
                             onPressed: () => widget.onAddToCart(_quantity),
-                            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
-                            child: const Text('Tambah ke Keranjang', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                            ),
+                            child: const Text('Tambah ke Keranjang',
+                                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
                           ),
                         ),
                       ],

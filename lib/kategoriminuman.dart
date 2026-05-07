@@ -1,32 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:netizencafe/detailkeranjang.dart';
 import 'models/menu_models.dart';
 import 'services/api_services.dart';
 import 'katergorimakanan.dart' as makanan;
 import 'snack.dart' as snack;
 import 'beranda.dart';
-import 'cart_provider.dart';
-import 'detailkeranjang.dart';
-
-// AppColors, CartItem sudah ada di katergorimakanan.dart
-// Reuse dari sana lewat import
 
 class PaMenuJenisMinuman extends StatefulWidget {
-  const PaMenuJenisMinuman({super.key});
+  final List<KeranjangItem> keranjang;
+  final void Function(MenuModel) onAddToCart;
+
+  const PaMenuJenisMinuman({
+    super.key,
+    required this.keranjang,
+    required this.onAddToCart,
+  });
 
   @override
   State<PaMenuJenisMinuman> createState() => _PaMenuJenisMinumanState();
 }
 
 class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
-  // =====================
-  //  STATE & DATA
-  // =====================
   List<MenuModel> _allDrinks = [];
   bool _isLoading            = true;
   int _currentIndex          = 0;
   String _searchQuery        = '';
   final TextEditingController _searchController = TextEditingController();
+
+  int get _keranjangCount => widget.keranjang.fold(0, (sum, item) => sum + item.qty);
 
   List<MenuModel> get _filteredDrinks {
     final items = _allDrinks
@@ -38,9 +40,6 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
         .toList();
   }
 
-  // =====================
-  //  FUNGSI / LOGIKA
-  // =====================
   @override
   void initState() {
     super.initState();
@@ -82,8 +81,8 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
   }
 
   void _addToCart(MenuModel item) {
-    CartProvider().addFromMenu(item, imageUrl: _buildImageUrl(item.foto));
-    setState(() {});
+    widget.onAddToCart(item);
+      setState(() {}); // 🔥 paksa refresh UI
     HapticFeedback.lightImpact();
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -108,17 +107,20 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
     if (index == 2) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const PuDetailKeranjang()),
-      ).then((_) => setState(() {}));
+        MaterialPageRoute(
+          builder: (_) => PuDetailKeranjang(
+            items: List.from(widget.keranjang),
+            userId: 0,
+            namaPelanggan: 'User',
+          ),
+        ),
+      );
       return;
     }
     setState(() => _currentIndex = index);
     HapticFeedback.selectionClick();
   }
 
-  // =====================
-  //  UI / BUILD
-  // =====================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -160,7 +162,12 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
                   HapticFeedback.lightImpact();
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (_) => const makanan.MenuPage()),
+                    MaterialPageRoute(
+                      builder: (_) => makanan.MenuPage(
+                        keranjang: widget.keranjang,
+                        onAddToCart: widget.onAddToCart,
+                      ),
+                    ),
                   );
                 },
                 child: Container(
@@ -183,7 +190,12 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
               HapticFeedback.lightImpact();
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (_) => const snack.MenuPage()),
+                MaterialPageRoute(
+                  builder: (_) => snack.MenuPage(
+                    keranjang: widget.keranjang,
+                    onAddToCart: widget.onAddToCart,
+                  ),
+                ),
               );
             },
             child: Container(
@@ -305,7 +317,7 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
         children: [
           _NavItem(icon: Icons.home_rounded,         index: 0, currentIndex: _currentIndex, onTap: _onNavTap),
           _NavItem(icon: Icons.search_rounded,       index: 1, currentIndex: _currentIndex, onTap: _onNavTap),
-          _NavItem(icon: Icons.shopping_bag_rounded, index: 2, currentIndex: _currentIndex, badgeCount: CartProvider().totalItems, onTap: _onNavTap),
+          _NavItem(icon: Icons.shopping_bag_rounded, index: 2, currentIndex: _currentIndex, onTap: _onNavTap, badgeCount: _keranjangCount),
           _NavItem(icon: Icons.person_rounded,       index: 3, currentIndex: _currentIndex, onTap: _onNavTap),
         ],
       ),
@@ -334,7 +346,6 @@ class _DrinkCard extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // === FOTO ===
             imageUrl.isNotEmpty
                 ? Image.network(imageUrl, fit: BoxFit.cover,
                     errorBuilder: (c, e, s) => Container(
@@ -344,8 +355,6 @@ class _DrinkCard extends StatelessWidget {
                 : Container(
                     color: const Color(0xFFFFF4E6),
                     child: const Center(child: Icon(Icons.local_drink, color: Color(0xFF8A4607), size: 40))),
-
-            // === GRADIENT GELAP DI BAWAH ===
             Positioned(
               bottom: 0, left: 0, right: 0,
               child: Container(

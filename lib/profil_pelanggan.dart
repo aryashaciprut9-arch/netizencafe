@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
-import 'beranda.dart';
-// IMPORT halaman login (sesuaikan dengan nama file login Anda)
-import 'login.dart'; // ← TAMBAHKAN import halaman login
+import 'beranda.dart'; // T
+import 'login.dart'; 
+import 'utils/session_manager.dart';
 
 // ─── Data Model ───────────────────────────────────────────────
 class ProfileMenuItem {
+  final IconData icon;
   final String label;
   final VoidCallback? onTap;
 
   const ProfileMenuItem({
+    required this.icon,
     required this.label,
     this.onTap,
   });
@@ -24,8 +26,13 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   int _selectedNavIndex = 3;
+  bool _notificationsOn = true;
 
   final String _name = 'Ambaput';
+  final String _email = 'Email@contoh.com';
+  final int _orderCount = 456;
+  final int _favCount = 12;
+  final int _reviewCount = 50;
 
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -39,22 +46,6 @@ class _ProfilePageState extends State<ProfilePage> {
         margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       ),
     );
-  }
-
-  // FUNGSI LOGOUT - DIEDIT
-  void _logout() {
-    // Hapus semua data session/user (jika ada)
-    // Misal: SharedPreferences.clear() atau hapus token
-    
-    // Navigasi ke halaman login dan hapus semua halaman sebelumnya
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginPage()), // ← Ganti dengan nama class login Anda
-      (route) => false, // Menghapus semua halaman dalam stack
-    );
-    
-    // Tampilkan snackbar (opsional)
-    _showSnackBar('Berhasil keluar dari akun');
   }
 
   void _showLogoutDialog() {
@@ -85,20 +76,29 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx); // Tutup dialog
-              _logout(); // ← PANGGIL FUNGSI LOGOUT
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFB50000),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            child: const Text(
-              'Keluar',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-            ),
-          ),
+         ElevatedButton(
+  onPressed: () async {
+    Navigator.pop(ctx);
+    await SessionManager.clearSession();
+    if (mounted) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const Scaffold(body: LoginPage()),
+        ),
+        (route) => false,
+      );
+    }
+  },
+  style: ElevatedButton.styleFrom(
+    backgroundColor: const Color(0xFFB50000),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  ),
+  child: const Text(
+    'Keluar',
+    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+  ),
+),
         ],
       ),
     );
@@ -106,27 +106,53 @@ class _ProfilePageState extends State<ProfilePage> {
 
   List<ProfileMenuItem> get _menuItems => [
         ProfileMenuItem(
-          label: 'Edit Nama',
-          onTap: () => _showSnackBar('Membuka Edit Nama...'),
+          icon: Icons.person_outline_rounded,
+          label: 'Edit Profil',
+          onTap: () => _showSnackBar('Membuka Edit Profil...'),
         ),
         ProfileMenuItem(
-          label: 'Alamat',
-          onTap: () => _showSnackBar('Membuka Alamat...'),
+          icon: Icons.location_on_outlined,
+          label: 'Alamat Saya',
+          onTap: () => _showSnackBar('Membuka Alamat Saya...'),
         ),
         ProfileMenuItem(
-          label: 'No.Telpon',
-          onTap: () => _showSnackBar('Membuka No.Telpon...'),
+          icon: Icons.notifications_none_rounded,
+          label: 'Notifikasi',
+          onTap: () {
+            setState(() => _notificationsOn = !_notificationsOn);
+            _showSnackBar(
+              _notificationsOn ? 'Notifikasi aktif' : 'Notifikasi nonaktif',
+            );
+          },
+        ),
+        ProfileMenuItem(
+          icon: Icons.payment_outlined,
+          label: 'Metode Pembayaran',
+          onTap: () => _showSnackBar('Membuka Metode Pembayaran...'),
+        ),
+        ProfileMenuItem(
+          icon: Icons.help_outline_rounded,
+          label: 'Bantuan & FAQ',
+          onTap: () => _showSnackBar('Membuka Bantuan & FAQ...'),
+        ),
+        ProfileMenuItem(
+          icon: Icons.settings_outlined,
+          label: 'Pengaturan',
+          onTap: () => _showSnackBar('Membuka Pengaturan...'),
         ),
       ];
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final horizontalPadding = screenWidth * 0.088;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
-            Expanded(child: _buildContent()),
+            Expanded(child: _buildContent(horizontalPadding)),
             _buildBottomNav(),
           ],
         ),
@@ -134,258 +160,298 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildContent(double padding) {
     return SingleChildScrollView(
+      padding: EdgeInsets.symmetric(horizontal: padding, vertical: 24),
       child: Column(
         children: [
           _buildHeader(),
-          const SizedBox(height: 30),
-          _buildProfileCard(),
-          const SizedBox(height: 40),
-          _buildLogoutButton(),
-          const SizedBox(height: 30),
-        ],
-      ),
-    );
-  }
-
-  // ─── Header dengan back button dan title ───
-  Widget _buildHeader() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-      decoration: const BoxDecoration(
-        color: Color(0xFF8A4607),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(40),
-          bottomRight: Radius.circular(40),
-        ),
-      ),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => const PuBeranda()),
-                (route) => false,
-              );
-            },
-            child: const Icon(
-              Icons.chevron_left_rounded,
-              color: Colors.white,
-              size: 28,
-            ),
-          ),
-          const SizedBox(width: 12),
-          const Icon(
-            Icons.chevron_left_rounded,
-            color: Colors.white,
-            size: 28,
-          ),
-          const SizedBox(width: 20),
-          const Text(
-            'Profil Saya',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ─── Profile Card dengan user info dan menu items ───
-  Widget _buildProfileCard() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Avatar section
-          Transform.translate(
-            offset: const Offset(0, -45),
-            child: Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFFF5CC9E),
-                border: Border.all(color: const Color(0xFF8A4607), width: 3),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF8A4607).withOpacity(0.2),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.person_rounded,
-                size: 52,
-                color: Color(0xFF8A4607),
-              ),
-            ),
-          ),
-          // Name
-          Text(
-            _name,
-            style: const TextStyle(
-              color: Color(0xFF8A4607),
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
           const SizedBox(height: 20),
-          // Menu Items
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              children: List.generate(_menuItems.length, (index) {
-                final item = _menuItems[index];
-                final isLast = index == _menuItems.length - 1;
-                return _menuTile(item, isLast);
-              }),
-            ),
-          ),
+          _buildStatsRow(),
+          const SizedBox(height: 28),
+          _buildMenuList(),
           const SizedBox(height: 24),
+          _buildQuickAccessCards(),
+          const SizedBox(height: 28),
+          _buildLogoutButton(),
+          const SizedBox(height: 12),
         ],
       ),
     );
   }
 
-  // ─── Menu Tile ───
-  Widget _menuTile(ProfileMenuItem item, bool isLast) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: item.onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          decoration: isLast
-              ? null
-              : const BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(color: Color(0xFFF0E8E4), width: 1),
-                  ),
-                ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  item.label,
-                  style: const TextStyle(
-                    color: Color(0xFF8A4607),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              const Icon(
-                Icons.chevron_right_rounded,
-                size: 24,
-                color: Color(0xFF8A4607),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ─── Logout Button ───
-  Widget _buildLogoutButton() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 60),
-      child: GestureDetector(
-        onTap: _showLogoutDialog,
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 14),
+  Widget _buildHeader() {
+    return Column(
+      children: [
+        Container(
+          width: 90,
+          height: 90,
           decoration: BoxDecoration(
-            color: const Color(0xFF8A4607),
-            borderRadius: BorderRadius.circular(30),
+            shape: BoxShape.circle,
+            color: const Color(0xFFF5CC9E),
+            border: Border.all(color: const Color(0xFF8A4607), width: 2.5),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF8A4607).withOpacity(0.3),
-                blurRadius: 8,
+                color: const Color(0xFF8A4607).withOpacity(0.2),
+                blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
             ],
           ),
-          child: const Text(
-            'KELUAR',
-            textAlign: TextAlign.center,
-            style: TextStyle(
+          child: const Icon(Icons.person_rounded, size: 44, color: Color(0xFF8A4607)),
+        ),
+        const SizedBox(height: 14),
+        Text(
+          _name,
+          style: const TextStyle(
+            color: Color(0xFF8A4607),
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          _email,
+          style: TextStyle(
+            color: Colors.grey.shade500,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 12),
+        GestureDetector(
+          onTap: () => _showSnackBar('Membuka Edit Profil...'),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 7),
+            decoration: BoxDecoration(
               color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.2,
+              borderRadius: BorderRadius.circular(25),
+              border: Border.all(color: const Color(0xFFE0D5D0)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
+            child: const Text(
+              'Edit Profile',
+              style: TextStyle(
+                color: Color(0xFF8B6C60),
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatsRow() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFF0E8E4)),
+      ),
+      child: Row(
+        children: [
+          _statItem('$_orderCount', 'Pesanan'),
+          _statDivider(),
+          _statItem('$_favCount', 'Favorite'),
+          _statDivider(),
+          _statItem('$_reviewCount', 'Ulasan'),
+        ],
+      ),
+    );
+  }
+
+  Widget _statItem(String value, String label) {
+    return Expanded(
+      child: Column(
+        children: [
+          Text(value, style: const TextStyle(color: Color(0xFF8A4607), fontSize: 20, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 4),
+          Text(label, style: const TextStyle(color: Color(0xFF8A4607), fontSize: 13, fontWeight: FontWeight.w600)),
+        ],
+      ),
+    );
+  }
+
+  Widget _statDivider() {
+    return Container(height: 40, width: 1, color: const Color(0xFFEAEAEA));
+  }
+
+  Widget _buildMenuList() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFF0E8E4)),
+      ),
+      child: Column(
+        children: List.generate(_menuItems.length, (index) {
+          final item = _menuItems[index];
+          final isLast = index == _menuItems.length - 1;
+          return _menuTile(item, isLast);
+        }),
+      ),
+    );
+  }
+
+  Widget _menuTile(ProfileMenuItem item, bool isLast) {
+    final isNotification = item.label == 'Notifikasi';
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: item.onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: isLast
+              ? null
+              : const BoxDecoration(
+                  border: Border(bottom: BorderSide(color: Color(0xFFF0E8E4), width: 1)),
+                ),
+          child: Row(
+            children: [
+              Container(
+                width: 38, height: 38,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5CC9E).withOpacity(0.4),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(item.icon, size: 20, color: const Color(0xFF8A4607)),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(item.label,
+                    style: const TextStyle(color: Color(0xFF8A4607), fontSize: 15, fontWeight: FontWeight.w500)),
+              ),
+              if (isNotification) ...[
+                AnimatedSwitch(
+                  value: _notificationsOn,
+                  onChanged: (_) => item.onTap?.call(),
+                  activeColor: const Color(0xFF8A4607),
+                ),
+              ] else ...[
+                const Icon(Icons.chevron_right_rounded, size: 22, color: Color(0xFF8B6C60)),
+              ],
+            ],
           ),
         ),
       ),
     );
   }
 
-  // ─── Bottom Navigation ───
+  Widget _buildQuickAccessCards() {
+    return Row(
+      children: [
+        Expanded(child: _quickCard(
+          icon: Icons.receipt_long_rounded,
+          title: 'Pesanan Saya',
+          subtitle: 'Lihat Riwayat',
+          onTap: () => _showSnackBar('Membuka Pesanan Saya...'),
+        )),
+        const SizedBox(width: 12),
+        Expanded(child: _quickCard(
+          icon: Icons.favorite_outline_rounded,
+          title: 'Favorite',
+          subtitle: 'Menu Kesukaan',
+          onTap: () => _showSnackBar('Membuka Favorite...'),
+        )),
+      ],
+    );
+  }
+
+  Widget _quickCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 6, offset: const Offset(0, 4))],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 44, height: 36,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF5CC9E).withOpacity(0.4),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, size: 22, color: const Color(0xFF8A4607)),
+            ),
+            const SizedBox(height: 10),
+            Text(title, style: const TextStyle(color: Color(0xFF8A4607), fontSize: 15, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 2),
+            Text(subtitle, style: const TextStyle(color: Color(0xFFA47C7A), fontSize: 10, fontWeight: FontWeight.w500)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLogoutButton() {
+    return GestureDetector(
+      onTap: _showLogoutDialog,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFB50000),
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [BoxShadow(color: const Color(0xFFB50000).withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))],
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.logout_rounded, color: Colors.white, size: 22),
+            SizedBox(width: 8),
+            Text('KELUAR', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700, letterSpacing: 1.5)),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildBottomNav() {
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 4, 12, 12),
       decoration: ShapeDecoration(
         color: const Color(0xFFF5CC9E),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(35)),
-        shadows: const [
-          BoxShadow(
-            color: Color(0x3F000000),
-            blurRadius: 6,
-            offset: Offset(0, 4),
-          ),
-        ],
+        shadows: const [BoxShadow(color: Color(0x3F000000), blurRadius: 6, offset: Offset(0, 4))],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _navItem(Icons.home_outlined, Icons.home_rounded, 'Home', 0),
-          _navItem(Icons.search_outlined, Icons.search_rounded, 'Cari', 1),
-          _navItem(
-            Icons.shopping_cart_outlined,
-            Icons.shopping_cart_rounded,
-            'Keranjang',
-            2,
-          ),
-          _navItem(
-            Icons.person_outline_rounded,
-            Icons.person_rounded,
-            'Profil',
-            3,
-          ),
+          _navItem(Icons.home_outlined,         Icons.home_rounded,         'Home',      0),
+          _navItem(Icons.search_outlined,        Icons.search_rounded,       'Cari',      1),
+          _navItem(Icons.shopping_cart_outlined, Icons.shopping_cart_rounded,'Keranjang', 2),
+          _navItem(Icons.person_outline_rounded, Icons.person_rounded,       'Profil',    3),
         ],
       ),
     );
   }
 
-  // ─── Navigation Item ───
   Widget _navItem(IconData inactive, IconData active, String label, int index) {
     final isSelected = _selectedNavIndex == index;
     return GestureDetector(
       onTap: () {
-        // Kembali ke Home/Beranda
+        // DIFIX: Home → kembali ke beranda
         if (index == 0) {
           Navigator.pushAndRemoveUntil(
             context,
@@ -422,6 +488,33 @@ class _ProfilePageState extends State<ProfilePage> {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ─── Animated Switch ──────────────────────────────────────────
+class AnimatedSwitch extends StatelessWidget {
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  final Color activeColor;
+
+  const AnimatedSwitch({
+    super.key,
+    required this.value,
+    required this.onChanged,
+    required this.activeColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Switch(
+      value: value,
+      onChanged: onChanged,
+      activeColor: activeColor,
+      activeTrackColor: activeColor.withOpacity(0.3),
+      inactiveThumbColor: Colors.grey.shade400,
+      inactiveTrackColor: Colors.grey.shade200,
+      splashRadius: 20,
     );
   }
 }
