@@ -16,7 +16,6 @@ class _C {
   static const surface = Color(0xFFFFFFFF);
   static const danger = Color(0xFFC62828);
 }
-
 // ==================== HALAMAN DASHBOARD ADMIN ====================
 class AdminDashboardPage extends StatelessWidget {
   const AdminDashboardPage({super.key});
@@ -47,17 +46,17 @@ class AdminDashboardPage extends StatelessWidget {
       ),
     );
 
-    if (confirm == true) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.clear();
-      if (context.mounted) {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (_) => const LoginPage()),
-          (route) => false,
-        );
+   if (confirm == true) {
+    final prefs = await SharedPreferences.getInstance();
+   await prefs.clear();
+   if (context.mounted) {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const FigmaToCodeApp()),
+      (route) => false,
+         );
       }
-    }
+     }
   }
 
   @override

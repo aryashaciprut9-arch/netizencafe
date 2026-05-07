@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 // ==================== GANTI DENGAN IP KAMU ====================
-const String baseUrl = 'http://127.0.0.1/kasir_api'; // ganti IP-nya!
+const String baseUrl = 'http://192.168.1.x/kasir_api'; // ganti IP PC kamu!
 
 // ==================== KONSISTENSI WARNA ====================
 class AppColors {
@@ -49,12 +49,14 @@ class PuDetailKeranjang extends StatefulWidget {
   final List<KeranjangItem> items;
   final int userId;
   final String namaPelanggan;
+  final VoidCallback? onPesananBerhasil;
 
   const PuDetailKeranjang({
     super.key,
     required this.items,
     required this.userId,
     required this.namaPelanggan,
+    this.onPesananBerhasil,
   });
 
   @override
@@ -73,7 +75,7 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
   }
 
   int get _subtotal => _items.fold(0, (sum, item) => sum + item.subtotal);
-  int get _total => _subtotal; // bisa tambah diskon/biaya layanan di sini
+  int get _total => _subtotal;
 
   void _updateQty(int index, int delta) {
     setState(() {
@@ -131,6 +133,7 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
 
       if (data['status'] == 'success') {
         if (mounted) {
+          widget.onPesananBerhasil?.call();
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -145,11 +148,13 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
         throw Exception(data['message'] ?? 'Gagal membuat pesanan');
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -199,7 +204,8 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
       decoration: const BoxDecoration(
         color: AppColors.surface,
         boxShadow: [
-          BoxShadow(color: Color(0x0D000000), blurRadius: 8, offset: Offset(0, 2)),
+          BoxShadow(
+              color: Color(0x0D000000), blurRadius: 8, offset: Offset(0, 2)),
         ],
       ),
       child: Row(
@@ -277,7 +283,8 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
                   color: AppColors.accentSoft,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.restaurant, color: AppColors.primaryLight),
+                child: const Icon(Icons.restaurant,
+                    color: AppColors.primaryLight),
               ),
             ),
           ),
@@ -326,7 +333,8 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
                       ),
                       child: Row(
                         children: [
-                          _stepperButton(Icons.remove_rounded, () => _updateQty(index, -1)),
+                          _stepperButton(Icons.remove_rounded,
+                              () => _updateQty(index, -1)),
                           Container(
                             width: 36,
                             alignment: Alignment.center,
@@ -339,7 +347,8 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
                               ),
                             ),
                           ),
-                          _stepperButton(Icons.add_rounded, () => _updateQty(index, 1)),
+                          _stepperButton(
+                              Icons.add_rounded, () => _updateQty(index, 1)),
                         ],
                       ),
                     ),
@@ -672,6 +681,7 @@ class PesananBerhasilPage extends StatelessWidget {
                   style: TextStyle(color: AppColors.textMuted, fontSize: 14),
                 ),
                 const SizedBox(height: 32),
+                // ✅ FIX: Container info invoice dikembalikan
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
@@ -679,11 +689,17 @@ class PesananBerhasilPage extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: AppColors.border),
                   ),
+                  child: Column(
+                    children: [
+                      _infoRow('Kode Invoice', kodeInvoice),
+                      const Divider(color: AppColors.divider, height: 24),
+                      _infoRow('Total', _formatRupiah(total)),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 32),
                 GestureDetector(
                   onTap: () {
-                    // Kembali ke halaman utama
                     Navigator.popUntil(context, (route) => route.isFirst);
                   },
                   child: Container(
@@ -720,8 +736,7 @@ class PesananBerhasilPage extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label,
-            style:
-                const TextStyle(color: AppColors.textMuted, fontSize: 14)),
+            style: const TextStyle(color: AppColors.textMuted, fontSize: 14)),
         Text(
           value,
           style: const TextStyle(

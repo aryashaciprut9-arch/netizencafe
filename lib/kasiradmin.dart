@@ -494,16 +494,6 @@ class _KasirPageState extends State<KasirPage> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(Icons.payments_rounded, size: 16, color: _C.textMuted),
-                    const SizedBox(width: 6),
-                    const Text('Metode: ', style: TextStyle(color: _C.textMuted, fontSize: 12)),
-                    _metodePill('Tunai'),
-                    const SizedBox(width: 8),
-                    _metodePill('Transfer'),
-                  ],
-                ),
               ],
             ),
           ),
@@ -600,26 +590,6 @@ class _KasirPageState extends State<KasirPage> {
             child: const Icon(Icons.delete_outline_rounded, size: 18, color: _C.danger),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _metodePill(String label) {
-    final selected = _metodePembayaran == label;
-    return GestureDetector(
-      onTap: () => setState(() => _metodePembayaran = label),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        decoration: BoxDecoration(
-          color: selected ? _C.primary : _C.accentSoft,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(label,
-            style: TextStyle(
-              color: selected ? Colors.white : _C.primary,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            )),
       ),
     );
   }

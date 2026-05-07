@@ -218,32 +218,34 @@ class _LoginPageState extends State<LoginPage> {
                   _buildLoginButton(context),
 
                   // === REGISTER LINK ===
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Belum punya akun? ',
-                        style: TextStyle(color: textDark, fontSize: 13),
-                      ),
-                      GestureDetector(
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const Scaffold(body: RegisterPage()),
-                          ),
-                        ),
-                        child: Text(
-                          'Daftar',
-                          style: TextStyle(
-                            color: primary,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  // === REGISTER LINK ===
+const SizedBox(height: 20),
+if (isUserSelected)
+  Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      Text(
+        'Belum punya akun? ',
+        style: TextStyle(color: textDark, fontSize: 13),
+      ),
+      GestureDetector(
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const Scaffold(body: RegisterPage()),
+          ),
+        ),
+        child: Text(
+          'Daftar',
+          style: TextStyle(
+            color: primary,
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    ],
+  ),
                 ],
               ),
             ),

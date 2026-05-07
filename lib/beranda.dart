@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:netizencafe/search.dart';
 import 'services/api_services.dart';
 import 'models/menu_models.dart';
 import 'katergorimakanan.dart' as makanan;
 import 'kategoriminuman.dart';
 import 'snack.dart' as snack;
 import 'profil_pelanggan.dart';
-import 'detailkeranjang.dart'; // sesuaikan path import
-
+import 'detailkeranjang.dart';
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 class AppColors {
@@ -127,20 +127,45 @@ class _PuBerandaState extends State<PuBeranda> {
 
   void _onNavTap(int index) {
     HapticFeedback.selectionClick();
+    if (index == 1) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PuSearch(
+            keranjang: _keranjang,
+            onTambahKeranjang: (menuId, namaMenu, harga, foto) {
+              setState(() {
+                final existing = _keranjang.where((k) => k.menuId == menuId).toList();
+                if (existing.isNotEmpty) {
+                  existing.first.qty++;
+                } else {
+                  _keranjang.add(KeranjangItem(
+                    menuId: menuId,
+                    namaMenu: namaMenu,
+                    harga: harga,
+                    qty: 1,
+                    foto: foto,
+                  ));
+                }
+              });
+            },
+          ),
+        ),
+      ).then((_) => setState(() {}));
+      return;
+    }
     if (index == 2) {
-      // Buka keranjang
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (_) => PuDetailKeranjang(
             items: List.from(_keranjang),
-            userId: 0,             // ganti dengan userId dari session/SharedPreferences
-            namaPelanggan: 'User', // ganti dengan nama user dari session
+            userId: 0,
+            namaPelanggan: 'User',
           ),
         ),
       ).then((_) {
-         setState(() => _keranjang.clear());
-        // setState(() => _keranjang.clear());
+        setState(() => _keranjang.clear());
       });
       return;
     }
