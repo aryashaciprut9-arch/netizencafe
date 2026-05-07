@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'beranda.dart'; // TAMBAH IMPORT
+import 'beranda.dart'; // T
+import 'login.dart'; 
+import 'utils/session_manager.dart';
 
 // ─── Data Model ───────────────────────────────────────────────
 class ProfileMenuItem {
@@ -74,20 +76,29 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _showSnackBar('Berhasil keluar dari akun');
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFB50000),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            child: const Text(
-              'Keluar',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-            ),
-          ),
+         ElevatedButton(
+  onPressed: () async {
+    Navigator.pop(ctx);
+    await SessionManager.clearSession();
+    if (mounted) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const Scaffold(body: LoginPage()),
+        ),
+        (route) => false,
+      );
+    }
+  },
+  style: ElevatedButton.styleFrom(
+    backgroundColor: const Color(0xFFB50000),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  ),
+  child: const Text(
+    'Keluar',
+    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+  ),
+),
         ],
       ),
     );

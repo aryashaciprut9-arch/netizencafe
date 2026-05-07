@@ -11,8 +11,10 @@ class LoginResponse {
 }
 
 class ApiService {
-  static const String _baseUrl = 'http://127.0.0.1/kasir_api/login.php';
+  static const String _baseUrl    = 'http://127.0.0.1/kasir_api/login.php';
+  static const String _registerUrl = 'http://127.0.0.1/kasir_api/register.php';
 
+  // ── LOGIN ──
   static Future<LoginResponse> login({
     required String email,
     required String password,
@@ -33,7 +35,6 @@ class ApiService {
 
       if (data['success'] == true) {
         final userData = data['user'];
-        
         return LoginResponse(
           success: true,
           message: data['message'],
@@ -48,6 +49,53 @@ class ApiService {
         return LoginResponse(
           success: false,
           message: data['message'] ?? 'Login gagal',
+        );
+      }
+    } catch (e) {
+      return LoginResponse(
+        success: false,
+        message: 'Gagal terhubung ke server: ${e.toString()}',
+      );
+    }
+  }
+
+  // ── REGISTER ──
+  static Future<LoginResponse> register({
+    required String namaLengkap,
+    required String email,
+    required String password,
+    required String role,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse(_registerUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'nama_lengkap': namaLengkap,
+          'email': email,
+          'password': password,
+          'role': role,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (data['success'] == true) {
+        final userData = data['user'];
+        return LoginResponse(
+          success: true,
+          message: data['message'],
+          user: UserModel(
+            id: userData['id'],
+            namaLengkap: userData['namaLengkap'],
+            email: userData['email'],
+            role: userData['role'],
+          ),
+        );
+      } else {
+        return LoginResponse(
+          success: false,
+          message: data['message'] ?? 'Registrasi gagal',
         );
       }
     } catch (e) {

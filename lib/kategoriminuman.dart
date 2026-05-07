@@ -1,30 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:netizencafe/detailkeranjang.dart';
 import 'models/menu_models.dart';
 import 'services/api_services.dart';
 import 'katergorimakanan.dart' as makanan;
 import 'snack.dart' as snack;
 import 'beranda.dart';
 
-// AppColors, CartItem sudah ada di katergorimakanan.dart
-// Reuse dari sana lewat import
-
 class PaMenuJenisMinuman extends StatefulWidget {
-  const PaMenuJenisMinuman({super.key});
+  final List<KeranjangItem> keranjang;
+  final void Function(MenuModel) onAddToCart;
+
+  const PaMenuJenisMinuman({
+    super.key,
+    required this.keranjang,
+    required this.onAddToCart,
+  });
 
   @override
   State<PaMenuJenisMinuman> createState() => _PaMenuJenisMinumanState();
 }
 
 class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
-  // =====================
-  //  STATE & DATA
-  // =====================
   List<MenuModel> _allDrinks = [];
   bool _isLoading            = true;
   int _currentIndex          = 0;
   String _searchQuery        = '';
   final TextEditingController _searchController = TextEditingController();
+
+  int get _keranjangCount => widget.keranjang.fold(0, (sum, item) => sum + item.qty);
 
   List<MenuModel> get _filteredDrinks {
     final items = _allDrinks
@@ -36,9 +40,6 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
         .toList();
   }
 
-  // =====================
-  //  FUNGSI / LOGIKA
-  // =====================
   @override
   void initState() {
     super.initState();
@@ -80,6 +81,8 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
   }
 
   void _addToCart(MenuModel item) {
+    widget.onAddToCart(item);
+      setState(() {}); // 🔥 paksa refresh UI
     HapticFeedback.lightImpact();
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -101,13 +104,23 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
       );
       return;
     }
+    if (index == 2) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PuDetailKeranjang(
+            items: List.from(widget.keranjang),
+            userId: 0,
+            namaPelanggan: 'User',
+          ),
+        ),
+      );
+      return;
+    }
     setState(() => _currentIndex = index);
     HapticFeedback.selectionClick();
   }
 
-  // =====================
-  //  UI / BUILD
-  // =====================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -144,13 +157,17 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
         children: [
           Row(
             children: [
-              // Panah kiri → ke halaman Makanan
               GestureDetector(
                 onTap: () {
                   HapticFeedback.lightImpact();
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (_) => const makanan.MenuPage()),
+                    MaterialPageRoute(
+                      builder: (_) => makanan.MenuPage(
+                        keranjang: widget.keranjang,
+                        onAddToCart: widget.onAddToCart,
+                      ),
+                    ),
                   );
                 },
                 child: Container(
@@ -168,13 +185,17 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
                   style: TextStyle(color: Color(0xFF8A4607), fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: -0.3)),
             ],
           ),
-          // Panah kanan → ke halaman Snack
           GestureDetector(
             onTap: () {
               HapticFeedback.lightImpact();
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (_) => const snack.MenuPage()),
+                MaterialPageRoute(
+                  builder: (_) => snack.MenuPage(
+                    keranjang: widget.keranjang,
+                    onAddToCart: widget.onAddToCart,
+                  ),
+                ),
               );
             },
             child: Container(
@@ -278,7 +299,7 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
           crossAxisCount: crossAxisCount,
           mainAxisSpacing: 14,
           crossAxisSpacing: 14,
-          childAspectRatio: 0.8,
+          childAspectRatio: 0.75,
         ),
       ),
     );
@@ -296,7 +317,7 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman> {
         children: [
           _NavItem(icon: Icons.home_rounded,         index: 0, currentIndex: _currentIndex, onTap: _onNavTap),
           _NavItem(icon: Icons.search_rounded,       index: 1, currentIndex: _currentIndex, onTap: _onNavTap),
-          _NavItem(icon: Icons.shopping_bag_rounded, index: 2, currentIndex: _currentIndex, onTap: _onNavTap),
+          _NavItem(icon: Icons.shopping_bag_rounded, index: 2, currentIndex: _currentIndex, onTap: _onNavTap, badgeCount: _keranjangCount),
           _NavItem(icon: Icons.person_rounded,       index: 3, currentIndex: _currentIndex, onTap: _onNavTap),
         ],
       ),
@@ -318,7 +339,7 @@ class _DrinkCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
-        boxShadow: [BoxShadow(color: const Color(0xFF8A4607).withOpacity(0.1), blurRadius: 12, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: const Color(0xFF8A4607).withOpacity(0.15), blurRadius: 12, offset: const Offset(0, 4))],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(18),
@@ -331,41 +352,68 @@ class _DrinkCard extends StatelessWidget {
                       color: const Color(0xFFFFF4E6),
                       child: Center(child: Icon(Icons.broken_image_rounded, color: const Color(0xFF8A4607).withOpacity(0.3), size: 40)),
                     ))
-                : Container(color: const Color(0xFFFFF4E6),
+                : Container(
+                    color: const Color(0xFFFFF4E6),
                     child: const Center(child: Icon(Icons.local_drink, color: Color(0xFF8A4607), size: 40))),
             Positioned(
               bottom: 0, left: 0, right: 0,
               child: Container(
-                padding: const EdgeInsets.fromLTRB(10, 30, 10, 10),
+                padding: const EdgeInsets.fromLTRB(10, 40, 10, 10),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [Colors.white.withOpacity(0), Colors.white.withOpacity(0.85), Colors.white],
+                    colors: [
+                      Colors.transparent,
+                      const Color(0xFF8A4607).withOpacity(0.6),
+                      const Color(0xFF5C2D00).withOpacity(0.92),
+                    ],
                   ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(item.nama, style: const TextStyle(color: Color(0xFF8A4607), fontSize: 13, fontWeight: FontWeight.w700), maxLines: 2, overflow: TextOverflow.ellipsis),
+                    Text(
+                      item.nama,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        shadows: [Shadow(color: Colors.black26, blurRadius: 4)],
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                     const SizedBox(height: 2),
-                    Text('IDR ${item.harga}', style: TextStyle(color: const Color(0xFF8A4607).withOpacity(0.6), fontSize: 11, fontWeight: FontWeight.w500)),
+                    Text(
+                      'IDR ${item.harga}',
+                      style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w500),
+                    ),
                     const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Row(children: [
-                          Container(width: 6, height: 6, decoration: BoxDecoration(color: item.tersedia ? Colors.green : Colors.red, shape: BoxShape.circle)),
-                          const SizedBox(width: 4),
-                          Text(item.tersedia ? 'Tersedia' : 'Habis', style: TextStyle(color: const Color(0xFF8A4607).withOpacity(0.5), fontSize: 10)),
+                          Container(
+                            width: 7, height: 7,
+                            decoration: BoxDecoration(
+                              color: item.tersedia ? Colors.greenAccent : Colors.redAccent,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            item.tersedia ? 'Tersedia' : 'Habis',
+                            style: const TextStyle(color: Colors.white70, fontSize: 10),
+                          ),
                         ]),
                         GestureDetector(
                           onTap: onAddToCart,
                           child: Container(
-                            width: 28, height: 28,
-                            decoration: const BoxDecoration(color: Color(0xFF8A4607), shape: BoxShape.circle),
-                            child: const Icon(Icons.add_rounded, color: Colors.white, size: 18),
+                            width: 30, height: 30,
+                            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                            child: const Icon(Icons.add_rounded, color: Color(0xFF8A4607), size: 20),
                           ),
                         ),
                       ],
