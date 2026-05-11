@@ -1,62 +1,100 @@
-// lib/utils/session_manager.dart
-
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/user_model.dart';
 
 class SessionManager {
-  static const String _keyIsLoggedIn = "is_logged_in";
-  static const String _keyUserId = "user_id";
-  static const String _keyUserName = "user_name";
-  static const String _keyUserEmail = "user_email";
-  static const String _keyUserRole = "user_role";
+  static const String _keyIsLoggedIn = 'is_logged_in';
+  static const String _keyEmail = 'user_email';
+  static const String _keyUsername = 'user_username';
+  static const String _keyPhone = 'user_phone';
+  static const String _keyAddress = 'user_address';
+  static const String _keyRole = 'user_role';
+  static const String _keyId = 'user_id';
 
-  /// Simpan data session (FLEKSIBEL: menerima Map dari API atau UserModel)
-  static Future<void> saveSession(dynamic user) async {
+  // ==================== SAVE DATA ====================
+
+  static Future<void> saveUserData({
+    required String email,
+    required String username,
+    String phone = '',
+    String address = '',
+    String role = 'user',
+    String id = '',
+  }) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyIsLoggedIn, true);
-
-    if (user is Map<String, dynamic>) {
-      // Jika data dari API masih berupa Map
-      await prefs.setString(_keyUserId, user['id']?.toString() ?? '0');
-      // Menyesuaikan apakah key JSON-nya 'namaLengkap' atau 'nama_lengkap'
-      await prefs.setString(_keyUserName, user['namaLengkap'] ?? user['nama_lengkap'] ?? '');
-      await prefs.setString(_keyUserEmail, user['email'] ?? '');
-      await prefs.setString(_keyUserRole, user['role'] ?? 'user');
-    } else {
-      // Fallback jika suatu saat data sudah berupa object UserModel
-      await prefs.setString(_keyUserId, user.id.toString());
-      await prefs.setString(_keyUserName, user.namaLengkap);
-      await prefs.setString(_keyUserEmail, user.email);
-      await prefs.setString(_keyUserRole, user.role);
-    }
+    await prefs.setString(_keyEmail, email);
+    await prefs.setString(_keyUsername, username);
+    await prefs.setString(_keyPhone, phone);
+    await prefs.setString(_keyAddress, address);
+    await prefs.setString(_keyRole, role);
+    await prefs.setString(_keyId, id);
   }
 
-  /// Cek apakah user sudah login
+  // Ambil path gambar profil
+  static Future<String> getProfileImage() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('profile_image') ?? '';
+  }
+
+  // Simpan path gambar profil baru
+  static Future<void> updateProfileImage(String path) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('profile_image', path);
+  }
+
+  static Future<void> updateUsername(String username) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyUsername, username);
+  }
+
+  static Future<void> updatePhone(String phone) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyPhone, phone);
+  }
+
+  static Future<void> updateAddress(String address) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyAddress, address);
+  }
+
+  // ==================== GET DATA ====================
+
+  static Future<String> getEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyEmail) ?? '';
+  }
+
+  static Future<String> getUsername() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyUsername) ?? '';
+  }
+
+  static Future<String> getPhone() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyPhone) ?? '';
+  }
+
+  static Future<String> getAddress() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyAddress) ?? '';
+  }
+
+  static Future<String> getRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyRole) ?? 'user';
+  }
+
+  static Future<String> getId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyId) ?? '';
+  }
+
   static Future<bool> isLoggedIn() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool(_keyIsLoggedIn) ?? false;
   }
 
-  /// Ambil data user yang sedang login
-  static Future<UserModel?> getUser() async {
-    final prefs = await SharedPreferences.getInstance();
-    final isLoggedIn = prefs.getBool(_keyIsLoggedIn) ?? false;
+  // ==================== CLEAR DATA ====================
 
-    if (!isLoggedIn) return null;
-
-    // Ambil string dulu, lalu parse ke int (aman dari error tipe data)
-    final userIdStr = prefs.getString(_keyUserId) ?? '0';
-    final userId = int.tryParse(userIdStr) ?? 0;
-
-    return UserModel(
-      id: userId, // Jika id di UserModel Anda String, ganti jadi: id: userIdStr,
-      namaLengkap: prefs.getString(_keyUserName) ?? '',
-      email: prefs.getString(_keyUserEmail) ?? '',
-      role: prefs.getString(_keyUserRole) ?? 'user',
-    );
-  }
-
-  /// Hapus session (logout)
   static Future<void> clearSession() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();

@@ -1,20 +1,27 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import '../services/api_services.dart';
 
-// ==================== WARNA ====================
-class _C {
-  static const bg = Color(0xFFFFF8F0);
-  static const primary = Color(0xFF8A4607);
-  static const primaryDark = Color(0xFF5C2E00);
-  static const accent = Color(0xFFF5CC9E);
-  static const accentSoft = Color(0xFFFAEBD7);
-  static const border = Color(0xFFDCC8AE);
-  static const textDark = Color(0xFF3D1F00);
-  static const textMuted = Color(0xFFB08A60);
-  static const textLight = Color(0xFFD4B896);
-  static const surface = Color(0xFFFFFFFF);
+// ==================== WARNA (SELARAS GLOBAL) ====================
+class AppColors {
+  static const Color primary        = Color(0xFFB86B2B);
+  static const Color accent         = Color(0xFF8D5524);
+  static const Color textDark       = Color(0xFF6D4C41);
+  static const Color cardColor      = Color(0xFFFFFBF5);
+  static const Color primaryLight   = Color(0xFFF5CC9E);
+  static const Color primaryLighter = Color(0xFFFFF8F2);
+  static const Color white          = Colors.white;
+  static const Color success        = Color(0xFF2E7D32);
+  static const Color danger         = Color(0xFFC62828);
+
+  static const List<Color> bgGradient = [
+    Color(0xFFFFF8F2),
+    Color(0xFFFDE8D7),
+    Color(0xFFE8CBB0),
+    Color(0xFFD4A57A),
+  ];
 }
 
 // ==================== MODEL ====================
@@ -127,65 +134,135 @@ class _KelolaPesananPageState extends State<KelolaPesananPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _C.bg,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildAppBar(),
-            Expanded(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator(color: _C.primary))
-                  : _semuaPesanan.isEmpty
-                      ? _buildEmpty()
-                      : RefreshIndicator(
-                          onRefresh: _ambilPesanan,
-                          color: _C.primary,
-                          child: ListView.builder(
-                            padding: const EdgeInsets.all(16),
-                            itemCount: _semuaPesanan.length,
-                            itemBuilder: (ctx, i) =>
-                                _buildPesananCard(_semuaPesanan[i]),
-                          ),
+      // ✅ Gradient Background
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: AppColors.bgGradient,
+            stops: [0.0, 0.3, 0.7, 1.0],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildAppBar(),
+              Expanded(
+                child: _isLoading
+                    ? Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.primary,
+                          strokeWidth: 3,
+                          backgroundColor: AppColors.primary.withOpacity(0.2),
                         ),
-            ),
-          ],
+                      )
+                    : _semuaPesanan.isEmpty
+                        ? _buildEmpty()
+                        : RefreshIndicator(
+                            onRefresh: _ambilPesanan,
+                            color: AppColors.primary,
+                            backgroundColor: AppColors.white,
+                            child: ListView.builder(
+                              physics: const BouncingScrollPhysics(),
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                              itemCount: _semuaPesanan.length,
+                              itemBuilder: (ctx, i) =>
+                                  _buildPesananCard(_semuaPesanan[i]),
+                            ),
+                          ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
+  // --- APP BAR ---
   Widget _buildAppBar() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      color: _C.surface,
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppColors.white, AppColors.cardColor],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Row(
         children: [
+          // Tombol kembali — style card
           GestureDetector(
             onTap: () => Navigator.pop(context),
             child: Container(
-              width: 38, height: 38,
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: _C.accentSoft,
-                borderRadius: BorderRadius.circular(12),
+                gradient: const LinearGradient(
+                  colors: [Colors.white, AppColors.cardColor],
+                ),
+                shape: BoxShape.circle,
+                border: Border.all(
+                    color: AppColors.primary.withOpacity(0.2), width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.15),
+                    blurRadius: 14,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
               ),
               child: const Icon(Icons.arrow_back_ios_new_rounded,
-                  size: 16, color: _C.primary),
+                  size: 16, color: AppColors.primary),
             ),
           ),
           const SizedBox(width: 16),
-          const Text('Kelola Pesanan',
-              style: TextStyle(
-                  color: _C.textDark, fontSize: 20, fontWeight: FontWeight.w700)),
+          Text(
+            'Kelola Pesanan',
+            style: GoogleFonts.poppins(
+              color: AppColors.accent,
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.5,
+              shadows: [
+                Shadow(
+                  color: Colors.black.withOpacity(0.08),
+                  offset: const Offset(0, 2),
+                  blurRadius: 4,
+                ),
+              ],
+            ),
+          ),
           const Spacer(),
+          // Tombol refresh — style card
           GestureDetector(
             onTap: _ambilPesanan,
             child: Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: _C.accentSoft,
-                borderRadius: BorderRadius.circular(12),
+                gradient: const LinearGradient(
+                  colors: [Colors.white, AppColors.cardColor],
+                ),
+                shape: BoxShape.circle,
+                border: Border.all(
+                    color: AppColors.primary.withOpacity(0.2), width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.15),
+                    blurRadius: 14,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
               ),
-              child: const Icon(Icons.refresh_rounded, size: 20, color: _C.primary),
+              child: const Icon(Icons.refresh_rounded,
+                  size: 20, color: AppColors.primary),
             ),
           ),
         ],
@@ -193,78 +270,155 @@ class _KelolaPesananPageState extends State<KelolaPesananPage> {
     );
   }
 
+  // --- PESANAN CARD ---
   Widget _buildPesananCard(PesananModel pesanan) {
     return GestureDetector(
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => PaDetailPesananPage(kodeInvoice: pesanan.kodeInvoice),
+          builder: (_) =>
+              PaDetailPesananPage(kodeInvoice: pesanan.kodeInvoice),
         ),
       ).then((_) => _ambilPesanan()),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 14),
+        padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: _C.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _C.border),
+          gradient: const LinearGradient(
+            colors: [AppColors.white, AppColors.cardColor],
+          ),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(
+              color: AppColors.primary.withOpacity(0.15), width: 1),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+              color: AppColors.primary.withOpacity(0.1),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
             ),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Baris atas: Kode Invoice & Waktu
             Row(
               children: [
                 Expanded(
-                  child: Text(pesanan.kodeInvoice,
-                      style: const TextStyle(
-                          color: _C.primary, fontSize: 13, fontWeight: FontWeight.w700)),
+                  child: Text(
+                    pesanan.kodeInvoice,
+                    style: GoogleFonts.poppins(
+                      color: AppColors.accent,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
-                Text(_formatWaktu(pesanan.createdAt),
-                    style: const TextStyle(color: _C.textMuted, fontSize: 12)),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(pesanan.namaPelanggan,
-                style: const TextStyle(
-                    color: _C.textDark, fontSize: 15, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 4),
-            Text(_formatRupiah(pesanan.total),
-                style: const TextStyle(color: _C.textMuted, fontSize: 13)),
-            const SizedBox(height: 10),
-            Row(
-              children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: pesanan.sumber == 'kasir' ? _C.accent : _C.accentSoft,
-                    borderRadius: BorderRadius.circular(20),
+                    color: AppColors.primaryLight.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    pesanan.sumber == 'kasir' ? 'Kasir' : 'User',
-                    style: TextStyle(
-                      color: pesanan.sumber == 'kasir' ? _C.primaryDark : _C.primary,
+                    _formatWaktu(pesanan.createdAt),
+                    style: GoogleFonts.openSans(
+                      color: AppColors.accent,
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
-                const Spacer(),
+              ],
+            ),
+            const SizedBox(height: 8),
+            // Nama Pelanggan
+            Text(
+              pesanan.namaPelanggan,
+              style: GoogleFonts.poppins(
+                color: AppColors.textDark,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            // Total Harga
+            Text(
+              _formatRupiah(pesanan.total),
+              style: GoogleFonts.openSans(
+                color: AppColors.textDark.withOpacity(0.5),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 14),
+            // Baris bawah: Sumber & Tombol Detail
+            Row(
+              children: [
+                // Badge Sumber
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: _C.primary,
+                    gradient: pesanan.sumber == 'kasir'
+                        ? const LinearGradient(
+                            colors: [AppColors.primary, AppColors.accent])
+                        : const LinearGradient(
+                            colors: [AppColors.white, AppColors.cardColor]),
                     borderRadius: BorderRadius.circular(20),
+                    border: pesanan.sumber != 'kasir'
+                        ? Border.all(
+                            color: AppColors.primary.withOpacity(0.2),
+                            width: 1)
+                        : null,
+                    boxShadow: pesanan.sumber == 'kasir'
+                        ? [
+                            BoxShadow(
+                              color: AppColors.primary.withOpacity(0.25),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ]
+                        : [],
                   ),
-                  child: const Text('Detail',
-                      style: TextStyle(
-                          color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
+                  child: Text(
+                    pesanan.sumber == 'kasir' ? 'Kasir' : 'User',
+                    style: GoogleFonts.poppins(
+                      color: pesanan.sumber == 'kasir'
+                          ? Colors.white
+                          : AppColors.primary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                // Tombol Detail
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [AppColors.primary, AppColors.accent],
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withOpacity(0.25),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    'Detail',
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -274,15 +428,50 @@ class _KelolaPesananPageState extends State<KelolaPesananPage> {
     );
   }
 
+  // --- EMPTY STATE ---
   Widget _buildEmpty() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.receipt_long_outlined, size: 70, color: _C.textLight),
-          const SizedBox(height: 12),
-          const Text('Belum ada pesanan',
-              style: TextStyle(color: _C.textMuted, fontSize: 15)),
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Colors.white, AppColors.cardColor],
+              ),
+              shape: BoxShape.circle,
+              border: Border.all(
+                  color: AppColors.primary.withOpacity(0.15), width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withOpacity(0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Icon(Icons.receipt_long_outlined,
+                size: 52, color: AppColors.primary.withOpacity(0.35)),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Belum ada pesanan',
+            style: GoogleFonts.poppins(
+              color: AppColors.textDark.withOpacity(0.5),
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Pesanan baru akan muncul di sini',
+            style: GoogleFonts.openSans(
+              color: AppColors.textDark.withOpacity(0.35),
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ],
       ),
     );
@@ -341,99 +530,199 @@ class _PaDetailPesananPageState extends State<PaDetailPesananPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _C.bg,
-      body: SafeArea(
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator(color: _C.primary))
-            : _pesanan == null
-                ? const Center(child: Text('Data tidak ditemukan'))
-                : Column(
-                    children: [
-                      _buildAppBar(),
-                      Expanded(
-                        child: ListView(
-                          padding: const EdgeInsets.all(16),
-                          children: [
-                            _buildInvoiceCard(),
-                            const SizedBox(height: 12),
-                            _buildInfoPelanggan(),
-                            const SizedBox(height: 12),
-                            _buildDetailItem(),
-                            const SizedBox(height: 12),
-                            _buildTotalCard(),
-                            const SizedBox(height: 24),
-                          ],
+      // ✅ Gradient Background
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: AppColors.bgGradient,
+            stops: [0.0, 0.3, 0.7, 1.0],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: _isLoading
+              ? Center(
+                  child: CircularProgressIndicator(
+                    color: AppColors.primary,
+                    strokeWidth: 3,
+                    backgroundColor: AppColors.primary.withOpacity(0.2),
+                  ),
+                )
+              : _pesanan == null
+                  ? Center(
+                      child: Text(
+                        'Data tidak ditemukan',
+                        style: GoogleFonts.openSans(
+                          color: AppColors.textDark.withOpacity(0.5),
+                          fontSize: 16,
                         ),
                       ),
-                    ],
-                  ),
+                    )
+                  : Column(
+                      children: [
+                        _buildAppBar(),
+                        Expanded(
+                          child: ListView(
+                            physics: const BouncingScrollPhysics(),
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                            children: [
+                              _buildInvoiceCard(),
+                              const SizedBox(height: 16),
+                              _buildInfoPelanggan(),
+                              const SizedBox(height: 16),
+                              _buildDetailItem(),
+                              const SizedBox(height: 16),
+                              _buildTotalCard(),
+                              const SizedBox(height: 32),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+        ),
       ),
     );
   }
 
+  // --- APP BAR ---
   Widget _buildAppBar() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      color: _C.surface,
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppColors.white, AppColors.cardColor],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Row(
         children: [
           GestureDetector(
             onTap: () => Navigator.pop(context),
             child: Container(
-              width: 38, height: 38,
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: _C.accentSoft,
-                borderRadius: BorderRadius.circular(12),
+                gradient: const LinearGradient(
+                  colors: [Colors.white, AppColors.cardColor],
+                ),
+                shape: BoxShape.circle,
+                border: Border.all(
+                    color: AppColors.primary.withOpacity(0.2), width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.15),
+                    blurRadius: 14,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
               ),
               child: const Icon(Icons.arrow_back_ios_new_rounded,
-                  size: 16, color: _C.primary),
+                  size: 16, color: AppColors.primary),
             ),
           ),
           const SizedBox(width: 16),
-          const Text('Detail Pesanan',
-              style: TextStyle(
-                  color: _C.textDark, fontSize: 20, fontWeight: FontWeight.w700)),
+          Text(
+            'Detail Pesanan',
+            style: GoogleFonts.poppins(
+              color: AppColors.accent,
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.5,
+              shadows: [
+                Shadow(
+                  color: Colors.black.withOpacity(0.08),
+                  offset: const Offset(0, 2),
+                  blurRadius: 4,
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
+  // --- INVOICE CARD ---
   Widget _buildInvoiceCard() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [_C.primaryDark, _C.primary],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
+          colors: [AppColors.primary, AppColors.accent],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.35),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Row(
         children: [
-          const Icon(Icons.receipt_long_rounded, color: _C.accent, size: 28),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Kode Invoice',
-                  style: TextStyle(color: _C.accent, fontSize: 12)),
-              Text(widget.kodeInvoice,
-                  style: const TextStyle(
-                      color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800)),
-            ],
-          ),
-          const Spacer(),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.receipt_long_rounded,
+                color: AppColors.white, size: 24),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Kode Invoice',
+                  style: GoogleFonts.openSans(
+                    color: AppColors.primaryLight,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  widget.kodeInvoice,
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    shadows: const [
+                      Shadow(color: Colors.black26, blurRadius: 4),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Badge Sumber
+          Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.2),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
               _pesanan!.sumber == 'kasir' ? 'Kasir' : 'User',
-              style: const TextStyle(
-                  color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+              style: GoogleFonts.poppins(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],
@@ -441,35 +730,63 @@ class _PaDetailPesananPageState extends State<PaDetailPesananPage> {
     );
   }
 
+  // --- INFO PELANGGAN ---
   Widget _buildInfoPelanggan() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: _C.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _C.border),
+        gradient: const LinearGradient(
+          colors: [AppColors.white, AppColors.cardColor],
+        ),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+            color: AppColors.primary.withOpacity(0.15), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.08),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Informasi Pelanggan',
-              style: TextStyle(
-                  color: _C.textDark, fontSize: 15, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 12),
+          Text(
+            'Informasi Pelanggan',
+            style: GoogleFonts.poppins(
+              color: AppColors.accent,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.3,
+            ),
+          ),
+          const SizedBox(height: 16),
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: _C.accentSoft,
-                  borderRadius: BorderRadius.circular(10),
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.primaryLight.withOpacity(0.4),
+                      AppColors.primaryLighter.withOpacity(0.6),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.person_rounded, color: _C.primary, size: 20),
+                child: const Icon(Icons.person_rounded,
+                    color: AppColors.primary, size: 20),
               ),
-              const SizedBox(width: 12),
-              Text(_pesanan!.namaPelanggan,
-                  style: const TextStyle(
-                      color: _C.textDark, fontSize: 15, fontWeight: FontWeight.w600)),
+              const SizedBox(width: 14),
+              Text(
+                _pesanan!.namaPelanggan,
+                style: GoogleFonts.poppins(
+                  color: AppColors.textDark,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ],
           ),
         ],
@@ -477,21 +794,38 @@ class _PaDetailPesananPageState extends State<PaDetailPesananPage> {
     );
   }
 
+  // --- DETAIL ITEM ---
   Widget _buildDetailItem() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: _C.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _C.border),
+        gradient: const LinearGradient(
+          colors: [AppColors.white, AppColors.cardColor],
+        ),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+            color: AppColors.primary.withOpacity(0.15), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.08),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Detail Item',
-              style: TextStyle(
-                  color: _C.textDark, fontSize: 15, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 12),
+          Text(
+            'Detail Item',
+            style: GoogleFonts.poppins(
+              color: AppColors.accent,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.3,
+            ),
+          ),
+          const SizedBox(height: 16),
           ..._items.asMap().entries.map((e) {
             final item = e.value;
             final isLast = e.key == _items.length - 1;
@@ -499,39 +833,60 @@ class _PaDetailPesananPageState extends State<PaDetailPesananPage> {
               children: [
                 Row(
                   children: [
+                    // Badge Qty
                     Container(
-                      width: 28, height: 28,
+                      width: 32,
+                      height: 32,
+                      alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: _C.accentSoft,
-                        borderRadius: BorderRadius.circular(8),
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.primaryLight.withOpacity(0.3),
+                            AppColors.primaryLighter.withOpacity(0.5),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Center(
-                        child: Text('${item.qty}x',
-                            style: const TextStyle(
-                                color: _C.primary,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700)),
+                      child: Text(
+                        '${item.qty}x',
+                        style: GoogleFonts.poppins(
+                          color: AppColors.accent,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 14),
+                    // Nama Menu
                     Expanded(
-                      child: Text(item.namaMenu,
-                          style: const TextStyle(
-                              color: _C.textDark,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500)),
+                      child: Text(
+                        item.namaMenu,
+                        style: GoogleFonts.openSans(
+                          color: AppColors.textDark,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
-                    Text(_formatRupiah(item.subtotal),
-                        style: const TextStyle(
-                            color: _C.textDark,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600)),
+                    // Subtotal
+                    Text(
+                      _formatRupiah(item.subtotal),
+                      style: GoogleFonts.poppins(
+                        color: AppColors.accent,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ],
                 ),
                 if (!isLast)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8),
-                    child: Divider(color: Color(0xFFE8D5C0), height: 1),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    child: Divider(
+                      color: AppColors.primary.withOpacity(0.1),
+                      height: 1,
+                      thickness: 1,
+                    ),
                   ),
               ],
             );
@@ -541,39 +896,80 @@ class _PaDetailPesananPageState extends State<PaDetailPesananPage> {
     );
   }
 
+  // --- TOTAL CARD ---
   Widget _buildTotalCard() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: _C.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _C.border),
+        gradient: const LinearGradient(
+          colors: [AppColors.white, AppColors.cardColor],
+        ),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+            color: AppColors.primary.withOpacity(0.15), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.08),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [
+          // Metode Pembayaran
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Metode Pembayaran',
-                  style: TextStyle(color: _C.textMuted, fontSize: 14)),
-              Text(_pesanan!.metodePembayaran,
-                  style: const TextStyle(
-                      color: _C.textDark, fontSize: 14, fontWeight: FontWeight.w600)),
+              Text(
+                'Metode Pembayaran',
+                style: GoogleFonts.openSans(
+                  color: AppColors.textDark.withOpacity(0.55),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Text(
+                _pesanan!.metodePembayaran,
+                style: GoogleFonts.openSans(
+                  color: AppColors.textDark,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ],
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 10),
-            child: Divider(color: Color(0xFFE8D5C0), height: 1),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            child: Divider(
+              color: AppColors.primary.withOpacity(0.1),
+              height: 1,
+              thickness: 1,
+            ),
           ),
+          // Total
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Total',
-                  style: TextStyle(
-                      color: _C.textDark, fontSize: 15, fontWeight: FontWeight.w700)),
-              Text(_formatRupiah(_pesanan!.total),
-                  style: const TextStyle(
-                      color: _C.primary, fontSize: 17, fontWeight: FontWeight.w800)),
+              Text(
+                'Total',
+                style: GoogleFonts.poppins(
+                  color: AppColors.textDark,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Text(
+                _formatRupiah(_pesanan!.total),
+                style: GoogleFonts.poppins(
+                  color: AppColors.accent,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  shadows: const [
+                    Shadow(color: Colors.black12, blurRadius: 4),
+                  ],
+                ),
+              ),
             ],
           ),
         ],
