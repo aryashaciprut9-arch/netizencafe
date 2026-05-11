@@ -1,28 +1,29 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:google_fonts/google_fonts.dart';
 
 // ==================== GANTI DENGAN IP KAMU ====================
-const String baseUrl = 'http://192.168.1.x/kasir_api'; // ganti IP PC kamu!
+const String baseUrl = 'http://127.0.0.1/kasir_api';
 
-// ==================== KONSISTENSI WARNA ====================
+// ==================== KONSISTENSI WARNA (selaras beranda, minuman, makanan, snack) ====================
 class AppColors {
-  static const Color primaryDark = Color(0xFF5C2E00);
-  static const Color primary = Color(0xFF8A4607);
-  static const Color primaryMedium = Color(0xFFA85A1B);
-  static const Color primaryLight = Color(0xFFC47A3A);
-  static const Color accent = Color(0xFFF5CC9E);
-  static const Color accentSoft = Color(0xFFFAEBD7);
-  static const Color accentPale = Color(0xFFFFF8F0);
-  static const Color textDark = Color(0xFF3D1F00);
-  static const Color textMedium = Color(0xFF8A4607);
-  static const Color textMuted = Color(0xFFB08A60);
-  static const Color textLight = Color(0xFFD4B896);
-  static const Color surface = Color(0xFFFFFFFF);
-  static const Color divider = Color(0xFFE8D5C0);
-  static const Color border = Color(0xFFDCC8AE);
-  static const Color success = Color(0xFF2E7D32);
-  static const Color danger = Color(0xFFC62828);
+  static const Color primary        = Color(0xFFB86B2B);
+  static const Color accent         = Color(0xFF8D5524);
+  static const Color textDark       = Color(0xFF6D4C41);
+  static const Color cardColor      = Color(0xFFFFFBF5);
+  static const Color primaryLight   = Color(0xFFF5CC9E);
+  static const Color primaryLighter = Color(0xFFFFF8F2);
+  static const Color white          = Colors.white;
+  static const Color success        = Color(0xFF2E7D32);
+  static const Color danger         = Color(0xFFC62828);
+
+  static const List<Color> bgGradient = [
+    Color(0xFFFFF8F2),
+    Color(0xFFFDE8D7),
+    Color(0xFFE8CBB0),
+    Color(0xFFD4A57A),
+  ];
 }
 
 // ==================== MODEL ITEM KERANJANG ====================
@@ -63,15 +64,42 @@ class PuDetailKeranjang extends StatefulWidget {
   State<PuDetailKeranjang> createState() => _PuDetailKeranjangState();
 }
 
-class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
+class _PuDetailKeranjangState extends State<PuDetailKeranjang>
+    with TickerProviderStateMixin {
   late List<KeranjangItem> _items;
   String _metodePembayaran = 'Tunai';
   bool _isLoading = false;
+
+  // Animasi masuk — selaras halaman lain
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
     super.initState();
     _items = List.from(widget.items);
+
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 900),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
+    );
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.25),
+      end: Offset.zero,
+    ).animate(
+        CurvedAnimation(parent: _fadeController, curve: Curves.easeOutBack));
+
+    _fadeController.forward();
+  }
+
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    super.dispose();
   }
 
   int get _subtotal => _items.fold(0, (sum, item) => sum + item.subtotal);
@@ -99,7 +127,16 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
   Future<void> _pesanSekarang() async {
     if (_items.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Keranjang kosong!')),
+        SnackBar(
+          content: Text('Keranjang kosong!',
+              style: GoogleFonts.openSans(
+                  color: Colors.white, fontWeight: FontWeight.w600)),
+          backgroundColor: AppColors.danger,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15)),
+          margin: const EdgeInsets.all(16),
+        ),
       );
       return;
     }
@@ -150,7 +187,25 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text('Error: $e',
+                      style: GoogleFonts.openSans(
+                          color: Colors.white, fontWeight: FontWeight.w600)),
+                ),
+              ],
+            ),
+            backgroundColor: AppColors.danger,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15)),
+            margin: const EdgeInsets.all(16),
+            duration: const Duration(seconds: 4),
+          ),
         );
       }
     } finally {
@@ -158,40 +213,61 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
     }
   }
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  //  BUILD
+  // ═══════════════════════════════════════════════════════════════════════════
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.accentPale,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildAppBar(),
-            Expanded(
-              child: _items.isEmpty
-                  ? _buildKeranjangKosong()
-                  : ListView(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      children: [
-                        const SizedBox(height: 20),
-                        ..._items.asMap().entries.map(
-                              (e) => Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: _buildFoodItem(e.key, e.value),
-                              ),
-                            ),
-                        const SizedBox(height: 12),
-                        _buildRincianSection(),
-                        const SizedBox(height: 16),
-                        _buildTotalSection(),
-                        const SizedBox(height: 16),
-                        _buildPaymentMethod(),
-                        const SizedBox(height: 24),
-                        _buildOrderButton(),
-                        const SizedBox(height: 24),
-                      ],
-                    ),
-            ),
-          ],
+      // ✅ Gradient background sama persis halaman lain
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: AppColors.bgGradient,
+            stops: [0.0, 0.3, 0.7, 1.0],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildAppBar(),
+              Expanded(
+                child: _items.isEmpty
+                    ? _buildKeranjangKosong()
+                    : FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: SlideTransition(
+                          position: _slideAnimation,
+                          child: ListView(
+                            physics: const BouncingScrollPhysics(),
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            children: [
+                              const SizedBox(height: 20),
+                              ..._items.asMap().entries.map(
+                                    (e) => Padding(
+                                      padding: const EdgeInsets.only(bottom: 14),
+                                      child: _buildFoodItem(e.key, e.value),
+                                    ),
+                                  ),
+                              const SizedBox(height: 14),
+                              _buildRincianSection(),
+                              const SizedBox(height: 16),
+                              _buildTotalSection(),
+                              const SizedBox(height: 16),
+                              _buildPaymentMethod(),
+                              const SizedBox(height: 28),
+                              _buildOrderButton(),
+                              const SizedBox(height: 32),
+                            ],
+                          ),
+                        ),
+                      ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -200,50 +276,88 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
   // ==================== APP BAR ====================
   Widget _buildAppBar() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppColors.white, AppColors.cardColor],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
         boxShadow: [
           BoxShadow(
-              color: Color(0x0D000000), blurRadius: 8, offset: Offset(0, 2)),
+            color: AppColors.primary.withOpacity(0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Row(
         children: [
+          // Tombol kembali — style card selaras halaman lain
           GestureDetector(
             onTap: () => Navigator.pop(context),
             child: Container(
-              width: 38,
-              height: 38,
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppColors.accentSoft,
-                borderRadius: BorderRadius.circular(12),
+                gradient: const LinearGradient(
+                  colors: [Colors.white, AppColors.cardColor],
+                ),
+                shape: BoxShape.circle,
+                border: Border.all(
+                    color: AppColors.primary.withOpacity(0.2), width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.15),
+                    blurRadius: 14,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
               ),
               child: const Icon(Icons.arrow_back_ios_new_rounded,
                   size: 16, color: AppColors.primary),
             ),
           ),
           const SizedBox(width: 16),
-          const Text(
+          Text(
             'Detail Keranjang',
-            style: TextStyle(
-              color: AppColors.textDark,
+            style: GoogleFonts.poppins(
+              color: AppColors.accent,
               fontSize: 20,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.5,
+              shadows: [
+                Shadow(
+                  color: Colors.black.withOpacity(0.08),
+                  offset: const Offset(0, 2),
+                  blurRadius: 4,
+                ),
+              ],
             ),
           ),
           const Spacer(),
+          // Tombol hapus semua — style card
           if (_items.isNotEmpty)
             GestureDetector(
               onTap: () => setState(() => _items.clear()),
               child: Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.accentSoft,
-                  borderRadius: BorderRadius.circular(12),
+                  gradient: const LinearGradient(
+                    colors: [Colors.white, AppColors.cardColor],
+                  ),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                      color: AppColors.danger.withOpacity(0.25), width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.danger.withOpacity(0.1),
+                      blurRadius: 14,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
                 ),
                 child: const Icon(Icons.delete_outline_rounded,
-                    size: 20, color: AppColors.danger),
+                    size: 18, color: AppColors.danger),
               ),
             ),
         ],
@@ -254,41 +368,50 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
   // ==================== FOOD ITEM CARD ====================
   Widget _buildFoodItem(int index, KeranjangItem item) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        gradient: const LinearGradient(
+          colors: [Colors.white, AppColors.cardColor],
+        ),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+            color: AppColors.primary.withOpacity(0.15), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            color: AppColors.primary.withOpacity(0.1),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
       child: Row(
         children: [
+          // Gambar produk
           ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
             child: Image.network(
               '$baseUrl/menu/uploads/${item.foto}',
-              width: 72,
-              height: 72,
+              width: 76,
+              height: 76,
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Container(
-                width: 72,
-                height: 72,
+                width: 76,
+                height: 76,
                 decoration: BoxDecoration(
-                  color: AppColors.accentSoft,
-                  borderRadius: BorderRadius.circular(12),
+                  gradient: const LinearGradient(
+                    colors: [AppColors.cardColor, AppColors.primaryLighter],
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                      color: AppColors.primary.withOpacity(0.1), width: 1),
                 ),
-                child: const Icon(Icons.restaurant,
-                    color: AppColors.primaryLight),
+                child: Icon(Icons.restaurant_rounded,
+                    color: AppColors.primary.withOpacity(0.4), size: 28),
               ),
             ),
           ),
           const SizedBox(width: 14),
+          // Info produk
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -298,38 +421,60 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
                     Expanded(
                       child: Text(
                         item.namaMenu,
-                        style: const TextStyle(
+                        style: GoogleFonts.poppins(
                           color: AppColors.textDark,
                           fontSize: 14,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w700,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     GestureDetector(
                       onTap: () => _hapusItem(index),
-                      child: const Icon(Icons.close_rounded,
-                          size: 18, color: AppColors.textMuted),
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: AppColors.danger.withOpacity(0.08),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.close_rounded,
+                            size: 16, color: AppColors.danger.withOpacity(0.7)),
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 3),
                 Text(
                   '@ ${_formatRupiah(item.harga)}',
-                  style: const TextStyle(
-                    color: AppColors.textMuted,
+                  style: GoogleFonts.openSans(
+                    color: AppColors.textDark.withOpacity(0.5),
                     fontSize: 12,
-                    fontWeight: FontWeight.w400,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
+                // Qty stepper + subtotal
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    // Stepper — style card selaras detail sheet makanan
                     Container(
                       decoration: BoxDecoration(
-                        color: AppColors.accentSoft,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: AppColors.border),
+                        gradient: const LinearGradient(
+                          colors: [Colors.white, AppColors.cardColor],
+                        ),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                            color: AppColors.primary.withOpacity(0.2),
+                            width: 1.5),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
                       ),
                       child: Row(
                         children: [
@@ -340,8 +485,8 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
                             alignment: Alignment.center,
                             child: Text(
                               '${item.qty}',
-                              style: const TextStyle(
-                                color: AppColors.primaryDark,
+                              style: GoogleFonts.poppins(
+                                color: AppColors.accent,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -354,8 +499,8 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
                     ),
                     Text(
                       _formatRupiah(item.subtotal),
-                      style: const TextStyle(
-                        color: AppColors.primaryDark,
+                      style: GoogleFonts.poppins(
+                        color: AppColors.accent,
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
                       ),
@@ -374,10 +519,10 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 30,
-        height: 30,
+        width: 32,
+        height: 32,
         alignment: Alignment.center,
-        child: Icon(icon, size: 16, color: AppColors.primary),
+        child: Icon(icon, size: 18, color: AppColors.primary),
       ),
     );
   }
@@ -385,29 +530,43 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
   // ==================== RINCIAN SECTION ====================
   Widget _buildRincianSection() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        gradient: const LinearGradient(
+          colors: [Colors.white, AppColors.cardColor],
+        ),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+            color: AppColors.primary.withOpacity(0.15), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.08),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Rincian',
-            style: TextStyle(
-              color: AppColors.textDark,
+            style: GoogleFonts.poppins(
+              color: AppColors.accent,
               fontSize: 16,
               fontWeight: FontWeight.w700,
+              letterSpacing: -0.3,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
           _rincianRow(
               'Subtotal (${_items.length} item)', _formatRupiah(_subtotal)),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 10),
-            child: Divider(color: AppColors.divider, height: 1),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Divider(
+                color: AppColors.primary.withOpacity(0.1),
+                height: 1,
+                thickness: 1),
           ),
           _rincianRow('Biaya Layanan', 'Rp -'),
         ],
@@ -420,13 +579,17 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label,
-            style: const TextStyle(color: AppColors.textMuted, fontSize: 14)),
+            style: GoogleFonts.openSans(
+              color: AppColors.textDark.withOpacity(0.55),
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            )),
         Text(
           value,
-          style: TextStyle(
+          style: GoogleFonts.openSans(
             color: isDiscount ? AppColors.success : AppColors.textDark,
             fontSize: 14,
-            fontWeight: isDiscount ? FontWeight.w600 : FontWeight.w500,
+            fontWeight: isDiscount ? FontWeight.w700 : FontWeight.w600,
           ),
         ),
       ],
@@ -436,35 +599,42 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
   // ==================== TOTAL SECTION ====================
   Widget _buildTotalSection() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [AppColors.primaryDark, AppColors.primary],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
+          colors: [AppColors.primary, AppColors.accent],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: AppColors.primary.withOpacity(0.35),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text(
+          Text(
             'Total Pembayaran',
-            style: TextStyle(color: AppColors.accent, fontSize: 15),
+            style: GoogleFonts.openSans(
+              color: AppColors.primaryLight,
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           Text(
             _formatRupiah(_total),
-            style: const TextStyle(
+            style: GoogleFonts.poppins(
               color: Colors.white,
-              fontSize: 20,
+              fontSize: 22,
               fontWeight: FontWeight.w800,
+              shadows: const [
+                Shadow(color: Colors.black26, blurRadius: 6),
+              ],
             ),
           ),
         ],
@@ -475,21 +645,33 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
   // ==================== PAYMENT METHOD ====================
   Widget _buildPaymentMethod() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        gradient: const LinearGradient(
+          colors: [Colors.white, AppColors.cardColor],
+        ),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+            color: AppColors.primary.withOpacity(0.15), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.08),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Metode Pembayaran',
-            style: TextStyle(
-                color: AppColors.textDark,
-                fontSize: 15,
-                fontWeight: FontWeight.w600),
+            style: GoogleFonts.poppins(
+              color: AppColors.accent,
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.3,
+            ),
           ),
           const SizedBox(height: 14),
           _paymentOption('Tunai', Icons.payments_rounded),
@@ -502,52 +684,94 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
     final bool isSelected = _metodePembayaran == label;
     return GestureDetector(
       onTap: () => setState(() => _metodePembayaran = label),
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeInOut,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.accentPale : AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
+          gradient: isSelected
+              ? const LinearGradient(
+                  colors: [Colors.white, Color(0xFFFFF5EB)])
+              : const LinearGradient(
+                  colors: [Colors.white, AppColors.cardColor]),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected
-                ? AppColors.primary.withOpacity(0.5)
-                : AppColors.border,
+                ? AppColors.primary
+                : AppColors.primary.withOpacity(0.15),
+            width: isSelected ? 2.0 : 1.0,
           ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.15),
+                    blurRadius: 14,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
         child: Row(
           children: [
-            Container(
-              width: 20,
-              height: 20,
+            // Radio circle
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              width: 22,
+              height: 22,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.primary, width: 2),
+                border: Border.all(
+                  color: isSelected
+                      ? AppColors.primary
+                      : AppColors.primary.withOpacity(0.35),
+                  width: 2,
+                ),
               ),
               child: isSelected
-                  ? Container(
+                  ? AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
                       margin: const EdgeInsets.all(3),
                       decoration: const BoxDecoration(
                         shape: BoxShape.circle,
-                        color: AppColors.primary,
+                        gradient: LinearGradient(
+                          colors: [AppColors.primary, AppColors.accent],
+                        ),
                       ),
                     )
                   : null,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 14),
+            // Icon
             Container(
-              padding: const EdgeInsets.all(6),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.accent,
-                borderRadius: BorderRadius.circular(8),
+                gradient: LinearGradient(
+                  colors: isSelected
+                      ? [AppColors.primaryLight, AppColors.primaryLighter]
+                      : [
+                          AppColors.primaryLight.withOpacity(0.5),
+                          AppColors.primaryLighter.withOpacity(0.5)
+                        ],
+                ),
+                borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, size: 18, color: AppColors.primaryDark),
+              child: Icon(icon,
+                  size: 18,
+                  color: isSelected ? AppColors.accent : AppColors.primary),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             Text(
               label,
-              style: const TextStyle(
-                color: AppColors.textDark,
+              style: GoogleFonts.poppins(
+                color: isSelected ? AppColors.accent : AppColors.textDark,
                 fontSize: 14,
-                fontWeight: FontWeight.w600,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
               ),
             ),
           ],
@@ -562,37 +786,52 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
       onTap: _isLoading ? null : _pesanSekarang,
       child: Container(
         width: double.infinity,
-        height: 54,
+        height: 58,
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [AppColors.primary, AppColors.primaryMedium],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
+            colors: [AppColors.primary, AppColors.accent],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(29),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withOpacity(0.35),
-              blurRadius: 14,
-              offset: const Offset(0, 6),
+              color: AppColors.primary.withOpacity(0.4),
+              blurRadius: 25,
+              offset: const Offset(0, 12),
             ),
           ],
         ),
         child: Center(
           child: _isLoading
-              ? const CircularProgressIndicator(color: Colors.white)
-              : const Row(
+              ? SizedBox(
+                  width: 26,
+                  height: 26,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 3,
+                    backgroundColor: Colors.white.withOpacity(0.3),
+                  ),
+                )
+              : Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.shopping_bag_rounded,
+                    const Icon(Icons.shopping_bag_rounded,
                         color: Colors.white, size: 20),
-                    SizedBox(width: 10),
+                    const SizedBox(width: 10),
                     Text(
                       'Pesan Sekarang',
-                      style: TextStyle(
+                      style: GoogleFonts.poppins(
                         color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.5,
+                        shadows: const [
+                          Shadow(
+                              color: Colors.black26,
+                              blurRadius: 4,
+                              offset: Offset(0, 2)),
+                        ],
                       ),
                     ),
                   ],
@@ -608,21 +847,43 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.shopping_cart_outlined,
-              size: 80, color: AppColors.textLight),
-          const SizedBox(height: 16),
-          const Text(
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Colors.white, AppColors.cardColor],
+              ),
+              shape: BoxShape.circle,
+              border: Border.all(
+                  color: AppColors.primary.withOpacity(0.15), width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withOpacity(0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Icon(Icons.shopping_cart_outlined,
+                size: 52, color: AppColors.primary.withOpacity(0.35)),
+          ),
+          const SizedBox(height: 24),
+          Text(
             'Keranjang kosong',
-            style: TextStyle(
-              color: AppColors.textMuted,
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
+            style: GoogleFonts.poppins(
+              color: AppColors.textDark.withOpacity(0.5),
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Tambahkan menu terlebih dahulu',
-            style: TextStyle(color: AppColors.textLight, fontSize: 13),
+            style: GoogleFonts.openSans(
+              color: AppColors.textDark.withOpacity(0.35),
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),
@@ -631,7 +892,7 @@ class _PuDetailKeranjangState extends State<PuDetailKeranjang> {
 }
 
 // ==================== HALAMAN PESANAN BERHASIL ====================
-class PesananBerhasilPage extends StatelessWidget {
+class PesananBerhasilPage extends StatefulWidget {
   final String kodeInvoice;
   final int total;
 
@@ -641,6 +902,50 @@ class PesananBerhasilPage extends StatelessWidget {
     required this.total,
   });
 
+  @override
+  State<PesananBerhasilPage> createState() => _PesananBerhasilPageState();
+}
+
+class _PesananBerhasilPageState extends State<PesananBerhasilPage>
+    with TickerProviderStateMixin {
+  late AnimationController _scaleController;
+  late Animation<double> _scaleAnimation;
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _scaleController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+          parent: _scaleController, curve: Curves.elasticOut),
+    );
+
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
+    );
+
+    _scaleController.forward();
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) _fadeController.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _scaleController.dispose();
+    _fadeController.dispose();
+    super.dispose();
+  }
+
   String _formatRupiah(int amount) {
     return 'Rp ${amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
   }
@@ -648,82 +953,161 @@ class PesananBerhasilPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.accentPale,
-      body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    color: AppColors.success.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.check_circle_rounded,
-                      size: 60, color: AppColors.success),
-                ),
-                const SizedBox(height: 24),
-                const Text(
-                  'Pesanan Berhasil!',
-                  style: TextStyle(
-                    color: AppColors.textDark,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Pesananmu sedang diproses',
-                  style: TextStyle(color: AppColors.textMuted, fontSize: 14),
-                ),
-                const SizedBox(height: 32),
-                // ✅ FIX: Container info invoice dikembalikan
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Column(
-                    children: [
-                      _infoRow('Kode Invoice', kodeInvoice),
-                      const Divider(color: AppColors.divider, height: 24),
-                      _infoRow('Total', _formatRupiah(total)),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 32),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.popUntil(context, (route) => route.isFirst);
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    height: 54,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [AppColors.primaryDark, AppColors.primary],
+      // ✅ Gradient background
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: AppColors.bgGradient,
+            stops: [0.0, 0.3, 0.7, 1.0],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(28),
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Ikon sukses — animasi scale
+                    ScaleTransition(
+                      scale: _scaleAnimation,
+                      child: Container(
+                        width: 110,
+                        height: 110,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              AppColors.success.withOpacity(0.15),
+                              AppColors.success.withOpacity(0.05),
+                            ],
+                          ),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                              color: AppColors.success.withOpacity(0.2),
+                              width: 2),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.success.withOpacity(0.15),
+                              blurRadius: 25,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(Icons.check_circle_rounded,
+                            size: 64, color: AppColors.success),
                       ),
-                      borderRadius: BorderRadius.circular(16),
                     ),
-                    child: const Center(
-                      child: Text(
-                        'Kembali ke Beranda',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
+                    const SizedBox(height: 28),
+                    Text(
+                      'Pesanan Berhasil!',
+                      style: GoogleFonts.poppins(
+                        color: AppColors.accent,
+                        fontSize: 26,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.5,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black.withOpacity(0.08),
+                            offset: const Offset(0, 2),
+                            blurRadius: 4,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Pesananmu sedang diproses',
+                      style: GoogleFonts.openSans(
+                        color: AppColors.textDark.withOpacity(0.55),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 36),
+                    // Card info invoice
+                    Container(
+                      padding: const EdgeInsets.all(22),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Colors.white, AppColors.cardColor],
+                        ),
+                        borderRadius: BorderRadius.circular(22),
+                        border: Border.all(
+                            color: AppColors.primary.withOpacity(0.15),
+                            width: 1),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withOpacity(0.1),
+                            blurRadius: 18,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          _infoRow('Kode Invoice', widget.kodeInvoice),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            child: Divider(
+                                color: AppColors.primary.withOpacity(0.1),
+                                height: 1,
+                                thickness: 1),
+                          ),
+                          _infoRow('Total', _formatRupiah(widget.total)),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 36),
+                    // Tombol kembali — pill style
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.popUntil(
+                            context, (route) => route.isFirst);
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        height: 58,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [AppColors.primary, AppColors.accent],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(29),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withOpacity(0.4),
+                              blurRadius: 25,
+                              offset: const Offset(0, 12),
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Text(
+                            'Kembali ke Beranda',
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5,
+                              shadows: const [
+                                Shadow(
+                                    color: Colors.black26,
+                                    blurRadius: 4,
+                                    offset: Offset(0, 2)),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
@@ -736,11 +1120,15 @@ class PesananBerhasilPage extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label,
-            style: const TextStyle(color: AppColors.textMuted, fontSize: 14)),
+            style: GoogleFonts.openSans(
+              color: AppColors.textDark.withOpacity(0.55),
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            )),
         Text(
           value,
-          style: const TextStyle(
-            color: AppColors.textDark,
+          style: GoogleFonts.poppins(
+            color: AppColors.accent,
             fontSize: 14,
             fontWeight: FontWeight.w700,
           ),

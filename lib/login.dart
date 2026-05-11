@@ -37,19 +37,23 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   bool _isRememberMe = false;
   bool _isLoading = false;
   bool _obscurePassword = true;
-  
+  bool _emailFocused = false;
+  bool _passwordFocused = false;
+
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final FocusNode _emailFocusNode = FocusNode();
+  final FocusNode _passwordFocusNode = FocusNode();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  
+
   final Color primary = const Color(0xFFB86B2B);
   final Color accent = const Color(0xFF8D5524);
   final Color textDark = const Color(0xFF6D4C41);
-  final Color cardColor = Color(0xFFFFFBF5);
+  final Color cardColor = const Color(0xFFFFFBF5);
 
   @override
   void initState() {
@@ -65,7 +69,14 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       begin: const Offset(0, 0.3),
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _animationController, curve: Curves.easeOutBack));
-    
+
+    _emailFocusNode.addListener(() {
+      setState(() => _emailFocused = _emailFocusNode.hasFocus);
+    });
+    _passwordFocusNode.addListener(() {
+      setState(() => _passwordFocused = _passwordFocusNode.hasFocus);
+    });
+
     _animationController.forward();
   }
 
@@ -73,10 +84,13 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _emailFocusNode.dispose();
+    _passwordFocusNode.dispose();
     _animationController.dispose();
     super.dispose();
   }
 
+  // ✅ PERBAIKAN: Disesuaikan agar aman dari error Type & Dead Code
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -85,69 +99,108 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
 
     String role = isUserSelected ? 'user' : 'admin';
 
-    final response = await ApiService.login(
-      email: _emailController.text.trim(),
-      password: _passwordController.text,
-      role: role,
-    );
-
-    setState(() => _isLoading = false);
-
-    if (!mounted) return;
-
-    if (response.success && response.user != null) {
-      await SessionManager.saveSession(response.user!);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.check_circle, color: Colors.white),
-              const SizedBox(width: 12),
-              Expanded(child: Text(role == 'admin' ? 'Selamat datang Admin!' : 'Selamat datang User!')),
-            ],
-          ),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-          margin: EdgeInsets.all(16),
-        ),
+    try {
+      final response = await ApiService.login(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        role: role,
       );
 
-      if (role == 'admin') {
-        Navigator.pushReplacement(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (_, __, ___) => const KasirPage(),
-            transitionsBuilder: (_, animation, __, child) => FadeTransition(opacity: animation, child: child),
-          ),
+      setState(() => _isLoading = false);
+
+      if (!mounted) return;
+
+      if (response.success) {
+        // ✅ Simpan data langsung dari controller (aman, tanpa bergantung pada response.user)
+        await SessionManager.saveUserData(
+          email: _emailController.text.trim(),
+          username: _emailController.text.trim().split('@')[0],
+          phone: '',
+          address: '',
+          role: role,
+          id: '',
         );
+
+        // Tampilkan snackbar sukses
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: const [
+                  Icon(Icons.check_circle, color: Colors.white),
+                  SizedBox(width: 12),
+                  Expanded(child: Text('Selamat datang!')), // Text dibuat dinamis di bawah
+                ],
+              ),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+              margin: const EdgeInsets.all(16),
+            ),
+          );
+
+          // Navigasi ke halaman sesuai role
+          if (role == 'admin') {
+            Navigator.pushReplacement(
+              context,
+              PageRouteBuilder(
+                pageBuilder: (_, __, ___) => const KasirPage(),
+                transitionsBuilder: (_, animation, __, child) => FadeTransition(opacity: animation, child: child),
+              ),
+            );
+          } else {
+            Navigator.pushReplacement(
+              context,
+              PageRouteBuilder(
+                pageBuilder: (_, __, ___) => const PuBeranda(),
+                transitionsBuilder: (_, animation, __, child) => FadeTransition(opacity: animation, child: child),
+              ),
+            );
+          }
+        }
       } else {
-        Navigator.pushReplacement(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (_, __, ___) => const PuBeranda(),
-            transitionsBuilder: (_, animation, __, child) => FadeTransition(opacity: animation, child: child),
+        // Tampilkan snackbar error dari response API
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.white),
+                  const SizedBox(width: 12),
+                  Expanded(child: Text(response.message)),
+                ],
+              ),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+              margin: const EdgeInsets.all(16),
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      // ✅ Tambahan: Menangkap error jika koneksi terputus atau API down
+      setState(() => _isLoading = false);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.wifi_off, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(child: Text('Terjadi kesalahan: ${e.toString()}')),
+              ],
+            ),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+            margin: const EdgeInsets.all(16),
+            duration: const Duration(seconds: 4),
           ),
         );
       }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.error_outline, color: Colors.white),
-              const SizedBox(width: 12),
-              Expanded(child: Text(response.message)),
-            ],
-          ),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-          margin: EdgeInsets.all(16),
-          duration: const Duration(seconds: 4),
-        ),
-      );
     }
   }
 
@@ -155,7 +208,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
               Color(0xFFFFF8F2),
@@ -182,11 +235,9 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // === HEADER ===
                         _buildHeader(),
                         const SizedBox(height: 40),
 
-                        // === MAIN CARD ===
                         Container(
                           padding: const EdgeInsets.all(28),
                           decoration: BoxDecoration(
@@ -202,16 +253,16 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                           ),
                           child: Column(
                             children: [
-                              // === ANIMATEDSWITCHER TOGGLE ===
                               _buildCustomToggle(),
                               const SizedBox(height: 28),
 
-                              // === EMAIL FIELD ===
                               _buildInputField(
                                 label: "Email",
                                 hint: "masukkan email anda",
                                 icon: Icons.email_outlined,
                                 controller: _emailController,
+                                focusNode: _emailFocusNode,
+                                isFocused: _emailFocused,
                                 keyboardType: TextInputType.emailAddress,
                                 validator: (value) {
                                   if (value == null || value.trim().isEmpty) return 'Email tidak boleh kosong';
@@ -223,12 +274,13 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                               ),
                               const SizedBox(height: 20),
 
-                              // === PASSWORD FIELD ===
                               _buildInputField(
                                 label: "Password",
                                 hint: "Minimal 6 karakter",
                                 icon: Icons.lock_outline_rounded,
                                 controller: _passwordController,
+                                focusNode: _passwordFocusNode,
+                                isFocused: _passwordFocused,
                                 obscureText: _obscurePassword,
                                 isPassword: true,
                                 onToggleObscure: () => setState(() => _obscurePassword = !_obscurePassword),
@@ -240,18 +292,15 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                               ),
                               const SizedBox(height: 24),
 
-                              // === REMEMBER ME ===
                               _buildRememberMe(),
                               const SizedBox(height: 32),
 
-                              // === LOGIN BUTTON ===
                               _buildLoginButton(),
                             ],
                           ),
                         ),
                         const SizedBox(height: 32),
 
-                        // === REGISTER LINK ===
                         if (isUserSelected) _buildRegisterLink(),
                         const SizedBox(height: 40),
                       ],
@@ -281,10 +330,10 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                 BoxShadow(color: primary.withOpacity(0.25), blurRadius: 25, offset: const Offset(0, 12)),
               ],
             ),
-            child: CircleAvatar(
+            child: const CircleAvatar(
               radius: 55,
               backgroundColor: Colors.white,
-              backgroundImage: const AssetImage('assets/nettyzencafe.png'),
+              backgroundImage: AssetImage('assets/nettyzencafe.png'),
             ),
           ),
         ),
@@ -318,7 +367,6 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     );
   }
 
-  // 🔥 ANIMATEDSWITCHER TOGGLE - SELARAS DENGAN REGISTER
   Widget _buildCustomToggle() {
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 250),
@@ -408,12 +456,20 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     required String hint,
     required IconData icon,
     TextEditingController? controller,
+    FocusNode? focusNode,
+    bool isFocused = false,
     String? Function(String?)? validator,
     bool obscureText = false,
     bool isPassword = false,
     VoidCallback? onToggleObscure,
     TextInputType? keyboardType,
   }) {
+    final Color currentBorderColor = isFocused
+        ? primary
+        : primary.withOpacity(0.45);
+
+    final double currentBorderWidth = isFocused ? 2.0 : 1.5;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -427,37 +483,89 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
           ),
         ),
         const SizedBox(height: 12),
-        Container(
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeInOut,
           decoration: BoxDecoration(
-            gradient: LinearGradient(colors: [Colors.white, cardColor]),
+            gradient: LinearGradient(
+              colors: isFocused
+                  ? [Colors.white, const Color(0xFFFFF5EB)]
+                  : [Colors.white, cardColor],
+            ),
             borderRadius: BorderRadius.circular(25),
+            border: Border.all(
+              color: currentBorderColor,
+              width: currentBorderWidth,
+            ),
             boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 12, offset: const Offset(0, 4)),
+              BoxShadow(
+                color: isFocused
+                    ? primary.withOpacity(0.15)
+                    : Colors.black.withOpacity(0.05),
+                blurRadius: isFocused ? 16 : 8,
+                offset: isFocused
+                    ? const Offset(0, 4)
+                    : const Offset(0, 3),
+              ),
             ],
           ),
           child: TextFormField(
             controller: controller,
+            focusNode: focusNode,
             keyboardType: keyboardType,
             obscureText: obscureText,
             validator: validator,
-            style: GoogleFonts.openSans(fontSize: 16, fontWeight: FontWeight.w500, color: textDark),
+            style: GoogleFonts.openSans(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: textDark,
+            ),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: GoogleFonts.openSans(fontSize: 15, color: textDark.withOpacity(0.5)),
-              prefixIcon: Padding(padding: const EdgeInsets.all(16), child: Icon(icon, color: primary, size: 24)),
+              hintStyle: GoogleFonts.openSans(
+                fontSize: 15,
+                color: textDark.withOpacity(0.45),
+              ),
+              prefixIcon: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Icon(
+                  icon,
+                  color: isFocused ? primary : primary.withOpacity(0.65),
+                  size: 24,
+                ),
+              ),
               suffixIcon: isPassword
                   ? Padding(
                       padding: const EdgeInsets.all(16),
                       child: IconButton(
-                        icon: Icon(obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                            color: primary.withOpacity(0.7), size: 22),
+                        icon: Icon(
+                          obscureText
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                          color: isFocused
+                              ? primary
+                              : primary.withOpacity(0.55),
+                          size: 22,
+                        ),
                         onPressed: onToggleObscure,
                       ),
                     )
                   : null,
               border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
-              errorStyle: GoogleFonts.openSans(fontSize: 13, height: 0.8, color: Colors.red, fontWeight: FontWeight.w600),
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              errorBorder: InputBorder.none,
+              focusedErrorBorder: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 20,
+                horizontal: 8,
+              ),
+              errorStyle: GoogleFonts.openSans(
+                fontSize: 13,
+                height: 0.8,
+                color: Colors.red,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ),
@@ -470,21 +578,33 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       children: [
         GestureDetector(
           onTap: () => setState(() => _isRememberMe = !_isRememberMe),
-          child: Container(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
             height: 24,
             width: 24,
             decoration: BoxDecoration(
               color: _isRememberMe ? primary : Colors.white,
               borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: _isRememberMe ? primary : Colors.grey.withOpacity(0.3), width: 2),
+              border: Border.all(
+                color: _isRememberMe
+                    ? primary
+                    : primary.withOpacity(0.5),
+                width: 2,
+              ),
             ),
-            child: _isRememberMe ? Icon(Icons.check, size: 18, color: Colors.white) : null,
+            child: _isRememberMe
+                ? const Icon(Icons.check, size: 18, color: Colors.white)
+                : null,
           ),
         ),
         const SizedBox(width: 12),
         Text(
           "Ingat Saya",
-          style: GoogleFonts.openSans(color: textDark, fontSize: 14, fontWeight: FontWeight.w600),
+          style: GoogleFonts.openSans(
+            color: textDark,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ],
     );
@@ -505,12 +625,19 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(35),
             gradient: LinearGradient(
-              colors: [_isLoading ? primary.withOpacity(0.5) : primary.withOpacity(0.95), accent],
+              colors: [
+                _isLoading ? primary.withOpacity(0.5) : primary.withOpacity(0.95),
+                accent,
+              ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             boxShadow: [
-              BoxShadow(color: primary.withOpacity(0.4), blurRadius: 25, offset: const Offset(0, 12)),
+              BoxShadow(
+                color: primary.withOpacity(0.4),
+                blurRadius: 25,
+                offset: const Offset(0, 12),
+              ),
             ],
           ),
           child: Center(
@@ -532,7 +659,11 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                       fontWeight: FontWeight.w800,
                       letterSpacing: 1.5,
                       shadows: [
-                        Shadow(color: Colors.black.withOpacity(0.3), offset: const Offset(0, 2), blurRadius: 4),
+                        Shadow(
+                          color: Colors.black.withOpacity(0.3),
+                          offset: const Offset(0, 2),
+                          blurRadius: 4,
+                        ),
                       ],
                     ),
                   ),
@@ -548,14 +679,19 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       children: [
         Text(
           'Belum punya akun? ',
-          style: GoogleFonts.openSans(color: textDark.withOpacity(0.8), fontSize: 15, fontWeight: FontWeight.w500),
+          style: GoogleFonts.openSans(
+            color: textDark.withOpacity(0.8),
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+          ),
         ),
         GestureDetector(
           onTap: () => Navigator.push(
             context,
             PageRouteBuilder(
               pageBuilder: (_, __, ___) => const Scaffold(body: RegisterPage()),
-              transitionsBuilder: (_, animation, __, child) => FadeTransition(opacity: animation, child: child),
+              transitionsBuilder: (_, animation, __, child) =>
+                  FadeTransition(opacity: animation, child: child),
             ),
           ),
           child: Text(

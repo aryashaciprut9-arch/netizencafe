@@ -1,8 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart'; // ✅ FIX: Import yang sebelumnya hilang
 import 'services/api_services.dart';
 import 'models/menu_models.dart';
 import 'detailkeranjang.dart';
+
+// ─── Constants (Selaras Global) ───────────────────────────────────────────────
+class AppColors {
+  static const Color primary        = Color(0xFFB86B2B);
+  static const Color accent         = Color(0xFF8D5524);
+  static const Color textDark       = Color(0xFF6D4C41);
+  static const Color cardColor      = Color(0xFFFFFBF5);
+  static const Color primaryLight   = Color(0xFFF5CC9E);
+  static const Color primaryLighter = Color(0xFFFFF8F2);
+  static const Color white          = Colors.white;
+  static const Color danger         = Color(0xFFC62828);
+
+  static const List<Color> bgGradient = [
+    Color(0xFFFFF8F2),
+    Color(0xFFFDE8D7),
+    Color(0xFFE8CBB0),
+    Color(0xFFD4A57A),
+  ];
+}
 
 class PuSearch extends StatefulWidget {
   final List<KeranjangItem> keranjang;
@@ -30,11 +50,6 @@ class _PuSearchState extends State<PuSearch> {
     'Risol Mayo',
     'Ricebowl Chicken Blackpaper',
   ];
-
-  static const Color _primary = Color(0xFF8A4607);
-  static const Color _primaryLight = Color(0xFFF5CC9E);
-  static const Color _primaryLighter = Color(0xFFFFF4E6);
-  static const Color _danger = Color(0xFFB50000);
 
   int get _keranjangCount => widget.keranjang.fold(0, (sum, item) => sum + item.qty);
 
@@ -127,13 +142,27 @@ class _PuSearchState extends State<PuSearch> {
     setState(() {});
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(
-        content: Text('${item.nama} ditambahkan ke keranjang'),
-        backgroundColor: _primary,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        duration: const Duration(seconds: 1),
-      ));
+      ..showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle, color: Colors.white, size: 18),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  '${item.nama} ditambahkan ke keranjang',
+                  style: GoogleFonts.openSans(color: Colors.white, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: AppColors.primary,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          margin: const EdgeInsets.all(16),
+          duration: const Duration(seconds: 1),
+        ),
+      );
   }
 
   void _bukaKeranjang() {
@@ -149,79 +178,92 @@ class _PuSearchState extends State<PuSearch> {
     ).then((_) => setState(() {}));
   }
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  //  BUILD
+  // ═══════════════════════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildSearchBar(),
-            const Divider(height: 1, color: Color(0xFFEEEEEE)),
-            Expanded(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator(color: _primary))
-                  : _buildContent(),
-            ),
-          ],
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: AppColors.bgGradient,
+            stops: [0.0, 0.3, 0.7, 1.0],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildSearchBar(),
+              Expanded(
+                child: _isLoading
+                    ? Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.primary,
+                          strokeWidth: 3,
+                          backgroundColor: AppColors.primary.withOpacity(0.2),
+                        ),
+                      )
+                    : _buildContent(),
+              ),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: _buildBottomNavBar(),
     );
   }
 
+  // ─── Search Bar ─────────────────────────────────────────────────────────────
   Widget _buildSearchBar() {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final padding = screenWidth * 0.046;
-
     return Padding(
-      padding: EdgeInsets.fromLTRB(padding, 10, padding, 10),
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 12),
       child: Row(
         children: [
-          // Tombol back
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(10),
-              onTap: () => Navigator.pop(context),
-              child: Container(
-                width: 38, height: 38,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8F8F8),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.arrow_back_ios_new_rounded,
-                    size: 18, color: _primary),
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: [Colors.white, AppColors.cardColor]),
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 1.5),
+                boxShadow: [
+                  BoxShadow(color: AppColors.primary.withOpacity(0.15), blurRadius: 14, offset: const Offset(0, 6)),
+                ],
               ),
+              child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: AppColors.primary),
             ),
           ),
-          const SizedBox(width: 10),
-          // Search field
+          const SizedBox(width: 14),
           Expanded(
             child: Container(
-              height: 42,
-              decoration: ShapeDecoration(
-                color: const Color(0xFFF8F8F8),
-                shape: RoundedRectangleBorder(
-                  side: const BorderSide(width: 1.2, color: _primary),
-                  borderRadius: BorderRadius.circular(35),
-                ),
+              height: 54,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: [Colors.white, AppColors.cardColor]),
+                borderRadius: BorderRadius.circular(25),
+                border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 1.5),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 14, offset: const Offset(0, 5)),
+                ],
               ),
               child: Row(
                 children: [
-                  const SizedBox(width: 14),
-                  const Icon(Icons.search, color: _primary, size: 20),
+                  const SizedBox(width: 16),
+                  const Icon(Icons.search_rounded, color: AppColors.primary, size: 22),
                   const SizedBox(width: 8),
                   Expanded(
                     child: TextField(
                       controller: _searchController,
                       focusNode: _searchFocus,
-                      style: const TextStyle(color: _primary, fontSize: 14),
-                      decoration: const InputDecoration(
+                      style: GoogleFonts.openSans(color: AppColors.textDark, fontSize: 14, fontWeight: FontWeight.w500),
+                      decoration: InputDecoration(
                         hintText: 'Cari Makanan, Minuman...',
-                        hintStyle: TextStyle(color: Color(0x998A4607), fontSize: 14),
+                        hintStyle: GoogleFonts.openSans(color: AppColors.textDark.withOpacity(0.45), fontSize: 14),
                         border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(vertical: 10),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 17),
                         isDense: true,
                       ),
                       onChanged: (v) => setState(() => _searchQuery = v),
@@ -229,20 +271,16 @@ class _PuSearchState extends State<PuSearch> {
                     ),
                   ),
                   if (_searchQuery.isNotEmpty)
-                    Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(20),
-                        onTap: _clearSearch,
-                        child: Container(
-                          width: 36, height: 36,
-                          decoration: BoxDecoration(
-                            color: _danger.withOpacity(0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.close_rounded,
-                              size: 18, color: _danger),
+                    GestureDetector(
+                      onTap: _clearSearch,
+                      child: Container(
+                        margin: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: AppColors.danger.withOpacity(0.08),
+                          shape: BoxShape.circle,
                         ),
+                        child: const Icon(Icons.close_rounded, size: 18, color: AppColors.danger),
                       ),
                     ),
                 ],
@@ -254,11 +292,13 @@ class _PuSearchState extends State<PuSearch> {
     );
   }
 
+  // ─── Content Switcher ──────────────────────────────────────────────────────
   Widget _buildContent() {
     if (_searchQuery.isNotEmpty) {
       return _buildHasilPencarian();
     }
     return ListView(
+      physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 20),
       children: [
         if (_recentSearches.isNotEmpty) ...[
@@ -268,11 +308,12 @@ class _PuSearchState extends State<PuSearch> {
         ] else
           const SizedBox(height: 16),
         _buildTrendingSection(),
-        const SizedBox(height: 80),
+        const SizedBox(height: 90),
       ],
     );
   }
 
+  // ─── Recent Searches ────────────────────────────────────────────────────────
   Widget _buildRecentSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -280,45 +321,48 @@ class _PuSearchState extends State<PuSearch> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Pencarian terakhir',
-                style: TextStyle(color: _primary, fontSize: 20, fontWeight: FontWeight.w700)),
+            Text('Pencarian terakhir', style: GoogleFonts.poppins(color: AppColors.accent, fontSize: 18, fontWeight: FontWeight.w700)),
             GestureDetector(
               onTap: () => setState(() => _recentSearches.clear()),
-              child: const Text('Hapus semua',
-                  style: TextStyle(color: _danger, fontSize: 13, fontWeight: FontWeight.w500)),
+              child: Text('Hapus semua', style: GoogleFonts.openSans(color: AppColors.danger, fontSize: 13, fontWeight: FontWeight.w600)),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         ..._recentSearches.asMap().entries.map((e) => Dismissible(
           key: ValueKey('recent_${e.value}'),
           direction: DismissDirection.endToStart,
           onDismissed: (_) => _hapusRecent(e.key),
           background: Container(
-            margin: const EdgeInsets.symmetric(vertical: 4),
+            margin: const EdgeInsets.symmetric(vertical: 6),
             alignment: Alignment.centerRight,
             padding: const EdgeInsets.only(right: 20),
-            decoration: BoxDecoration(color: _danger, borderRadius: BorderRadius.circular(10)),
+            decoration: BoxDecoration(color: AppColors.danger, borderRadius: BorderRadius.circular(14)),
             child: const Icon(Icons.delete_sweep_rounded, color: Colors.white, size: 24),
           ),
-          child: InkWell(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque, // ✅ FIX: Mencegah konflik gesture
             onTap: () => _tapRecent(e.value),
-            borderRadius: BorderRadius.circular(10),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: [Colors.white, AppColors.cardColor]),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.primary.withOpacity(0.12), width: 1),
+              ),
               child: Row(
                 children: [
-                  const Icon(Icons.history_rounded, size: 18, color: _danger),
-                  const SizedBox(width: 12),
+                  Icon(Icons.history_rounded, size: 20, color: AppColors.primary.withOpacity(0.6)),
+                  const SizedBox(width: 14),
                   Expanded(
                     child: Text(e.value,
-                        style: const TextStyle(color: _primary, fontSize: 15),
+                        style: GoogleFonts.openSans(color: AppColors.textDark, fontSize: 14, fontWeight: FontWeight.w500),
                         overflow: TextOverflow.ellipsis),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.close_rounded, size: 18, color: Color(0xFF767070)),
-                    onPressed: () => _hapusRecent(e.key),
-                    visualDensity: VisualDensity.compact,
+                  GestureDetector(
+                    onTap: () => _hapusRecent(e.key),
+                    child: Icon(Icons.close_rounded, size: 18, color: AppColors.textDark.withOpacity(0.3)),
                   ),
                 ],
               ),
@@ -329,22 +373,22 @@ class _PuSearchState extends State<PuSearch> {
     );
   }
 
+  // ─── Trending Section ───────────────────────────────────────────────────────
   Widget _buildTrendingSection() {
     final menus = _trendingMenus;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Sedang Trending 🔥',
-            style: TextStyle(color: _primary, fontSize: 20, fontWeight: FontWeight.w700)),
-        const SizedBox(height: 14),
+        Text('Sedang Trending 🔥', style: GoogleFonts.poppins(color: AppColors.accent, fontSize: 18, fontWeight: FontWeight.w700)),
+        const SizedBox(height: 16),
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 0.9,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 0.75, 
           ),
           itemCount: menus.length,
           itemBuilder: (_, i) => _buildMenuCard(menus[i], i),
@@ -353,6 +397,7 @@ class _PuSearchState extends State<PuSearch> {
     );
   }
 
+  // ─── Search Results ────────────────────────────────────────────────────────
   Widget _buildHasilPencarian() {
     final results = _filteredMenus;
     if (results.isEmpty) {
@@ -360,28 +405,38 @@ class _PuSearchState extends State<PuSearch> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.search_off_rounded, size: 70, color: Colors.grey.shade300),
-            const SizedBox(height: 16),
-            Text('Tidak ditemukan', style: TextStyle(color: Colors.grey.shade500, fontSize: 16)),
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: [Colors.white, AppColors.cardColor]),
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.primary.withOpacity(0.15), width: 1.5),
+                boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 8))],
+              ),
+              child: Icon(Icons.search_off_rounded, size: 52, color: AppColors.primary.withOpacity(0.35)),
+            ),
+            const SizedBox(height: 24),
+            Text('Tidak ditemukan', style: GoogleFonts.poppins(color: AppColors.textDark.withOpacity(0.5), fontSize: 18, fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
-            Text('Coba kata kunci lain', style: TextStyle(color: Colors.grey.shade400, fontSize: 13)),
+            Text('Coba kata kunci lain', style: GoogleFonts.openSans(color: AppColors.textDark.withOpacity(0.35), fontSize: 14)),
           ],
         ),
       );
     }
     return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 80),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 90),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 0.9,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 0.75,
       ),
       itemCount: results.length,
       itemBuilder: (_, i) => _buildMenuCard(results[i], i),
     );
   }
 
+  // ─── Menu Card (Selarus dengan _MenuCard/_DrinkCard di beranda) ────────────
   Widget _buildMenuCard(MenuModel item, int index) {
     final imageUrl = _buildImageUrl(item.foto);
     return TweenAnimationBuilder<double>(
@@ -390,146 +445,166 @@ class _PuSearchState extends State<PuSearch> {
       curve: Curves.easeOutBack,
       builder: (context, scale, child) => Transform.scale(scale: scale, child: child),
       child: Container(
-        decoration: ShapeDecoration(
-          color: _primary,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-          shadows: const [BoxShadow(color: Color(0x3F000000), blurRadius: 6, offset: Offset(0, 4))],
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: [
+            BoxShadow(color: AppColors.primary.withOpacity(0.18), blurRadius: 16, offset: const Offset(0, 6)),
+          ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              flex: 6,
-              child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
-                child: imageUrl.isNotEmpty
-                    ? Image.network(imageUrl, fit: BoxFit.cover, width: double.infinity,
-                        errorBuilder: (_, __, ___) => Container(
-                          color: const Color(0xFF6B3605),
-                          child: const Center(child: Icon(Icons.broken_image_rounded,
-                              color: Colors.white38, size: 36)),
-                        ),
-                        loadingBuilder: (_, child, progress) {
-                          if (progress == null) return child;
-                          return Container(
-                            color: const Color(0xFF6B3605),
-                            child: Center(child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: _primaryLight,
-                              value: progress.expectedTotalBytes != null
-                                  ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes!
-                                  : null,
-                            )),
-                          );
-                        })
-                    : Container(
-                        color: const Color(0xFF6B3605),
-                        child: const Center(child: Icon(Icons.fastfood,
-                            color: Colors.white38, size: 36))),
-              ),
-            ),
-            Expanded(
-              flex: 4,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(10, 8, 4, 6),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(item.nama,
-                        style: const TextStyle(color: Colors.white, fontSize: 11,
-                            fontWeight: FontWeight.w600, height: 1.3),
-                        maxLines: 2, overflow: TextOverflow.ellipsis),
-                    const SizedBox(height: 2),
-                    Text('IDR ${item.harga}',
-                        style: const TextStyle(color: Colors.white,
-                            fontSize: 11, fontWeight: FontWeight.w600)),
-                    const Spacer(),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: _primaryLight.withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            item.tersedia ? 'Tersedia' : 'Habis',
-                            style: const TextStyle(color: _primaryLight, fontSize: 8),
-                          ),
-                        ),
-                        Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(14),
-                            onTap: () => _addToCart(item),
-                            child: Container(
-                              width: 28, height: 28,
-                              decoration: const ShapeDecoration(
-                                  color: Colors.white, shape: OvalBorder()),
-                              child: const Center(
-                                child: Text('+',
-                                    style: TextStyle(color: _primary, fontSize: 22,
-                                        fontWeight: FontWeight.w800, height: 1)),
-                              ),
-                            ),
-                          ),
-                        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(22),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              imageUrl.isNotEmpty
+                  ? Image.network(imageUrl, fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        color: AppColors.cardColor,
+                        child: Center(child: Icon(Icons.broken_image_outlined, color: AppColors.primary.withOpacity(0.3), size: 40)),
+                      ))
+                  : Container(
+                      color: AppColors.cardColor,
+                      child: const Center(child: Icon(Icons.fastfood_rounded, color: AppColors.primary, size: 40))),
+              
+              Positioned(
+                bottom: 0, left: 0, right: 0,
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(10, 44, 10, 12),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        const Color(0xFFB86B2B).withOpacity(0.55),
+                        const Color(0xFF8D5524).withOpacity(0.92),
                       ],
                     ),
-                  ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        item.nama,
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          shadows: const [Shadow(color: Colors.black26, blurRadius: 4)],
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'IDR ${item.harga}',
+                        style: GoogleFonts.openSans(color: Colors.white.withOpacity(0.8), fontSize: 11, fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 7, height: 7,
+                                decoration: BoxDecoration(
+                                  color: item.tersedia ? Colors.greenAccent : Colors.redAccent,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                item.tersedia ? 'Tersedia' : 'Habis',
+                                style: GoogleFonts.openSans(color: Colors.white.withOpacity(0.8), fontSize: 10, fontWeight: FontWeight.w500),
+                              ),
+                            ],
+                          ),
+                          GestureDetector(
+                            onTap: () => _addToCart(item),
+                            child: Container(
+                              width: 30, height: 30,
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(colors: [Colors.white, AppColors.cardColor]),
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 8, offset: const Offset(0, 3)),
+                                ],
+                              ),
+                              child: const Icon(Icons.add_rounded, color: AppColors.primary, size: 20),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
+  // ─── Bottom Navigation Bar (Selarus Kasir/Beranda) ────────────────────────
   Widget _buildBottomNavBar() {
     return Container(
-      margin: const EdgeInsets.fromLTRB(12, 4, 12, 12),
-      decoration: ShapeDecoration(
-        color: _primaryLight,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(35)),
-        shadows: const [BoxShadow(color: Color(0x3F000000), blurRadius: 6, offset: Offset(0, 4))],
+      height: 72,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Colors.white, AppColors.cardColor],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+        border: Border(top: BorderSide(color: AppColors.primary.withOpacity(0.15), width: 1)),
+        boxShadow: [
+          BoxShadow(color: AppColors.primary.withOpacity(0.12), blurRadius: 20, offset: const Offset(0, -6)),
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _navItem(Icons.home_outlined, Icons.home_rounded, 'Home', 0),
-          _navItem(Icons.search_outlined, Icons.search_rounded, 'Cari', 1, isActive: true),
+          _navItem(Icons.home_rounded, 'Home', 0),
+          _navItem(Icons.search_rounded, 'Cari', 1, isActive: true),
           _navItemBadge(),
-          _navItem(Icons.person_outline_rounded, Icons.person_rounded, 'Profil', 3),
+          _navItem(Icons.person_rounded, 'Profil', 3),
         ],
       ),
     );
   }
 
-  Widget _navItem(IconData inactive, IconData active, String label, int index,
-      {bool isActive = false}) {
+  Widget _navItem(IconData icon, String label, int index, {bool isActive = false}) {
     return GestureDetector(
       onTap: () {
-        if (index == 0) Navigator.pop(context);
-        if (index == 3) Navigator.pop(context);
+        HapticFeedback.selectionClick();
+        if (index == 0 || index == 3) Navigator.pop(context);
       },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: isActive ? _primary.withOpacity(0.15) : Colors.transparent,
-          shape: BoxShape.circle,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+      behavior: HitTestBehavior.opaque,
+      child: SizedBox(
+        width: 58, height: 58,
+        child: Stack(
+          alignment: Alignment.center,
+          clipBehavior: Clip.none,
           children: [
-            Icon(isActive ? active : inactive, color: _primary, size: 22),
-            const SizedBox(height: 2),
-            Text(label,
-                style: TextStyle(
-                    color: _primary,
-                    fontSize: 10,
-                    fontWeight: isActive ? FontWeight.w700 : FontWeight.w400)),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              width: isActive ? 50 : 38,
+              height: isActive ? 50 : 38,
+              decoration: BoxDecoration(
+                gradient: isActive
+                    ? const LinearGradient(colors: [AppColors.primary, AppColors.accent], begin: Alignment.topLeft, end: Alignment.bottomRight)
+                    : null,
+                color: isActive ? null : Colors.transparent,
+                shape: BoxShape.circle,
+                boxShadow: isActive
+                    ? [BoxShadow(color: AppColors.primary.withOpacity(0.4), blurRadius: 16, offset: const Offset(0, 6))]
+                    : [],
+              ),
+              child: Icon(icon, size: 24, color: isActive ? Colors.white : AppColors.primary.withOpacity(0.35)),
+            ),
           ],
         ),
       ),
@@ -539,36 +614,25 @@ class _PuSearchState extends State<PuSearch> {
   Widget _navItemBadge() {
     return GestureDetector(
       onTap: _bukaKeranjang,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.shopping_cart_outlined, color: _primary, size: 22),
-                const SizedBox(height: 2),
-                Text('Keranjang',
-                    style: TextStyle(
-                        color: _primary,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w400)),
-              ],
-            ),
-          ),
-          if (_keranjangCount > 0)
-            Positioned(
-              top: 0, right: 4,
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-                child: Text('$_keranjangCount',
-                    style: const TextStyle(color: Colors.white, fontSize: 9,
-                        fontWeight: FontWeight.bold)),
+      behavior: HitTestBehavior.opaque,
+      child: SizedBox(
+        width: 58, height: 58,
+        child: Stack(
+          alignment: Alignment.center,
+          clipBehavior: Clip.none,
+          children: [
+            Icon(Icons.shopping_bag_rounded, size: 24, color: AppColors.primary.withOpacity(0.35)),
+            if (_keranjangCount > 0)
+              Positioned(
+                top: 4, right: 4,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                  child: Text('$_keranjangCount', style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+                ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
