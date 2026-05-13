@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:netizencafe/search.dart';
 import 'services/api_services.dart';
 import 'models/menu_models.dart';
@@ -8,16 +9,29 @@ import 'kategoriminuman.dart';
 import 'snack.dart' as snack;
 import 'profil_pelanggan.dart';
 import 'detailkeranjang.dart';
-// ─── Constants ───────────────────────────────────────────────────────────────
+
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 class AppColors {
-  static const Color primary        = Color(0xFF8A4607);
+  // Selaraskan dengan login.dart
+  static const Color primary        = Color(0xFFB86B2B);
+  static const Color accent         = Color(0xFF8D5524);
+  static const Color textDark       = Color(0xFF6D4C41);
+  static const Color cardColor      = Color(0xFFFFFBF5);
   static const Color primaryLight   = Color(0xFFF5CC9E);
-  static const Color primaryLighter = Color(0xFFFFF4E6);
+  static const Color primaryLighter = Color(0xFFFFF8F2);
   static const Color white          = Colors.white;
+
+  // Gradient latar belakang (sama persis dengan login.dart)
+  static const List<Color> bgGradient = [
+    Color(0xFFFFF8F2),
+    Color(0xFFFDE8D7),
+    Color(0xFFE8CBB0),
+    Color(0xFFD4A57A),
+  ];
 }
 
-// ─── Beranda Utama ───────────────────────────────────────────────────────────
+// ─── Beranda Utama ────────────────────────────────────────────────────────────
 
 class PuBeranda extends StatefulWidget {
   const PuBeranda({super.key});
@@ -26,7 +40,7 @@ class PuBeranda extends StatefulWidget {
   State<PuBeranda> createState() => _PuBerandaState();
 }
 
-class _PuBerandaState extends State<PuBeranda> {
+class _PuBerandaState extends State<PuBeranda> with TickerProviderStateMixin {
   // =====================
   //  STATE & DATA
   // =====================
@@ -36,6 +50,10 @@ class _PuBerandaState extends State<PuBeranda> {
   String _searchQuery        = '';
   String _selectedCategory   = 'Semua';
   final TextEditingController _searchController = TextEditingController();
+
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
 
   // ===== KERANJANG =====
   final List<KeranjangItem> _keranjang = [];
@@ -56,12 +74,25 @@ class _PuBerandaState extends State<PuBeranda> {
   @override
   void initState() {
     super.initState();
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 900),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
+    );
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.25),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _fadeController, curve: Curves.easeOutBack));
+
     _loadData();
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _fadeController.dispose();
     super.dispose();
   }
 
@@ -73,6 +104,7 @@ class _PuBerandaState extends State<PuBeranda> {
         _allMenus  = data;
         _isLoading = false;
       });
+      _fadeController.forward(from: 0);
     } catch (e) {
       debugPrint("ERROR BERANDA: $e");
       setState(() => _isLoading = false);
@@ -116,10 +148,22 @@ class _PuBerandaState extends State<PuBeranda> {
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text('${item.nama} ditambahkan ke keranjang'),
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle, color: Colors.white, size: 18),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  '${item.nama} ditambahkan ke keranjang',
+                  style: GoogleFonts.openSans(color: Colors.white, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
           backgroundColor: AppColors.primary,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          margin: const EdgeInsets.all(16),
           duration: const Duration(seconds: 1),
         ),
       );
@@ -176,24 +220,15 @@ class _PuBerandaState extends State<PuBeranda> {
     HapticFeedback.lightImpact();
     if (kategori == 'Makanan') {
       Navigator.push(context, MaterialPageRoute(
-        builder: (_) => makanan.MenuPage(
-          keranjang: _keranjang,
-          onAddToCart: _addToCart,
-        ),
+        builder: (_) => makanan.MenuPage(keranjang: _keranjang, onAddToCart: _addToCart),
       ));
     } else if (kategori == 'Minuman') {
       Navigator.push(context, MaterialPageRoute(
-        builder: (_) => PaMenuJenisMinuman(
-          keranjang: _keranjang,
-          onAddToCart: _addToCart,
-        ),
+        builder: (_) => PaMenuJenisMinuman(keranjang: _keranjang, onAddToCart: _addToCart),
       ));
     } else if (kategori == 'Snack') {
       Navigator.push(context, MaterialPageRoute(
-        builder: (_) => snack.MenuPage(
-          keranjang: _keranjang,
-          onAddToCart: _addToCart,
-        ),
+        builder: (_) => snack.MenuPage(keranjang: _keranjang, onAddToCart: _addToCart),
       ));
     }
   }
@@ -208,76 +243,116 @@ class _PuBerandaState extends State<PuBeranda> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.white,
-      body: SafeArea(
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-            : LayoutBuilder(
-                builder: (context, constraints) {
-                  return CustomScrollView(
-                    slivers: [
-                      SliverToBoxAdapter(child: _buildHeader(context)),
-                      const SliverToBoxAdapter(child: SizedBox(height: 10)),
-                      SliverToBoxAdapter(child: _buildSearchBar(context)),
-                      const SliverToBoxAdapter(child: SizedBox(height: 15)),
-                      SliverToBoxAdapter(child: _buildPromoBanner(context)),
-                      const SliverToBoxAdapter(child: SizedBox(height: 20)),
-                      SliverToBoxAdapter(child: _buildCategories(context)),
-                      const SliverToBoxAdapter(child: SizedBox(height: 20)),
-                      SliverToBoxAdapter(child: _buildSectionTitle(context)),
-                      const SliverToBoxAdapter(child: SizedBox(height: 10)),
-                      _buildProductGrid(context, constraints.maxWidth),
-                      const SliverToBoxAdapter(child: SizedBox(height: 80)),
-                    ],
-                  );
-                },
-              ),
+      // Gradient background sama dengan login.dart
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: AppColors.bgGradient,
+            stops: [0.0, 0.3, 0.7, 1.0],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: _isLoading
+              ? Center(
+                  child: CircularProgressIndicator(
+                    color: AppColors.primary,
+                    strokeWidth: 3,
+                    backgroundColor: AppColors.primary.withOpacity(0.2),
+                  ),
+                )
+              : FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: SlideTransition(
+                    position: _slideAnimation,
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        return CustomScrollView(
+                          physics: const BouncingScrollPhysics(),
+                          slivers: [
+                            SliverToBoxAdapter(child: _buildHeader(context)),
+                            const SliverToBoxAdapter(child: SizedBox(height: 14)),
+                            SliverToBoxAdapter(child: _buildSearchBar(context)),
+                            const SliverToBoxAdapter(child: SizedBox(height: 18)),
+                            SliverToBoxAdapter(child: _buildPromoBanner(context)),
+                            const SliverToBoxAdapter(child: SizedBox(height: 22)),
+                            SliverToBoxAdapter(child: _buildCategories(context)),
+                            const SliverToBoxAdapter(child: SizedBox(height: 22)),
+                            SliverToBoxAdapter(child: _buildSectionTitle(context)),
+                            const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                            _buildProductGrid(context, constraints.maxWidth),
+                            const SliverToBoxAdapter(child: SizedBox(height: 90)),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                ),
+        ),
       ),
       bottomNavigationBar: _buildBottomNavBar(),
     );
   }
 
+  // ─── Header ──────────────────────────────────────────────────────────────────
+
   Widget _buildHeader(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Hai, Selamat Datang!',
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
+                  style: GoogleFonts.poppins(
+                    color: AppColors.accent,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
                     letterSpacing: -0.5,
+                    shadows: [
+                      Shadow(
+                        color: Colors.black.withOpacity(0.08),
+                        offset: const Offset(0, 2),
+                        blurRadius: 4,
+                      ),
+                    ],
                   ),
                 ),
-                SizedBox(height: 2),
+                const SizedBox(height: 2),
                 Text(
                   'Mau pesan apa hari ini?',
-                  style: TextStyle(
-                    color: Color(0xFFB36A2B),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
+                  style: GoogleFonts.openSans(
+                    color: AppColors.textDark.withOpacity(0.75),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
             ),
           ),
+          // Tombol refresh — style mirip card login.dart
           GestureDetector(
             onTap: _loadData,
             child: Container(
-              padding: const EdgeInsets.all(9),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppColors.primaryLighter,
+                color: AppColors.cardColor,
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+                border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.2),
+                    blurRadius: 14,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
               ),
-              child: const Icon(Icons.refresh, color: AppColors.primary, size: 16),
+              child: const Icon(Icons.refresh_rounded, color: AppColors.primary, size: 18),
             ),
           ),
         ],
@@ -285,27 +360,45 @@ class _PuBerandaState extends State<PuBeranda> {
     );
   }
 
+  // ─── Search Bar ───────────────────────────────────────────────────────────────
+
   Widget _buildSearchBar(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
-        height: 50,
+        height: 54,
         decoration: BoxDecoration(
-          color: AppColors.primaryLighter,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.primary.withOpacity(0.15)),
+          gradient: const LinearGradient(
+            colors: [Colors.white, AppColors.cardColor],
+          ),
+          borderRadius: BorderRadius.circular(25),
+          border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 14,
+              offset: const Offset(0, 5),
+            ),
+          ],
         ),
         child: TextField(
           controller: _searchController,
           onChanged: (value) => setState(() => _searchQuery = value),
-          style: const TextStyle(color: AppColors.primary, fontSize: 14),
+          style: GoogleFonts.openSans(
+            color: AppColors.textDark,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
           decoration: InputDecoration(
             hintText: 'Cari makanan, minuman...',
-            hintStyle: TextStyle(color: AppColors.primary.withOpacity(0.4), fontSize: 14),
-            prefixIcon: const Icon(Icons.search, color: AppColors.primary, size: 22),
+            hintStyle: GoogleFonts.openSans(
+              color: AppColors.textDark.withOpacity(0.45),
+              fontSize: 14,
+            ),
+            prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primary, size: 22),
             suffixIcon: _searchQuery.isNotEmpty
                 ? IconButton(
-                    icon: const Icon(Icons.close, color: AppColors.primary, size: 18),
+                    icon: const Icon(Icons.close_rounded, color: AppColors.primary, size: 18),
                     onPressed: () {
                       _searchController.clear();
                       setState(() => _searchQuery = '');
@@ -313,74 +406,99 @@ class _PuBerandaState extends State<PuBeranda> {
                   )
                 : null,
             border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(vertical: 15),
+            contentPadding: const EdgeInsets.symmetric(vertical: 17),
           ),
         ),
       ),
     );
   }
 
+  // ─── Promo Banner ─────────────────────────────────────────────────────────────
+
   Widget _buildPromoBanner(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
-        height: 140,
+        height: 145,
         width: double.infinity,
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [Color(0xFF8A4607), Color(0xFFB35A0A)],
+            colors: [Color(0xFFB86B2B), Color(0xFF8D5524)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(26),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withOpacity(0.35),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
+              color: AppColors.primary.withOpacity(0.4),
+              blurRadius: 25,
+              offset: const Offset(0, 12),
             ),
           ],
         ),
         child: Stack(
           children: [
+            // Lingkaran dekoratif — sama dengan login header circle
             Positioned(
-              right: -20, top: -20,
+              right: -25, top: -25,
               child: Container(
-                width: 140, height: 140,
+                width: 150, height: 150,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.06),
+                  color: Colors.white.withOpacity(0.07),
+                ),
+              ),
+            ),
+            Positioned(
+              right: 40, bottom: -40,
+              child: Container(
+                width: 100, height: 100,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withOpacity(0.05),
                 ),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(22),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
+                  Text(
                     'Ready!!',
-                    style: TextStyle(
-                      color: Color(0xFFF5CC9E),
+                    style: GoogleFonts.poppins(
+                      color: AppColors.primaryLight,
                       fontSize: 28,
                       fontWeight: FontWeight.w800,
+                      height: 1.1,
                     ),
                   ),
-                  const Text(
+                  Text(
                     'Pesan Sekarang Nikmati Nongkimu',
-                    style: TextStyle(color: Colors.white70, fontSize: 14),
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
+                    style: GoogleFonts.openSans(
+                      color: Colors.white.withOpacity(0.8),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
                     ),
-                    child: const Text(
+                  ),
+                  const SizedBox(height: 14),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.cardColor,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Text(
                       'Solusi Nongkimu',
-                      style: TextStyle(
+                      style: GoogleFonts.poppins(
                         color: AppColors.primary,
                         fontWeight: FontWeight.w700,
                         fontSize: 12,
@@ -396,12 +514,14 @@ class _PuBerandaState extends State<PuBeranda> {
     );
   }
 
+  // ─── Kategori ─────────────────────────────────────────────────────────────────
+
   Widget _buildCategories(BuildContext context) {
     final categories = [
-      {'label': 'Semua',   'icon': Icons.apps},
-      {'label': 'Makanan', 'icon': Icons.fastfood},
-      {'label': 'Minuman', 'icon': Icons.local_cafe},
-      {'label': 'Snack',   'icon': Icons.cookie},
+      {'label': 'Semua',   'icon': Icons.apps_rounded},
+      {'label': 'Makanan', 'icon': Icons.fastfood_rounded},
+      {'label': 'Minuman', 'icon': Icons.local_cafe_rounded},
+      {'label': 'Snack',   'icon': Icons.cookie_outlined},
     ];
 
     return Padding(
@@ -422,23 +542,54 @@ class _PuBerandaState extends State<PuBeranda> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: 60, height: 60,
+                  duration: const Duration(milliseconds: 220),
+                  width: 62, height: 62,
                   decoration: BoxDecoration(
-                    color: isSelected ? AppColors.primary : AppColors.primaryLighter,
+                    gradient: isSelected
+                        ? const LinearGradient(
+                            colors: [AppColors.primary, AppColors.accent],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          )
+                        : LinearGradient(
+                            colors: [Colors.white, AppColors.cardColor],
+                          ),
                     shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected
+                          ? Colors.transparent
+                          : AppColors.primary.withOpacity(0.2),
+                      width: 1.5,
+                    ),
                     boxShadow: isSelected
-                        ? [BoxShadow(color: AppColors.primary.withOpacity(0.35), blurRadius: 10, offset: const Offset(0, 4))]
-                        : [],
+                        ? [
+                            BoxShadow(
+                              color: AppColors.primary.withOpacity(0.4),
+                              blurRadius: 16,
+                              offset: const Offset(0, 6),
+                            ),
+                          ]
+                        : [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.06),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                   ),
-                  child: Icon(icon,
-                      color: isSelected ? Colors.white : AppColors.primary, size: 26),
+                  child: Icon(
+                    icon,
+                    color: isSelected ? Colors.white : AppColors.primary,
+                    size: 26,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   label,
-                  style: TextStyle(
-                    color: isSelected ? AppColors.primary : AppColors.primary.withOpacity(0.5),
+                  style: GoogleFonts.poppins(
+                    color: isSelected
+                        ? AppColors.accent
+                        : AppColors.textDark.withOpacity(0.5),
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
                     fontSize: 12,
                   ),
@@ -450,6 +601,8 @@ class _PuBerandaState extends State<PuBeranda> {
       ),
     );
   }
+
+  // ─── Section Title ────────────────────────────────────────────────────────────
 
   Widget _buildSectionTitle(BuildContext context) {
     final title = _searchQuery.isNotEmpty
@@ -463,19 +616,37 @@ class _PuBerandaState extends State<PuBeranda> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(title,
-              style: const TextStyle(
-                  color: AppColors.primary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.3)),
-          Text('${_filteredProducts.length} menu',
-              style: TextStyle(
-                  color: AppColors.primary.withOpacity(0.45), fontSize: 13)),
+          Text(
+            title,
+            style: GoogleFonts.poppins(
+              color: AppColors.accent,
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.3,
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppColors.cardColor,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+            ),
+            child: Text(
+              '${_filteredProducts.length} menu',
+              style: GoogleFonts.openSans(
+                color: AppColors.textDark.withOpacity(0.6),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
+
+  // ─── Product Grid ─────────────────────────────────────────────────────────────
 
   Widget _buildProductGrid(BuildContext context, double screenWidth) {
     final products     = _filteredProducts;
@@ -489,11 +660,16 @@ class _PuBerandaState extends State<PuBeranda> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.search_off, size: 52, color: AppColors.primary.withOpacity(0.2)),
+                Icon(Icons.search_off_rounded,
+                    size: 52, color: AppColors.primary.withOpacity(0.2)),
                 const SizedBox(height: 10),
-                Text('Menu tidak ditemukan',
-                    style: TextStyle(
-                        color: AppColors.primary.withOpacity(0.4), fontSize: 15)),
+                Text(
+                  'Menu tidak ditemukan',
+                  style: GoogleFonts.poppins(
+                    color: AppColors.textDark.withOpacity(0.4),
+                    fontSize: 14,
+                  ),
+                ),
               ],
             ),
           ),
@@ -522,52 +698,37 @@ class _PuBerandaState extends State<PuBeranda> {
     );
   }
 
-  // =====================
-  //  NAVBAR BAWAH
-  // =====================
+  // ─── Bottom Nav Bar ───────────────────────────────────────────────────────────
+
   Widget _buildBottomNavBar() {
     return Container(
-      height: 70,
-      decoration: const BoxDecoration(
-        color: AppColors.primaryLight,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      height: 72,
+      decoration: BoxDecoration(
+        // Gradient selaras login.dart card style
+        gradient: const LinearGradient(
+          colors: [Colors.white, AppColors.cardColor],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+        border: Border(
+          top: BorderSide(color: AppColors.primary.withOpacity(0.15), width: 1),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.12),
+            blurRadius: 20,
+            offset: const Offset(0, -6),
+          ),
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _NavItem(
-            icon: Icons.home_outlined,
-            activeIcon: Icons.home_rounded,
-            label: 'Home',
-            index: 0,
-            currentIndex: _currentIndex,
-            onTap: _onNavTap,
-          ),
-          _NavItem(
-            icon: Icons.search_outlined,
-            activeIcon: Icons.search_rounded,
-            label: 'Cari',
-            index: 1,
-            currentIndex: _currentIndex,
-            onTap: _onNavTap,
-          ),
-          _NavItem(
-            icon: Icons.shopping_cart_outlined,
-            activeIcon: Icons.shopping_cart_rounded,
-            label: 'Keranjang',
-            index: 2,
-            currentIndex: _currentIndex,
-            onTap: _onNavTap,
-            badgeCount: _keranjangCount,
-          ),
-          _NavItem(
-            icon: Icons.person_outline_rounded,
-            activeIcon: Icons.person_rounded,
-            label: 'Profil',
-            index: 3,
-            currentIndex: _currentIndex,
-            onTap: _onNavTap,
-          ),
+          _NavItem(icon: Icons.home_rounded,         index: 0, currentIndex: _currentIndex, onTap: _onNavTap),
+          _NavItem(icon: Icons.search_rounded,       index: 1, currentIndex: _currentIndex, onTap: _onNavTap),
+          _NavItem(icon: Icons.shopping_bag_rounded, index: 2, currentIndex: _currentIndex, onTap: _onNavTap, badgeCount: _keranjangCount),
+          _NavItem(icon: Icons.person_rounded,       index: 3, currentIndex: _currentIndex, onTap: _onNavTap),
         ],
       ),
     );
@@ -591,50 +752,54 @@ class _MenuCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.15),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: AppColors.primary.withOpacity(0.18),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(22),
         child: Stack(
           fit: StackFit.expand,
           children: [
+            // Gambar produk
             imageUrl.isNotEmpty
                 ? Image.network(
                     imageUrl,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) => Container(
-                      color: AppColors.primaryLighter,
+                      color: AppColors.cardColor,
                       child: Center(
-                        child: Icon(Icons.broken_image,
+                        child: Icon(Icons.broken_image_outlined,
                             color: AppColors.primary.withOpacity(0.3), size: 40),
                       ),
                     ),
                   )
                 : Container(
-                    color: AppColors.primaryLighter,
+                    color: AppColors.cardColor,
                     child: const Center(
-                      child: Icon(Icons.fastfood, color: AppColors.primary, size: 40),
+                      child: Icon(Icons.fastfood_rounded,
+                          color: AppColors.primary, size: 40),
                     ),
                   ),
+
+            // Overlay info + tombol
             Positioned(
               bottom: 0, left: 0, right: 0,
               child: Container(
-                padding: const EdgeInsets.fromLTRB(10, 40, 10, 10),
+                padding: const EdgeInsets.fromLTRB(10, 44, 10, 12),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.transparent,
-                      const Color(0xFF8A4607).withOpacity(0.6),
-                      const Color(0xFF5C2D00).withOpacity(0.92),
+                      const Color(0xFFB86B2B).withOpacity(0.55),
+                      const Color(0xFF8D5524).withOpacity(0.92),
                     ],
                   ),
                 ),
@@ -642,27 +807,32 @@ class _MenuCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // Nama menu
                     Text(
                       item.nama,
-                      style: const TextStyle(
+                      style: GoogleFonts.poppins(
                         color: Colors.white,
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        shadows: [Shadow(color: Colors.black26, blurRadius: 4)],
+                        shadows: const [
+                          Shadow(color: Colors.black26, blurRadius: 4),
+                        ],
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
+                    // Harga
                     Text(
                       'IDR ${item.harga}',
-                      style: const TextStyle(
-                        color: Colors.white70,
+                      style: GoogleFonts.openSans(
+                        color: Colors.white.withOpacity(0.8),
                         fontSize: 11,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: 8),
+                    // Status & tombol tambah
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -671,27 +841,46 @@ class _MenuCard extends StatelessWidget {
                             Container(
                               width: 7, height: 7,
                               decoration: BoxDecoration(
-                                color: item.tersedia ? Colors.greenAccent : Colors.redAccent,
+                                color: item.tersedia
+                                    ? Colors.greenAccent
+                                    : Colors.redAccent,
                                 shape: BoxShape.circle,
                               ),
                             ),
                             const SizedBox(width: 5),
                             Text(
                               item.tersedia ? 'Tersedia' : 'Habis',
-                              style: const TextStyle(color: Colors.white70, fontSize: 10),
+                              style: GoogleFonts.openSans(
+                                color: Colors.white.withOpacity(0.8),
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ],
                         ),
+                        // Tombol + — mirip style card login
                         GestureDetector(
                           onTap: onAddToCart,
                           child: Container(
                             width: 30, height: 30,
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Colors.white, AppColors.cardColor],
+                              ),
                               shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.15),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
                             ),
-                            child: const Icon(Icons.add_rounded,
-                                color: AppColors.primary, size: 20),
+                            child: const Icon(
+                              Icons.add_rounded,
+                              color: AppColors.primary,
+                              size: 20,
+                            ),
                           ),
                         ),
                       ],
@@ -707,12 +896,10 @@ class _MenuCard extends StatelessWidget {
   }
 }
 
-// ─── Nav Item Widget ─────────────────────────────────────────────────────────
+// ─── Nav Item Widget ──────────────────────────────────────────────────────────
 
 class _NavItem extends StatelessWidget {
   final IconData icon;
-  final IconData activeIcon;
-  final String label;
   final int index;
   final int currentIndex;
   final int badgeCount;
@@ -720,8 +907,6 @@ class _NavItem extends StatelessWidget {
 
   const _NavItem({
     required this.icon,
-    required this.activeIcon,
-    required this.label,
     required this.index,
     required this.currentIndex,
     required this.onTap,
@@ -731,71 +916,66 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSelected = currentIndex == index;
-
     return GestureDetector(
       onTap: () => onTap(index),
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
-        width: 72,
-        height: 64,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        width: 58, height: 58,
+        child: Stack(
+          alignment: Alignment.center,
+          clipBehavior: Clip.none,
           children: [
-            Stack(
-              clipBehavior: Clip.none,
-              alignment: Alignment.center,
-              children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? AppColors.primary.withOpacity(0.18)
-                        : Colors.transparent,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    isSelected ? activeIcon : icon,
-                    size: 24,
-                    color: isSelected
-                        ? AppColors.primary
-                        : AppColors.primary.withOpacity(0.5),
-                  ),
-                ),
-                if (badgeCount > 0)
-                  Positioned(
-                    top: 2,
-                    right: 2,
-                    child: Container(
-                      padding: const EdgeInsets.all(3),
-                      decoration: const BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Text(
-                        '$badgeCount',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              width: isSelected ? 50 : 38,
+              height: isSelected ? 50 : 38,
+              decoration: BoxDecoration(
+                gradient: isSelected
+                    ? const LinearGradient(
+                        colors: [AppColors.primary, AppColors.accent],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      )
+                    : null,
+                color: isSelected ? null : Colors.transparent,
+                shape: BoxShape.circle,
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: AppColors.primary.withOpacity(0.4),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
                         ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+                      ]
+                    : [],
+              ),
+              child: Icon(
+                icon,
+                size: 24,
                 color: isSelected
-                    ? AppColors.primary
-                    : AppColors.primary.withOpacity(0.5),
+                    ? Colors.white
+                    : AppColors.primary.withOpacity(0.35),
               ),
             ),
+            if (badgeCount > 0)
+              Positioned(
+                top: 4, right: 4,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    '$badgeCount',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),

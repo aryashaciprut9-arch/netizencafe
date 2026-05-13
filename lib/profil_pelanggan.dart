@@ -1,7 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'beranda.dart';
 import 'login.dart'; 
 import 'utils/session_manager.dart';
+
+// ─── Constants (Selaras Global) ───────────────────────────────────────────────
+class AppColors {
+  static const Color primary        = Color(0xFFB86B2B);
+  static const Color accent         = Color(0xFF8D5524);
+  static const Color textDark       = Color(0xFF6D4C41);
+  static const Color cardColor      = Color(0xFFFFFBF5);
+  static const Color primaryLight   = Color(0xFFF5CC9E);
+  static const Color primaryLighter = Color(0xFFFFF8F2);
+  static const Color white          = Colors.white;
+  static const Color danger         = Color(0xFFC62828);
+
+  static const List<Color> bgGradient = [
+    Color(0xFFFFF8F2),
+    Color(0xFFFDE8D7),
+    Color(0xFFE8CBB0),
+    Color(0xFFD4A57A),
+  ];
+}
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -11,151 +31,237 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  int _selectedNavIndex = 3;
+  String _userName = '';
+  String _userEmail = '';
+  String _userAddress = '';
+  String _userPhone = '';
+  bool _isLoading = true;
 
-  // User data
-  String _userName = 'Ambaput';
-  String _userEmail = 'Email@contoh.com';
-  String _userAddress = 'Belum ditambahkan';
-  String _userPhone = '+62 812-3456-7890';
-    return _userEmail.split('@')[0];
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
   }
 
-  void _showSnackBar(String message) {
+  Future<void> _loadUserData() async {
+    final email = await SessionManager.getEmail();
+    final username = await SessionManager.getUsername();
+    final phone = await SessionManager.getPhone();
+    final address = await SessionManager.getAddress();
+
+    if (mounted) {
+      setState(() {
+        _userEmail = email.isNotEmpty ? email : 'Email tidak tersedia';
+        _userName = username.isNotEmpty ? username : _extractNameFromEmail(email);
+        _userPhone = phone.isNotEmpty ? phone : 'Belum ditambahkan';
+        _userAddress = address.isNotEmpty ? address : 'Belum ditambahkan';
+        _isLoading = false;
+      });
+    }
+  }
+
+  String _extractNameFromEmail(String email) {
+    if (email.contains('@')) return email.split('@')[0];
+    return 'User';
+  }
+
+  void _showSnackBar(String message, {bool isSuccess = true}) {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
-        duration: const Duration(seconds: 2),
-        backgroundColor: const Color(0xFF8A4607),
+        content: Row(
+          children: [
+            Icon(isSuccess ? Icons.check_circle : Icons.error_outline, color: Colors.white, size: 20),
+            const SizedBox(width: 10),
+            Expanded(child: Text(message, style: GoogleFonts.openSans(color: Colors.white, fontWeight: FontWeight.w600))),
+          ],
+        ),
+        backgroundColor: isSuccess ? AppColors.primary : AppColors.danger,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 2),
       ),
     );
   }
 
   void _showEditDialog(String title, String currentValue, Function(String) onSave) {
-    TextEditingController controller = TextEditingController(text: currentValue);
+    final controller = TextEditingController(text: currentValue);
     
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
-          'Edit $title',
-          style: const TextStyle(
-            color: Color(0xFF8A4607),
-            fontWeight: FontWeight.w700,
-            fontSize: 18,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(colors: [Colors.white, AppColors.cardColor]),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: AppColors.primary.withOpacity(0.15), width: 1),
+            boxShadow: [
+              BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 10)),
+            ],
           ),
-        ),
-        content: TextField(
-          controller: controller,
-          decoration: InputDecoration(
-            hintText: 'Masukkan $title',
-            hintStyle: TextStyle(color: Colors.grey.shade400),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE0D5D0)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE0D5D0)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF8A4607), width: 2),
-            ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          ),
-          style: const TextStyle(color: Color(0xFF8A4607), fontSize: 14),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text(
-              'Batal',
-              style: TextStyle(
-                color: Color(0xFF8A4607),
-                fontWeight: FontWeight.w600,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Edit $title', style: GoogleFonts.poppins(color: AppColors.accent, fontSize: 20, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 20),
+              Container(
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(colors: [Colors.white, AppColors.cardColor]),
+                  borderRadius: BorderRadius.circular(25),
+                  border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 1.5),
+                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 14, offset: const Offset(0, 5))],
+                ),
+                child: TextField(
+                  controller: controller,
+                  style: GoogleFonts.openSans(color: AppColors.textDark, fontSize: 14, fontWeight: FontWeight.w500),
+                  decoration: InputDecoration(
+                    hintText: 'Masukkan $title',
+                    hintStyle: GoogleFonts.openSans(color: AppColors.textDark.withOpacity(0.45), fontSize: 14),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 17),
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(height: 28),
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => Navigator.pop(ctx),
+                      child: Container(
+                        height: 50,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(colors: [Colors.white, AppColors.cardColor]),
+                          borderRadius: BorderRadius.circular(25),
+                          border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 1.5),
+                        ),
+                        child: Center(child: Text('Batal', style: GoogleFonts.poppins(color: AppColors.primary, fontWeight: FontWeight.w700))),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        if (controller.text.isNotEmpty) {
+                          onSave(controller.text);
+                          Navigator.pop(ctx);
+                          _showSnackBar('$title berhasil diperbarui');
+                        }
+                      },
+                      child: Container(
+                        height: 50,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(colors: [AppColors.primary, AppColors.accent]),
+                          borderRadius: BorderRadius.circular(25),
+                          boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 4))],
+                        ),
+                        child: Center(child: Text('Simpan', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w700))),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () {
-              if (controller.text.isNotEmpty) {
-                onSave(controller.text);
-                Navigator.pop(ctx);
-                _showSnackBar('$title berhasil diperbarui');
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF8A4607),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            child: const Text(
-              'Simpan',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-            ),
-          ),
-        ],
+        ),
       ),
     );
+  }
+
+  Future<void> _updateAndSaveName(String newName) async {
+    setState(() => _userName = newName);
+    await SessionManager.updateUsername(newName);
+  }
+
+  Future<void> _updateAndSavePhone(String newPhone) async {
+    setState(() => _userPhone = newPhone);
+    await SessionManager.updatePhone(newPhone);
+  }
+
+  Future<void> _updateAndSaveAddress(String newAddress) async {
+    setState(() => _userAddress = newAddress);
+    await SessionManager.updateAddress(newAddress);
   }
 
   void _showLogoutDialog() {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
-          'Keluar Akun?',
-          style: TextStyle(
-            color: Color(0xFF8A4607),
-            fontWeight: FontWeight.w700,
-            fontSize: 18,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(colors: [Colors.white, AppColors.cardColor]),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: AppColors.primary.withOpacity(0.15), width: 1),
+            boxShadow: [
+              BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 10)),
+            ],
           ),
-        ),
-        content: const Text(
-          'Kamu yakin ingin keluar dari akun Ambaput?',
-          style: TextStyle(fontSize: 14, color: Colors.black54),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text(
-              'Batal',
-              style: TextStyle(
-                color: Color(0xFF8A4607),
-                fontWeight: FontWeight.w600,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(color: AppColors.danger.withOpacity(0.1), shape: BoxShape.circle),
+                child: const Icon(Icons.delete_forever_rounded, color: AppColors.danger, size: 32),
               ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              await SessionManager.clearSession();
-              if (mounted) {
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const Scaffold(body: LoginPage()),
+              const SizedBox(height: 20),
+              Text('Keluar Akun?', style: GoogleFonts.poppins(color: AppColors.accent, fontSize: 20, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 10),
+              Text('Kamu yakin ingin keluar dari akun $_userName?', textAlign: TextAlign.center, style: GoogleFonts.openSans(color: AppColors.textDark.withOpacity(0.6), fontSize: 14)),
+              const SizedBox(height: 28),
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => Navigator.pop(ctx),
+                      child: Container(
+                        height: 50,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(colors: [Colors.white, AppColors.cardColor]),
+                          borderRadius: BorderRadius.circular(25),
+                          border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 1.5),
+                        ),
+                        child: Center(child: Text('Batal', style: GoogleFonts.poppins(color: AppColors.primary, fontWeight: FontWeight.w700))),
+                      ),
+                    ),
                   ),
-                  (route) => false,
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFB50000),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            child: const Text(
-              'Keluar',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-            ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () async {
+                        Navigator.pop(ctx);
+                        await SessionManager.clearSession();
+                        if (mounted) {
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(builder: (_) => const Scaffold(body: LoginPage())),
+                            (route) => false,
+                          );
+                        }
+                      },
+                      child: Container(
+                        height: 50,
+                        decoration: BoxDecoration(
+                          color: AppColors.danger,
+                          borderRadius: BorderRadius.circular(25),
+                          boxShadow: [BoxShadow(color: AppColors.danger.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 4))],
+                        ),
+                        child: Center(child: Text('Keluar', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w700))),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -163,103 +269,149 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(child: _buildContent()),
-            _buildBottomNav(),
-          ],
+      // ✅ Gradient Background
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: AppColors.bgGradient,
+            stops: [0.0, 0.3, 0.7, 1.0],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              Expanded(child: _buildContent()),
+              _buildBottomNavBar(),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildContent() {
+    if (_isLoading) {
+      return SingleChildScrollView(
+        child: Column(
+          children: [
+            _buildHeader(),
+            const SizedBox(height: 40),
+            _buildLoadingSkeleton(),
+            const SizedBox(height: 40),
+          ],
+        ),
+      );
+    }
+
     return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
       child: Column(
         children: [
           _buildHeader(),
-          const SizedBox(height: 40),
+          const SizedBox(height: 32),
           _buildInfoCard(),
-          const SizedBox(height: 40),
+          const SizedBox(height: 32),
           _buildLogoutButton(),
-          const SizedBox(height: 24),
+          const SizedBox(height: 90),
         ],
       ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildLoadingSkeleton() {
     return Container(
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        color: Color(0xFF8A4607),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(40),
-          bottomRight: Radius.circular(40),
-        ),
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(colors: [Colors.white, AppColors.cardColor]),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.primary.withOpacity(0.1)),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
       child: Column(
-        children: [
-          Row(
-            children: [
-              GestureDetector(
-                onTap: () {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (_) => const PuBeranda()),
-                    (route) => false,
-                  );
-                },
-                child: const Icon(
-                  Icons.chevron_left_rounded,
-                  color: Colors.white,
-                  size: 28,
+        children: List.generate(4, (index) => Column(
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 40, height: 40,
+                  decoration: BoxDecoration(color: AppColors.primaryLight.withOpacity(0.2), borderRadius: BorderRadius.circular(12)),
                 ),
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                'Profil Saya',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-          Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: const Color(0xFFF5CC9E),
-              border: Border.all(color: const Color.fromARGB(255, 155, 127, 127), width: 3),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(height: 12, width: 80, decoration: BoxDecoration(color: AppColors.primaryLight.withOpacity(0.2), borderRadius: BorderRadius.circular(6))),
+                      const SizedBox(height: 8),
+                      Container(height: 14, width: 180, decoration: BoxDecoration(color: AppColors.primaryLight.withOpacity(0.2), borderRadius: BorderRadius.circular(6))),
+                    ],
+                  ),
                 ),
               ],
             ),
-            child: const Icon(
-              Icons.person_rounded,
-              size: 50,
-              color: Color(0xFF8A4607),
+            if (index < 3) ...[
+              const SizedBox(height: 20),
+              Divider(color: AppColors.primary.withOpacity(0.08), thickness: 1),
+              const SizedBox(height: 20),
+            ],
+          ],
+        )),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
+      child: Column(
+        children: [
+          // Top Bar
+          Row(
+            children: [
+              GestureDetector(
+                onTap: () => Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const PuBeranda()), (route) => false),
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(colors: [Colors.white, AppColors.cardColor]),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 1.5),
+                    boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.15), blurRadius: 14, offset: const Offset(0, 6))],
+                  ),
+                  child: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: AppColors.primary),
+                ),
+              ),
+              const Spacer(),
+              Text('Profil Saya', style: GoogleFonts.poppins(color: AppColors.accent, fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
+            ],
+          ),
+          const SizedBox(height: 36),
+          // Avatar
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(colors: [AppColors.primary.withOpacity(0.2), Colors.transparent]),
+              border: Border.all(color: AppColors.primary.withOpacity(0.3), width: 3),
+              boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.25), blurRadius: 25, offset: const Offset(0, 12))],
+            ),
+            child: CircleAvatar(
+              radius: 50,
+              backgroundColor: AppColors.cardColor,
+              child: Icon(Icons.person_rounded, size: 50, color: AppColors.primary.withOpacity(0.6)),
             ),
           ),
           const SizedBox(height: 20),
           Text(
-            _userName,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-            ),
+            _isLoading ? 'Memuat...' : _userName,
+            style: GoogleFonts.poppins(color: AppColors.textDark, fontSize: 22, fontWeight: FontWeight.w800, shadows: [Shadow(color: Colors.black.withOpacity(0.08), offset: const Offset(0, 2), blurRadius: 4)]),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _userEmail,
+            style: GoogleFonts.openSans(color: AppColors.textDark.withOpacity(0.5), fontSize: 14, fontWeight: FontWeight.w500),
           ),
         ],
       ),
@@ -269,63 +421,28 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget _buildInfoCard() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: const Color(0xFFE8E8E8),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        gradient: const LinearGradient(colors: [Colors.white, AppColors.cardColor]),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.primary.withOpacity(0.15), width: 1),
+        boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 16, offset: const Offset(0, 6))],
       ),
       child: Column(
         children: [
-          _infoField(
-            label: 'Nama Lengkap',
-            value: _userName,
-            icon: Icons.person_outline_rounded,
-            onEdit: () => _showEditDialog('Nama Lengkap', _userName, (value) {
-              setState(() => _userName = value);
-            }),
-          ),
+          _infoField(label: 'Nama Lengkap', value: _userName, icon: Icons.person_outline_rounded, onEdit: () => _showEditDialog('Nama Lengkap', _userName, _updateAndSaveName)),
           const SizedBox(height: 20),
-          _buildDivider(),
+          Divider(color: AppColors.primary.withOpacity(0.08), thickness: 1),
           const SizedBox(height: 20),
-          _infoField(
-            label: 'Email',
-            value: _userEmail,
-            icon: Icons.email_outlined,
-            isEditable: false,
-          ),
+          _infoField(label: 'Email', value: _userEmail, icon: Icons.email_outlined, isEditable: false),
           const SizedBox(height: 20),
-          _buildDivider(),
+          Divider(color: AppColors.primary.withOpacity(0.08), thickness: 1),
           const SizedBox(height: 20),
-          _infoField(
-            label: 'Alamat',
-            value: _userAddress,
-            icon: Icons.location_on_outlined,
-            onEdit: () => _showEditDialog('Alamat', _userAddress, (value) {
-              setState(() => _userAddress = value);
-            }),
-          ),
+          _infoField(label: 'Alamat', value: _userAddress, icon: Icons.location_on_outlined, onEdit: () => _showEditDialog('Alamat', _userAddress, _updateAndSaveAddress)),
           const SizedBox(height: 20),
-          _buildDivider(),
+          Divider(color: AppColors.primary.withOpacity(0.08), thickness: 1),
           const SizedBox(height: 20),
-          _infoField(
-            label: 'No. Telepon',
-            value: _userPhone,
-            icon: Icons.phone_outlined,
-            onEdit: () => _showEditDialog('No. Telepon', _userPhone, (value) {
-              setState(() => _userPhone = value);
-            }),
-          ),
+          _infoField(label: 'No. Telepon', value: _userPhone, icon: Icons.phone_outlined, onEdit: () => _showEditDialog('No. Telepon', _userPhone, _updateAndSavePhone)),
         ],
       ),
     );
@@ -342,43 +459,21 @@ class _ProfilePageState extends State<ProfilePage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          width: 40,
-          height: 40,
+          width: 42, height: 42,
           decoration: BoxDecoration(
-            color: const Color(0xFFF5CC9E).withOpacity(0.3),
-            borderRadius: BorderRadius.circular(10),
+            gradient: LinearGradient(colors: [AppColors.primaryLight.withOpacity(0.4), AppColors.primaryLighter.withOpacity(0.6)]),
+            borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(
-            icon,
-            size: 20,
-            color: const Color(0xFF8A4607),
-          ),
+          child: Icon(icon, size: 20, color: AppColors.primary),
         ),
-        const SizedBox(width: 14),
+        const SizedBox(width: 16),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                label,
-                style: const TextStyle(
-                  color: Color(0xFF8A4607),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.5,
-                ),
-              ),
+              Text(label, style: GoogleFonts.openSans(color: AppColors.textDark.withOpacity(0.55), fontSize: 12, fontWeight: FontWeight.w600)),
               const SizedBox(height: 6),
-              Text(
-                value,
-                style: const TextStyle(
-                  color: Color(0xFF8A4607),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
+              Text(value, style: GoogleFonts.openSans(color: AppColors.textDark, fontSize: 14, fontWeight: FontWeight.w600), maxLines: 2, overflow: TextOverflow.ellipsis),
             ],
           ),
         ),
@@ -387,28 +482,18 @@ class _ProfilePageState extends State<ProfilePage> {
           GestureDetector(
             onTap: onEdit,
             child: Container(
-              width: 36,
-              height: 36,
+              width: 38, height: 38,
               decoration: BoxDecoration(
-                color: const Color(0xFF8A4607).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
+                gradient: const LinearGradient(colors: [Colors.white, AppColors.cardColor]),
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 1.5),
+                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 3))],
               ),
-              child: const Icon(
-                Icons.edit_outlined,
-                size: 18,
-                color: Color(0xFF8A4607),
-              ),
+              child: Icon(Icons.edit_outlined, size: 18, color: AppColors.primary),
             ),
           ),
         ],
       ],
-    );
-  }
-
-  Widget _buildDivider() {
-    return Container(
-      height: 1,
-      color: const Color(0xFFE8E8E8),
     );
   }
 
@@ -418,94 +503,72 @@ class _ProfilePageState extends State<ProfilePage> {
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 20),
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        height: 58,
         decoration: BoxDecoration(
-          color: const Color(0xFF8A4607),
-          borderRadius: BorderRadius.circular(30),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF8A4607).withOpacity(0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          gradient: const LinearGradient(colors: [AppColors.primary, AppColors.accent], begin: Alignment.topLeft, end: Alignment.bottomRight),
+          borderRadius: BorderRadius.circular(29),
+          boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.4), blurRadius: 25, offset: const Offset(0, 12))],
         ),
         child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.logout_rounded, color: Colors.white, size: 20),
-            SizedBox(width: 8),
-            Text(
-              'KELUAR',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1,
-              ),
-            ),
+            SizedBox(width: 10),
+            Text('KELUAR', style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800, letterSpacing: 1, shadows: [Shadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))])),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildBottomNav() {
+  // ─── Bottom Navigation Bar (Selaras Global) ────────────────────────────────
+  Widget _buildBottomNavBar() {
     return Container(
-      margin: const EdgeInsets.fromLTRB(12, 4, 12, 12),
-      decoration: ShapeDecoration(
-        color: const Color(0xFFF5CC9E),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(35)),
-        shadows: const [BoxShadow(color: Color(0x3F000000), blurRadius: 6, offset: Offset(0, 4))],
+      height: 72,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(colors: [Colors.white, AppColors.cardColor], begin: Alignment.topCenter, end: Alignment.bottomCenter),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+        border: Border(top: BorderSide(color: AppColors.primary.withOpacity(0.15), width: 1)),
+        boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.12), blurRadius: 20, offset: const Offset(0, -6))],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _navItem(Icons.home_outlined, Icons.home_rounded, 'Home', 0),
-          _navItem(Icons.search_outlined, Icons.search_rounded, 'Cari', 1),
-          _navItem(Icons.shopping_cart_outlined, Icons.shopping_cart_rounded, 'Keranjang', 2),
-          _navItem(Icons.person_outline_rounded, Icons.person_rounded, 'Profil', 3),
+          _navItem(Icons.home_rounded, 'Home', 0),
+          _navItem(Icons.search_rounded, 'Cari', 1),
+          _navItem(Icons.shopping_bag_rounded, 'Keranjang', 2),
+          _navItem(Icons.person_rounded, 'Profil', 3, isActive: true),
         ],
       ),
     );
   }
 
-  Widget _navItem(IconData inactive, IconData active, String label, int index) {
-    final isSelected = _selectedNavIndex == index;
+  Widget _navItem(IconData icon, String label, int index, {bool isActive = false}) {
     return GestureDetector(
       onTap: () {
         if (index == 0) {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (_) => const PuBeranda()),
-            (route) => false,
-          );
+          Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const PuBeranda()), (route) => false);
           return;
         }
-        setState(() => _selectedNavIndex = index);
       },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF8A4607).withOpacity(0.15) : Colors.transparent,
-          shape: BoxShape.circle,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+      behavior: HitTestBehavior.opaque,
+      child: SizedBox(
+        width: 58, height: 58,
+        child: Stack(
+          alignment: Alignment.center,
+          clipBehavior: Clip.none,
           children: [
-            Icon(
-              isSelected ? active : inactive,
-              color: const Color(0xFF8A4607),
-              size: 22,
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                color: const Color(0xFF8A4607),
-                fontSize: 10,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              width: isActive ? 50 : 38,
+              height: isActive ? 50 : 38,
+              decoration: BoxDecoration(
+                gradient: isActive ? const LinearGradient(colors: [AppColors.primary, AppColors.accent], begin: Alignment.topLeft, end: Alignment.bottomRight) : null,
+                color: isActive ? null : Colors.transparent,
+                shape: BoxShape.circle,
+                boxShadow: isActive ? [BoxShadow(color: AppColors.primary.withOpacity(0.4), blurRadius: 16, offset: const Offset(0, 6))] : [],
               ),
+              child: Icon(icon, size: 24, color: isActive ? Colors.white : AppColors.primary.withOpacity(0.35)),
             ),
           ],
         ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'beranda.dart';
 import 'kasiradmin.dart';
 import 'services/api_service.dart';
@@ -30,26 +31,66 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   bool isUserSelected = true;
   bool _isPressed = false;
   bool _isRememberMe = false;
   bool _isLoading = false;
   bool _obscurePassword = true;
+  bool _emailFocused = false;
+  bool _passwordFocused = false;
+
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final FocusNode _emailFocusNode = FocusNode();
+  final FocusNode _passwordFocusNode = FocusNode();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
   final Color primary = const Color(0xFFB86B2B);
+  final Color accent = const Color(0xFF8D5524);
   final Color textDark = const Color(0xFF6D4C41);
+  final Color cardColor = const Color(0xFFFFFBF5);
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _animationController, curve: Curves.easeOutBack));
+
+    _emailFocusNode.addListener(() {
+      setState(() => _emailFocused = _emailFocusNode.hasFocus);
+    });
+    _passwordFocusNode.addListener(() {
+      setState(() => _passwordFocused = _passwordFocusNode.hasFocus);
+    });
+
+    _animationController.forward();
+  }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _emailFocusNode.dispose();
+    _passwordFocusNode.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
+  // ✅ PERBAIKAN: Disesuaikan agar aman dari error Type & Dead Code
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -58,195 +99,214 @@ class _LoginPageState extends State<LoginPage> {
 
     String role = isUserSelected ? 'user' : 'admin';
 
-    final response = await ApiService.login(
-      email: _emailController.text.trim(),
-      password: _passwordController.text,
-      role: role,
-    );
-
-    setState(() => _isLoading = false);
-
-    if (!mounted) return;
-
-    if (response.success && response.user != null) {
-      await SessionManager.saveSession(response.user!);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(role == 'admin' ? 'Selamat datang Admin' : 'Selamat datang user'),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
+    try {
+      final response = await ApiService.login(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        role: role,
       );
 
-      if (role == 'admin') {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const KasirPage()),
+      setState(() => _isLoading = false);
+
+      if (!mounted) return;
+
+      if (response.success) {
+        // ✅ Simpan data langsung dari controller (aman, tanpa bergantung pada response.user)
+        await SessionManager.saveUserData(
+          email: _emailController.text.trim(),
+          username: _emailController.text.trim().split('@')[0],
+          phone: '',
+          address: '',
+          role: role,
+          id: '',
         );
+
+        // Tampilkan snackbar sukses
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: const [
+                  Icon(Icons.check_circle, color: Colors.white),
+                  SizedBox(width: 12),
+                  Expanded(child: Text('Selamat datang!')), // Text dibuat dinamis di bawah
+                ],
+              ),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+              margin: const EdgeInsets.all(16),
+            ),
+          );
+
+          // Navigasi ke halaman sesuai role
+          if (role == 'admin') {
+            Navigator.pushReplacement(
+              context,
+              PageRouteBuilder(
+                pageBuilder: (_, __, ___) => const KasirPage(),
+                transitionsBuilder: (_, animation, __, child) => FadeTransition(opacity: animation, child: child),
+              ),
+            );
+          } else {
+            Navigator.pushReplacement(
+              context,
+              PageRouteBuilder(
+                pageBuilder: (_, __, ___) => const PuBeranda(),
+                transitionsBuilder: (_, animation, __, child) => FadeTransition(opacity: animation, child: child),
+              ),
+            );
+          }
+        }
       } else {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const PuBeranda()),
+        // Tampilkan snackbar error dari response API
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.white),
+                  const SizedBox(width: 12),
+                  Expanded(child: Text(response.message)),
+                ],
+              ),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+              margin: const EdgeInsets.all(16),
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      // ✅ Tambahan: Menangkap error jika koneksi terputus atau API down
+      setState(() => _isLoading = false);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.wifi_off, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(child: Text('Terjadi kesalahan: ${e.toString()}')),
+              ],
+            ),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+            margin: const EdgeInsets.all(16),
+            duration: const Duration(seconds: 4),
+          ),
         );
       }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(response.message),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          duration: const Duration(seconds: 3),
-        ),
-      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Color(0xFFFFF8F2),
-            Color(0xFFF3E5D8),
-            Color(0xFFE8CBB0),
-          ],
-          stops: [0.2, 0.6, 1.0],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-      ),
-      child: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 40.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // === LOGO & TITLE ===
-                  Column(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                              color: primary.withOpacity(0.2), width: 2),
-                          color: Colors.white,
-                        ),
-                        child: const CircleAvatar(
-                          radius: 50,
-                          backgroundColor: Colors.transparent,
-                          backgroundImage: AssetImage('assets/nettyzencafe.png'),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      Text(
-                        'Nettyzen Access',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: textDark,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Cafe & UMKM Solution',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.grey[700],
-                          fontSize: 14,
-                          letterSpacing: 1.5,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 50),
-                  _buildCustomToggle(),
-                  const SizedBox(height: 30),
-
-                  _buildInputField(
-                    label: "Email",
-                    hint: "masukkan email",
-                    icon: Icons.person_outline,
-                    controller: _emailController,
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Email tidak boleh kosong';
-                      }
-                      if (!value.contains('@')) {
-                        return 'Format email tidak valid';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  _buildInputField(
-                    label: "Password",
-                    hint: "masukan password",
-                    icon: Icons.lock_outline,
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    isPassword: true,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Password tidak boleh kosong';
-                      }
-                      if (value.length < 6) {
-                        return 'Password minimal 6 karakter';
-                      }
-                      return null;
-                    },
-                    onToggleObscure: () {
-                      setState(() {
-                        _obscurePassword = !_obscurePassword;
-                      });
-                    },
-                  ),
-
-                  _buildRememberAndForgot(),
-                  const SizedBox(height: 40),
-
-                  _buildLoginButton(context),
-
-                  // === REGISTER LINK ===
-                  // === REGISTER LINK ===
-const SizedBox(height: 20),
-if (isUserSelected)
-  Row(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: [
-      Text(
-        'Belum punya akun? ',
-        style: TextStyle(color: textDark, fontSize: 13),
-      ),
-      GestureDetector(
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const Scaffold(body: RegisterPage()),
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFFFFF8F2),
+              Color(0xFFFDE8D7),
+              Color(0xFFE8CBB0),
+              Color(0xFFD4A57A),
+            ],
+            stops: [0.0, 0.3, 0.7, 1.0],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
         ),
-        child: Text(
-          'Daftar',
-          style: TextStyle(
-            color: primary,
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-    ],
-  ),
-                ],
+        child: SafeArea(
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 20.0),
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildHeader(),
+                        const SizedBox(height: 40),
+
+                        Container(
+                          padding: const EdgeInsets.all(28),
+                          decoration: BoxDecoration(
+                            color: cardColor,
+                            borderRadius: BorderRadius.circular(30),
+                            boxShadow: [
+                              BoxShadow(
+                                color: primary.withOpacity(0.15),
+                                blurRadius: 30,
+                                offset: const Offset(0, 15),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              _buildCustomToggle(),
+                              const SizedBox(height: 28),
+
+                              _buildInputField(
+                                label: "Email",
+                                hint: "masukkan email anda",
+                                icon: Icons.email_outlined,
+                                controller: _emailController,
+                                focusNode: _emailFocusNode,
+                                isFocused: _emailFocused,
+                                keyboardType: TextInputType.emailAddress,
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty) return 'Email tidak boleh kosong';
+                                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                                    return 'Format email tidak valid';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 20),
+
+                              _buildInputField(
+                                label: "Password",
+                                hint: "Minimal 6 karakter",
+                                icon: Icons.lock_outline_rounded,
+                                controller: _passwordController,
+                                focusNode: _passwordFocusNode,
+                                isFocused: _passwordFocused,
+                                obscureText: _obscurePassword,
+                                isPassword: true,
+                                onToggleObscure: () => setState(() => _obscurePassword = !_obscurePassword),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) return 'Password tidak boleh kosong';
+                                  if (value.length < 6) return 'Password minimal 6 karakter';
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 24),
+
+                              _buildRememberMe(),
+                              const SizedBox(height: 32),
+
+                              _buildLoginButton(),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+
+                        if (isUserSelected) _buildRegisterLink(),
+                        const SizedBox(height: 40),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
@@ -255,64 +315,138 @@ if (isUserSelected)
     );
   }
 
+  Widget _buildHeader() {
+    return Column(
+      children: [
+        Hero(
+          tag: 'logo',
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(colors: [primary.withOpacity(0.2), Colors.transparent]),
+              border: Border.all(color: primary.withOpacity(0.3), width: 3),
+              boxShadow: [
+                BoxShadow(color: primary.withOpacity(0.25), blurRadius: 25, offset: const Offset(0, 12)),
+              ],
+            ),
+            child: const CircleAvatar(
+              radius: 55,
+              backgroundColor: Colors.white,
+              backgroundImage: AssetImage('assets/nettyzencafe.png'),
+            ),
+          ),
+        ),
+        const SizedBox(height: 28),
+        Text(
+          'Nettyzen Access',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.poppins(
+            fontSize: 36,
+            fontWeight: FontWeight.w800,
+            color: textDark,
+            height: 1.1,
+            shadows: [
+              Shadow(color: Colors.black.withOpacity(0.1), offset: const Offset(0, 2), blurRadius: 4),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Cafe & UMKM Solution',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.openSans(
+            color: textDark.withOpacity(0.8),
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 1.2,
+            height: 1.3,
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildCustomToggle() {
-    return Container(
-      width: double.infinity,
-      height: 55,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          )
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => isUserSelected = true),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                decoration: BoxDecoration(
-                  color: isUserSelected ? primary : Colors.transparent,
-                  borderRadius: const BorderRadius.horizontal(left: Radius.circular(30)),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  "User",
-                  style: TextStyle(
-                    color: isUserSelected ? Colors.white : textDark,
-                    fontWeight: FontWeight.w600,
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 250),
+      switchInCurve: Curves.easeInOutBack,
+      switchOutCurve: Curves.easeInOutBack,
+      transitionBuilder: (child, animation) {
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: Offset(isUserSelected ? 1.0 : -1.0, 0.0),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(parent: animation, curve: Curves.easeInOut)),
+          child: FadeTransition(opacity: animation, child: child),
+        );
+      },
+      child: Container(
+        key: ValueKey(isUserSelected),
+        width: double.infinity,
+        height: 60,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(colors: [Colors.white, cardColor]),
+          borderRadius: BorderRadius.circular(35),
+          border: Border.all(color: primary.withOpacity(0.2), width: 1.5),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 15, offset: const Offset(0, 6)),
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: () => setState(() => isUserSelected = true),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  decoration: BoxDecoration(
+                    gradient: isUserSelected ? LinearGradient(colors: [primary, accent]) : null,
+                    borderRadius: const BorderRadius.horizontal(left: Radius.circular(35)),
+                    boxShadow: isUserSelected
+                        ? [BoxShadow(color: primary.withOpacity(0.4), blurRadius: 20, offset: const Offset(0, 8))]
+                        : null,
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  alignment: Alignment.center,
+                  child: Text(
+                    'User',
+                    style: GoogleFonts.poppins(
+                      color: isUserSelected ? Colors.white : textDark,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => isUserSelected = false),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                decoration: BoxDecoration(
-                  color: !isUserSelected ? primary : Colors.transparent,
-                  borderRadius: const BorderRadius.horizontal(right: Radius.circular(30)),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  "Admin",
-                  style: TextStyle(
-                    color: !isUserSelected ? Colors.white : textDark,
-                    fontWeight: FontWeight.w600,
+            Expanded(
+              child: GestureDetector(
+                onTap: () => setState(() => isUserSelected = false),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  decoration: BoxDecoration(
+                    gradient: !isUserSelected ? LinearGradient(colors: [primary, accent]) : null,
+                    borderRadius: const BorderRadius.horizontal(right: Radius.circular(35)),
+                    boxShadow: !isUserSelected
+                        ? [BoxShadow(color: primary.withOpacity(0.4), blurRadius: 20, offset: const Offset(0, 8))]
+                        : null,
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  alignment: Alignment.center,
+                  child: Text(
+                    'Admin',
+                    style: GoogleFonts.poppins(
+                      color: !isUserSelected ? Colors.white : textDark,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -322,56 +456,116 @@ if (isUserSelected)
     required String hint,
     required IconData icon,
     TextEditingController? controller,
+    FocusNode? focusNode,
+    bool isFocused = false,
     String? Function(String?)? validator,
     bool obscureText = false,
     bool isPassword = false,
     VoidCallback? onToggleObscure,
+    TextInputType? keyboardType,
   }) {
+    final Color currentBorderColor = isFocused
+        ? primary
+        : primary.withOpacity(0.45);
+
+    final double currentBorderWidth = isFocused ? 2.0 : 1.5;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: TextStyle(
+          style: GoogleFonts.poppins(
             color: textDark,
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            fontSize: 15,
+            letterSpacing: 0.5,
           ),
         ),
-        const SizedBox(height: 10),
-        Container(
+        const SizedBox(height: 12),
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeInOut,
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              colors: isFocused
+                  ? [Colors.white, const Color(0xFFFFF5EB)]
+                  : [Colors.white, cardColor],
+            ),
+            borderRadius: BorderRadius.circular(25),
+            border: Border.all(
+              color: currentBorderColor,
+              width: currentBorderWidth,
+            ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 5,
-                offset: const Offset(0, 2),
-              )
+                color: isFocused
+                    ? primary.withOpacity(0.15)
+                    : Colors.black.withOpacity(0.05),
+                blurRadius: isFocused ? 16 : 8,
+                offset: isFocused
+                    ? const Offset(0, 4)
+                    : const Offset(0, 3),
+              ),
             ],
           ),
           child: TextFormField(
             controller: controller,
+            focusNode: focusNode,
+            keyboardType: keyboardType,
             obscureText: obscureText,
             validator: validator,
+            style: GoogleFonts.openSans(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: textDark,
+            ),
             decoration: InputDecoration(
               hintText: hint,
-              prefixIcon: Icon(icon, color: primary, size: 22),
+              hintStyle: GoogleFonts.openSans(
+                fontSize: 15,
+                color: textDark.withOpacity(0.45),
+              ),
+              prefixIcon: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Icon(
+                  icon,
+                  color: isFocused ? primary : primary.withOpacity(0.65),
+                  size: 24,
+                ),
+              ),
               suffixIcon: isPassword
-                  ? IconButton(
-                      icon: Icon(
-                        obscureText ? Icons.visibility_off : Icons.visibility,
-                        color: Colors.grey,
-                        size: 20,
+                  ? Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: IconButton(
+                        icon: Icon(
+                          obscureText
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                          color: isFocused
+                              ? primary
+                              : primary.withOpacity(0.55),
+                          size: 22,
+                        ),
+                        onPressed: onToggleObscure,
                       ),
-                      onPressed: onToggleObscure,
                     )
                   : null,
               border: InputBorder.none,
-              contentPadding:
-                  const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-              errorStyle: const TextStyle(fontSize: 12, height: 0.5),
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              errorBorder: InputBorder.none,
+              focusedErrorBorder: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 20,
+                horizontal: 8,
+              ),
+              errorStyle: GoogleFonts.openSans(
+                fontSize: 13,
+                height: 0.8,
+                color: Colors.red,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ),
@@ -379,79 +573,141 @@ if (isUserSelected)
     );
   }
 
-  Widget _buildRememberAndForgot() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 15.0),
-      child: Row(
-        children: [
-          SizedBox(
+  Widget _buildRememberMe() {
+    return Row(
+      children: [
+        GestureDetector(
+          onTap: () => setState(() => _isRememberMe = !_isRememberMe),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
             height: 24,
             width: 24,
-            child: Checkbox(
-              value: _isRememberMe,
-              onChanged: (value) =>
-                  setState(() => _isRememberMe = value ?? false),
-              activeColor: primary,
+            decoration: BoxDecoration(
+              color: _isRememberMe ? primary : Colors.white,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(
+                color: _isRememberMe
+                    ? primary
+                    : primary.withOpacity(0.5),
+                width: 2,
+              ),
             ),
+            child: _isRememberMe
+                ? const Icon(Icons.check, size: 18, color: Colors.white)
+                : null,
           ),
-          const SizedBox(width: 10),
-          Text("Ingat Saya",
-              style: TextStyle(color: textDark, fontSize: 13)),
-        ],
-      ),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          "Ingat Saya",
+          style: GoogleFonts.openSans(
+            color: textDark,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildLoginButton(BuildContext context) {
+  Widget _buildLoginButton() {
     return GestureDetector(
       onTapDown: _isLoading ? null : (_) => setState(() => _isPressed = true),
       onTapUp: _isLoading ? null : (_) => setState(() => _isPressed = false),
       onTapCancel: _isLoading ? null : () => setState(() => _isPressed = false),
       onTap: _isLoading ? null : _handleLogin,
       child: AnimatedScale(
-        scale: _isPressed ? 0.96 : 1.0,
-        duration: const Duration(milliseconds: 150),
+        scale: _isPressed ? 0.95 : 1.0,
+        duration: const Duration(milliseconds: 200),
         child: Container(
           width: double.infinity,
-          height: 55,
+          height: 62,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(30),
+            borderRadius: BorderRadius.circular(35),
             gradient: LinearGradient(
               colors: [
-                _isLoading ? primary.withOpacity(0.6) : primary.withOpacity(0.8),
-                primary,
+                _isLoading ? primary.withOpacity(0.5) : primary.withOpacity(0.95),
+                accent,
               ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
             boxShadow: [
               BoxShadow(
-                color: primary.withOpacity(0.3),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
+                color: primary.withOpacity(0.4),
+                blurRadius: 25,
+                offset: const Offset(0, 12),
               ),
             ],
           ),
           child: Center(
             child: _isLoading
-                ? const SizedBox(
-                    width: 24,
-                    height: 24,
+                ? SizedBox(
+                    width: 28,
+                    height: 28,
                     child: CircularProgressIndicator(
                       color: Colors.white,
-                      strokeWidth: 2.5,
+                      strokeWidth: 3,
+                      backgroundColor: Colors.white.withOpacity(0.3),
                     ),
                   )
-                : const Text(
-                    "LOGIN",
-                    style: TextStyle(
+                : Text(
+                    "MASUK SEKARANG",
+                    style: GoogleFonts.poppins(
                       color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.2,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.5,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withOpacity(0.3),
+                          offset: const Offset(0, 2),
+                          blurRadius: 4,
+                        ),
+                      ],
                     ),
                   ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildRegisterLink() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          'Belum punya akun? ',
+          style: GoogleFonts.openSans(
+            color: textDark.withOpacity(0.8),
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        GestureDetector(
+          onTap: () => Navigator.push(
+            context,
+            PageRouteBuilder(
+              pageBuilder: (_, __, ___) => const Scaffold(body: RegisterPage()),
+              transitionsBuilder: (_, animation, __, child) =>
+                  FadeTransition(opacity: animation, child: child),
+            ),
+          ),
+          child: Text(
+            'Daftar disini',
+            style: GoogleFonts.poppins(
+              color: primary,
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
+              decoration: TextDecoration.underline,
+              decorationColor: primary,
+              decorationThickness: 1.5,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
