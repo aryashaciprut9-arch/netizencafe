@@ -535,10 +535,39 @@ class _PuBerandaState extends State<PuBeranda> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _NavItem(icon: Icons.home_rounded,         index: 0, currentIndex: _currentIndex, onTap: _onNavTap),
-          _NavItem(icon: Icons.search_rounded,       index: 1, currentIndex: _currentIndex, onTap: _onNavTap),
-          _NavItem(icon: Icons.shopping_bag_rounded, index: 2, currentIndex: _currentIndex, onTap: _onNavTap, badgeCount: _keranjangCount),
-          _NavItem(icon: Icons.person_rounded,       index: 3, currentIndex: _currentIndex, onTap: _onNavTap),
+          _NavItem(
+            icon: Icons.home_outlined,
+            activeIcon: Icons.home_rounded,
+            label: 'Home',
+            index: 0,
+            currentIndex: _currentIndex,
+            onTap: _onNavTap,
+          ),
+          _NavItem(
+            icon: Icons.search_outlined,
+            activeIcon: Icons.search_rounded,
+            label: 'Cari',
+            index: 1,
+            currentIndex: _currentIndex,
+            onTap: _onNavTap,
+          ),
+          _NavItem(
+            icon: Icons.shopping_cart_outlined,
+            activeIcon: Icons.shopping_cart_rounded,
+            label: 'Keranjang',
+            index: 2,
+            currentIndex: _currentIndex,
+            onTap: _onNavTap,
+            badgeCount: _keranjangCount,
+          ),
+          _NavItem(
+            icon: Icons.person_outline_rounded,
+            activeIcon: Icons.person_rounded,
+            label: 'Profil',
+            index: 3,
+            currentIndex: _currentIndex,
+            onTap: _onNavTap,
+          ),
         ],
       ),
     );
@@ -682,6 +711,8 @@ class _MenuCard extends StatelessWidget {
 
 class _NavItem extends StatelessWidget {
   final IconData icon;
+  final IconData activeIcon;
+  final String label;
   final int index;
   final int currentIndex;
   final int badgeCount;
@@ -689,6 +720,8 @@ class _NavItem extends StatelessWidget {
 
   const _NavItem({
     required this.icon,
+    required this.activeIcon,
+    required this.label,
     required this.index,
     required this.currentIndex,
     required this.onTap,
@@ -698,45 +731,71 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSelected = currentIndex == index;
+
     return GestureDetector(
       onTap: () => onTap(index),
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
-        width: 56, height: 56,
-        child: Stack(
-          alignment: Alignment.center,
-          clipBehavior: Clip.none,
+        width: 72,
+        height: 64,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: isSelected ? 48 : 36,
-              height: isSelected ? 48 : 36,
-              decoration: BoxDecoration(
-                color: isSelected ? AppColors.primary : Colors.transparent,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon,
-                  size: 24,
-                  color: isSelected
-                      ? Colors.white
-                      : AppColors.primary.withOpacity(0.35)),
-            ),
-            if (badgeCount > 0)
-              Positioned(
-                top: 4, right: 4,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
-                    color: Colors.red,
+            Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.center,
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppColors.primary.withOpacity(0.18)
+                        : Colors.transparent,
                     shape: BoxShape.circle,
                   ),
-                  child: Text('$badgeCount',
-                      style: const TextStyle(
+                  child: Icon(
+                    isSelected ? activeIcon : icon,
+                    size: 24,
+                    color: isSelected
+                        ? AppColors.primary
+                        : AppColors.primary.withOpacity(0.5),
+                  ),
+                ),
+                if (badgeCount > 0)
+                  Positioned(
+                    top: 2,
+                    right: 2,
+                    child: Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        '$badgeCount',
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 9,
-                          fontWeight: FontWeight.bold)),
-                ),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+                color: isSelected
+                    ? AppColors.primary
+                    : AppColors.primary.withOpacity(0.5),
               ),
+            ),
           ],
         ),
       ),
