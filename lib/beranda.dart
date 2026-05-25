@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:netizencafe/search.dart';
 import 'services/api_services.dart';
 import 'models/menu_models.dart';
 import 'katergorimakanan.dart' as makanan;
@@ -13,7 +12,6 @@ import 'detailkeranjang.dart';
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 class AppColors {
-  // Selaraskan dengan login.dart
   static const Color primary        = Color(0xFFB86B2B);
   static const Color accent         = Color(0xFF8D5524);
   static const Color textDark       = Color(0xFF6D4C41);
@@ -22,7 +20,6 @@ class AppColors {
   static const Color primaryLighter = Color(0xFFFFF8F2);
   static const Color white          = Colors.white;
 
-  // Gradient latar belakang (sama persis dengan login.dart)
   static const List<Color> bgGradient = [
     Color(0xFFFFF8F2),
     Color(0xFFFDE8D7),
@@ -41,9 +38,6 @@ class PuBeranda extends StatefulWidget {
 }
 
 class _PuBerandaState extends State<PuBeranda> with TickerProviderStateMixin {
-  // =====================
-  //  STATE & DATA
-  // =====================
   int _currentIndex          = 0;
   List<MenuModel> _allMenus  = [];
   bool _isLoading            = true;
@@ -55,7 +49,6 @@ class _PuBerandaState extends State<PuBeranda> with TickerProviderStateMixin {
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
 
-  // ===== KERANJANG =====
   final List<KeranjangItem> _keranjang = [];
 
   int get _keranjangCount => _keranjang.fold(0, (sum, item) => sum + item.qty);
@@ -68,9 +61,6 @@ class _PuBerandaState extends State<PuBeranda> with TickerProviderStateMixin {
     }).toList();
   }
 
-  // =====================
-  //  FUNGSI / LOGIKA
-  // =====================
   @override
   void initState() {
     super.initState();
@@ -171,34 +161,8 @@ class _PuBerandaState extends State<PuBeranda> with TickerProviderStateMixin {
 
   void _onNavTap(int index) {
     HapticFeedback.selectionClick();
+    // index 0 = Home, index 1 = Keranjang, index 2 = Profil
     if (index == 1) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => PuSearch(
-            keranjang: _keranjang,
-            onTambahKeranjang: (menuId, namaMenu, harga, foto) {
-              setState(() {
-                final existing = _keranjang.where((k) => k.menuId == menuId).toList();
-                if (existing.isNotEmpty) {
-                  existing.first.qty++;
-                } else {
-                  _keranjang.add(KeranjangItem(
-                    menuId: menuId,
-                    namaMenu: namaMenu,
-                    harga: harga,
-                    qty: 1,
-                    foto: foto,
-                  ));
-                }
-              });
-            },
-          ),
-        ),
-      ).then((_) => setState(() {}));
-      return;
-    }
-    if (index == 2) {
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -233,17 +197,13 @@ class _PuBerandaState extends State<PuBeranda> with TickerProviderStateMixin {
     }
   }
 
-  // =====================
-  //  UI / BUILD
-  // =====================
   @override
   Widget build(BuildContext context) {
-    if (_currentIndex == 3) {
+    if (_currentIndex == 2) {
       return const ProfilePage();
     }
 
     return Scaffold(
-      // Gradient background sama dengan login.dart
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -295,8 +255,6 @@ class _PuBerandaState extends State<PuBeranda> with TickerProviderStateMixin {
     );
   }
 
-  // ─── Header ──────────────────────────────────────────────────────────────────
-
   Widget _buildHeader(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
@@ -335,7 +293,6 @@ class _PuBerandaState extends State<PuBeranda> with TickerProviderStateMixin {
               ],
             ),
           ),
-          // Tombol refresh — style mirip card login.dart
           GestureDetector(
             onTap: _loadData,
             child: Container(
@@ -359,8 +316,6 @@ class _PuBerandaState extends State<PuBeranda> with TickerProviderStateMixin {
       ),
     );
   }
-
-  // ─── Search Bar ───────────────────────────────────────────────────────────────
 
   Widget _buildSearchBar(BuildContext context) {
     return Padding(
@@ -413,8 +368,6 @@ class _PuBerandaState extends State<PuBeranda> with TickerProviderStateMixin {
     );
   }
 
-  // ─── Promo Banner ─────────────────────────────────────────────────────────────
-
   Widget _buildPromoBanner(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -438,7 +391,6 @@ class _PuBerandaState extends State<PuBeranda> with TickerProviderStateMixin {
         ),
         child: Stack(
           children: [
-            // Lingkaran dekoratif — sama dengan login header circle
             Positioned(
               right: -25, top: -25,
               child: Container(
@@ -513,8 +465,6 @@ class _PuBerandaState extends State<PuBeranda> with TickerProviderStateMixin {
       ),
     );
   }
-
-  // ─── Kategori ─────────────────────────────────────────────────────────────────
 
   Widget _buildCategories(BuildContext context) {
     final categories = [
@@ -602,8 +552,6 @@ class _PuBerandaState extends State<PuBeranda> with TickerProviderStateMixin {
     );
   }
 
-  // ─── Section Title ────────────────────────────────────────────────────────────
-
   Widget _buildSectionTitle(BuildContext context) {
     final title = _searchQuery.isNotEmpty
         ? 'Hasil Pencarian'
@@ -645,8 +593,6 @@ class _PuBerandaState extends State<PuBeranda> with TickerProviderStateMixin {
       ),
     );
   }
-
-  // ─── Product Grid ─────────────────────────────────────────────────────────────
 
   Widget _buildProductGrid(BuildContext context, double screenWidth) {
     final products     = _filteredProducts;
@@ -698,13 +644,12 @@ class _PuBerandaState extends State<PuBeranda> with TickerProviderStateMixin {
     );
   }
 
-  // ─── Bottom Nav Bar ───────────────────────────────────────────────────────────
+  // ─── Bottom Nav Bar (3 item: Home, Keranjang, Profil) ────────────────────────
 
   Widget _buildBottomNavBar() {
     return Container(
       height: 72,
       decoration: BoxDecoration(
-        // Gradient selaras login.dart card style
         gradient: const LinearGradient(
           colors: [Colors.white, AppColors.cardColor],
           begin: Alignment.topCenter,
@@ -725,10 +670,9 @@ class _PuBerandaState extends State<PuBeranda> with TickerProviderStateMixin {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
+          _NavItem(icon: Icons.shopping_bag_rounded, index: 1, currentIndex: _currentIndex, onTap: _onNavTap, badgeCount: _keranjangCount),
           _NavItem(icon: Icons.home_rounded,         index: 0, currentIndex: _currentIndex, onTap: _onNavTap),
-          _NavItem(icon: Icons.search_rounded,       index: 1, currentIndex: _currentIndex, onTap: _onNavTap),
-          _NavItem(icon: Icons.shopping_bag_rounded, index: 2, currentIndex: _currentIndex, onTap: _onNavTap, badgeCount: _keranjangCount),
-          _NavItem(icon: Icons.person_rounded,       index: 3, currentIndex: _currentIndex, onTap: _onNavTap),
+          _NavItem(icon: Icons.person_rounded,       index: 2, currentIndex: _currentIndex, onTap: _onNavTap),
         ],
       ),
     );
@@ -766,7 +710,6 @@ class _MenuCard extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // Gambar produk
             imageUrl.isNotEmpty
                 ? Image.network(
                     imageUrl,
@@ -786,8 +729,6 @@ class _MenuCard extends StatelessWidget {
                           color: AppColors.primary, size: 40),
                     ),
                   ),
-
-            // Overlay info + tombol
             Positioned(
               bottom: 0, left: 0, right: 0,
               child: Container(
@@ -807,7 +748,6 @@ class _MenuCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Nama menu
                     Text(
                       item.nama,
                       style: GoogleFonts.poppins(
@@ -822,7 +762,6 @@ class _MenuCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
-                    // Harga
                     Text(
                       'IDR ${item.harga}',
                       style: GoogleFonts.openSans(
@@ -832,7 +771,6 @@ class _MenuCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    // Status & tombol tambah
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -858,7 +796,6 @@ class _MenuCard extends StatelessWidget {
                             ),
                           ],
                         ),
-                        // Tombol + — mirip style card login
                         GestureDetector(
                           onTap: onAddToCart,
                           child: Container(

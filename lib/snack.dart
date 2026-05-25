@@ -7,7 +7,7 @@ import 'detailkeranjang.dart';
 import 'kategoriminuman.dart';
 import 'beranda.dart';
 
-// ─── Constants (selaras dengan beranda, minuman, makanan) ────────────────────
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 class AppColors {
   static const Color primary        = Color(0xFFB86B2B);
@@ -46,11 +46,10 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
   List<MenuModel> _snackItems     = [];
   List<MenuModel> _filteredItems  = [];
   bool _isLoading                 = true;
-  int _selectedNavIndex           = 0;
+  int _selectedNavIndex           = 1; // index 1 = Home (tengah)
   String _searchQuery             = '';
   final TextEditingController _searchCtrl = TextEditingController();
 
-  // Animasi masuk — sama seperti beranda, minuman, makanan
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -157,9 +156,11 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
       );
   }
 
+  // index: 0 = Keranjang, 1 = Home (tengah), 2 = Profil
   void _onNavTap(int index) {
     HapticFeedback.selectionClick();
-    if (index == 0) {
+    if (index == 1) {
+      // Home
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const PuBeranda()),
@@ -167,7 +168,8 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
       );
       return;
     }
-    if (index == 2) {
+    if (index == 0) {
+      // Keranjang
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -190,7 +192,6 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // ✅ Gradient background sama persis
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -250,7 +251,6 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Tombol kembali ke minuman — style card
           Row(
             children: [
               GestureDetector(
@@ -306,7 +306,6 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
               ),
             ],
           ),
-          // Tombol home — style card
           GestureDetector(
             onTap: () {
               HapticFeedback.lightImpact();
@@ -417,7 +416,6 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
               letterSpacing: -0.3,
             ),
           ),
-          // Pill badge — sama seperti beranda, minuman, makanan
           Container(
             padding:
                 const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -495,7 +493,7 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
     );
   }
 
-  // ─── Bottom Nav Bar ───────────────────────────────────────────────────────────
+  // ─── Bottom Nav Bar (3 item: Keranjang — Home — Profil) ──────────────────────
 
   Widget _buildBottomNav() {
     return Container(
@@ -523,24 +521,19 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _NavItem(
-              icon: Icons.home_rounded,
-              index: 0,
-              currentIndex: _selectedNavIndex,
-              onTap: _onNavTap),
-          _NavItem(
-              icon: Icons.search_rounded,
-              index: 1,
-              currentIndex: _selectedNavIndex,
-              onTap: _onNavTap),
-          _NavItem(
               icon: Icons.shopping_bag_rounded,
-              index: 2,
+              index: 0,
               currentIndex: _selectedNavIndex,
               onTap: _onNavTap,
               badgeCount: _keranjangCount),
           _NavItem(
+              icon: Icons.home_rounded,
+              index: 1,
+              currentIndex: _selectedNavIndex,
+              onTap: _onNavTap),
+          _NavItem(
               icon: Icons.person_rounded,
-              index: 3,
+              index: 2,
               currentIndex: _selectedNavIndex,
               onTap: _onNavTap),
         ],
@@ -549,7 +542,7 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
   }
 }
 
-// ─── Snack Card Widget (selaras _MenuCard, _DrinkCard, _FoodCard) ─────────────
+// ─── Snack Card Widget ────────────────────────────────────────────────────────
 
 class _SnackCard extends StatelessWidget {
   final MenuModel item;
@@ -580,7 +573,6 @@ class _SnackCard extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // Gambar produk
             imageUrl.isNotEmpty
                 ? Image.network(
                     imageUrl,
@@ -601,8 +593,6 @@ class _SnackCard extends StatelessWidget {
                           color: AppColors.primary, size: 40),
                     ),
                   ),
-
-            // Overlay gradient — primary → accent
             Positioned(
               bottom: 0,
               left: 0,
@@ -624,7 +614,6 @@ class _SnackCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Nama menu
                     Text(
                       item.nama,
                       style: GoogleFonts.poppins(
@@ -639,7 +628,6 @@ class _SnackCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
-                    // Harga
                     Text(
                       'IDR ${item.harga}',
                       style: GoogleFonts.openSans(
@@ -649,7 +637,6 @@ class _SnackCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    // Status & tombol tambah
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -676,7 +663,6 @@ class _SnackCard extends StatelessWidget {
                             ),
                           ],
                         ),
-                        // Tombol + — gradient card style
                         GestureDetector(
                           onTap: onAddToCart,
                           child: Container(
@@ -715,7 +701,7 @@ class _SnackCard extends StatelessWidget {
   }
 }
 
-// ─── Nav Item Widget (selaras beranda, minuman, makanan) ──────────────────────
+// ─── Nav Item Widget ──────────────────────────────────────────────────────────
 
 class _NavItem extends StatelessWidget {
   final IconData icon;

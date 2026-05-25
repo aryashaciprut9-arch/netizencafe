@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'beranda.dart';
-import 'login.dart'; 
+import 'login.dart';
+import 'detailkeranjang.dart';
 import 'utils/session_manager.dart';
 
-// ─── Constants (Selaras Global) ───────────────────────────────────────────────
+// ─── AppColors ────────────────────────────────────────────────────────────────
 class AppColors {
   static const Color primary        = Color(0xFFB86B2B);
   static const Color accent         = Color(0xFF8D5524);
@@ -23,6 +24,7 @@ class AppColors {
   ];
 }
 
+// ─── ProfilePage ──────────────────────────────────────────────────────────────
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
@@ -31,11 +33,11 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  String _userName = '';
-  String _userEmail = '';
+  String _userName    = '';
+  String _userEmail   = '';
   String _userAddress = '';
-  String _userPhone = '';
-  bool _isLoading = true;
+  String _userPhone   = '';
+  bool _isLoading     = true;
 
   @override
   void initState() {
@@ -44,18 +46,18 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _loadUserData() async {
-    final email = await SessionManager.getEmail();
+    final email    = await SessionManager.getEmail();
     final username = await SessionManager.getUsername();
-    final phone = await SessionManager.getPhone();
-    final address = await SessionManager.getAddress();
+    final phone    = await SessionManager.getPhone();
+    final address  = await SessionManager.getAddress();
 
     if (mounted) {
       setState(() {
-        _userEmail = email.isNotEmpty ? email : 'Email tidak tersedia';
-        _userName = username.isNotEmpty ? username : _extractNameFromEmail(email);
-        _userPhone = phone.isNotEmpty ? phone : 'Belum ditambahkan';
+        _userEmail   = email.isNotEmpty ? email : 'Email tidak tersedia';
+        _userName    = username.isNotEmpty ? username : _extractNameFromEmail(email);
+        _userPhone   = phone.isNotEmpty ? phone : 'Belum ditambahkan';
         _userAddress = address.isNotEmpty ? address : 'Belum ditambahkan';
-        _isLoading = false;
+        _isLoading   = false;
       });
     }
   }
@@ -87,7 +89,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
   void _showEditDialog(String title, String currentValue, Function(String) onSave) {
     final controller = TextEditingController(text: currentValue);
-    
     showDialog(
       context: context,
       builder: (ctx) => Dialog(
@@ -98,9 +99,7 @@ class _ProfilePageState extends State<ProfilePage> {
             gradient: const LinearGradient(colors: [Colors.white, AppColors.cardColor]),
             borderRadius: BorderRadius.circular(28),
             border: Border.all(color: AppColors.primary.withOpacity(0.15), width: 1),
-            boxShadow: [
-              BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 10)),
-            ],
+            boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 10))],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -199,9 +198,7 @@ class _ProfilePageState extends State<ProfilePage> {
             gradient: const LinearGradient(colors: [Colors.white, AppColors.cardColor]),
             borderRadius: BorderRadius.circular(28),
             border: Border.all(color: AppColors.primary.withOpacity(0.15), width: 1),
-            boxShadow: [
-              BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 10)),
-            ],
+            boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 10))],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -269,7 +266,6 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // ✅ Gradient Background
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -334,10 +330,7 @@ class _ProfilePageState extends State<ProfilePage> {
           children: [
             Row(
               children: [
-                Container(
-                  width: 40, height: 40,
-                  decoration: BoxDecoration(color: AppColors.primaryLight.withOpacity(0.2), borderRadius: BorderRadius.circular(12)),
-                ),
+                Container(width: 40, height: 40, decoration: BoxDecoration(color: AppColors.primaryLight.withOpacity(0.2), borderRadius: BorderRadius.circular(12))),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
@@ -367,11 +360,14 @@ class _ProfilePageState extends State<ProfilePage> {
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
       child: Column(
         children: [
-          // Top Bar
           Row(
             children: [
               GestureDetector(
-                onTap: () => Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const PuBeranda()), (route) => false),
+                onTap: () => Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => const PuBeranda()),
+                  (route) => false,
+                ),
                 child: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
@@ -388,7 +384,6 @@ class _ProfilePageState extends State<ProfilePage> {
             ],
           ),
           const SizedBox(height: 36),
-          // Avatar
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
@@ -409,10 +404,7 @@ class _ProfilePageState extends State<ProfilePage> {
             style: GoogleFonts.poppins(color: AppColors.textDark, fontSize: 22, fontWeight: FontWeight.w800, shadows: [Shadow(color: Colors.black.withOpacity(0.08), offset: const Offset(0, 2), blurRadius: 4)]),
           ),
           const SizedBox(height: 4),
-          Text(
-            _userEmail,
-            style: GoogleFonts.openSans(color: AppColors.textDark.withOpacity(0.5), fontSize: 14, fontWeight: FontWeight.w500),
-          ),
+          Text(_userEmail, style: GoogleFonts.openSans(color: AppColors.textDark.withOpacity(0.5), fontSize: 14, fontWeight: FontWeight.w500)),
         ],
       ),
     );
@@ -521,7 +513,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // ─── Bottom Navigation Bar (Selaras Global) ────────────────────────────────
+  // ─── Bottom Nav Bar (3 item: Keranjang — Home — Profil) ──────────────────────
   Widget _buildBottomNavBar() {
     return Container(
       height: 72,
@@ -534,43 +526,58 @@ class _ProfilePageState extends State<ProfilePage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _navItem(Icons.home_rounded, 'Home', 0),
-          _navItem(Icons.search_rounded, 'Cari', 1),
-          _navItem(Icons.shopping_bag_rounded, 'Keranjang', 2),
-          _navItem(Icons.person_rounded, 'Profil', 3, isActive: true),
+          _navItem(Icons.shopping_bag_rounded, 0), // Keranjang
+          _navItem(Icons.home_rounded, 1),          // Home (tengah)
+          _navItem(Icons.person_rounded, 2, isActive: true), // Profil (aktif)
         ],
       ),
     );
   }
 
-  Widget _navItem(IconData icon, String label, int index, {bool isActive = false}) {
+  // index: 0 = Keranjang, 1 = Home (tengah), 2 = Profil (aktif)
+  Widget _navItem(IconData icon, int index, {bool isActive = false}) {
     return GestureDetector(
       onTap: () {
-        if (index == 0) {
-          Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const PuBeranda()), (route) => false);
-          return;
+        if (index == 1) {
+          // Home
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (_) => const PuBeranda()),
+            (route) => false,
+          );
+        } else if (index == 0) {
+          // Keranjang — buka dengan keranjang kosong dari halaman profil
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => PuDetailKeranjang(
+                items: const [],
+                userId: 0,
+                namaPelanggan: 'User',
+              ),
+            ),
+          );
         }
+        // index == 2 adalah profil (halaman saat ini), tidak ada aksi
       },
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
         width: 58, height: 58,
-        child: Stack(
-          alignment: Alignment.center,
-          clipBehavior: Clip.none,
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 220),
-              width: isActive ? 50 : 38,
-              height: isActive ? 50 : 38,
-              decoration: BoxDecoration(
-                gradient: isActive ? const LinearGradient(colors: [AppColors.primary, AppColors.accent], begin: Alignment.topLeft, end: Alignment.bottomRight) : null,
-                color: isActive ? null : Colors.transparent,
-                shape: BoxShape.circle,
-                boxShadow: isActive ? [BoxShadow(color: AppColors.primary.withOpacity(0.4), blurRadius: 16, offset: const Offset(0, 6))] : [],
-              ),
-              child: Icon(icon, size: 24, color: isActive ? Colors.white : AppColors.primary.withOpacity(0.35)),
-            ),
-          ],
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          width: isActive ? 50 : 38,
+          height: isActive ? 50 : 38,
+          decoration: BoxDecoration(
+            gradient: isActive
+                ? const LinearGradient(colors: [AppColors.primary, AppColors.accent], begin: Alignment.topLeft, end: Alignment.bottomRight)
+                : null,
+            color: isActive ? null : Colors.transparent,
+            shape: BoxShape.circle,
+            boxShadow: isActive
+                ? [BoxShadow(color: AppColors.primary.withOpacity(0.4), blurRadius: 16, offset: const Offset(0, 6))]
+                : [],
+          ),
+          child: Icon(icon, size: 24, color: isActive ? Colors.white : AppColors.primary.withOpacity(0.35)),
         ),
       ),
     );

@@ -1,3 +1,4 @@
+// FILE: menu_makanan.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,8 +8,7 @@ import 'services/api_services.dart';
 import 'kategoriminuman.dart';
 import 'beranda.dart';
 
-// ─── Constants (selaras dengan beranda.dart & kategoriminuman.dart) ───────────
-
+// ─── Constants ───────────────────────────────────────────────────────────────
 class AppColors {
   static const Color primary        = Color(0xFFB86B2B);
   static const Color accent         = Color(0xFF8D5524);
@@ -26,15 +26,11 @@ class AppColors {
   ];
 }
 
-// ─── Model Keranjang (CartItem lokal, untuk detail sheet qty) ─────────────────
-
 class CartItem {
   final MenuModel product;
   int quantity;
   CartItem({required this.product, this.quantity = 1});
 }
-
-// ─── Halaman Makanan ─────────────────────────────────────────────────────────
 
 class MenuPage extends StatefulWidget {
   final List<KeranjangItem> keranjang;
@@ -53,11 +49,10 @@ class MenuPage extends StatefulWidget {
 class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
   List<MenuModel> _allMenuItems = [];
   bool _isLoading               = true;
-  int _currentIndex             = 0;
+  int _currentIndex             = 1; // index 1 = Home (tengah)
   String _searchQuery           = '';
   final TextEditingController _searchController = TextEditingController();
 
-  // Animasi masuk — sama seperti beranda & minuman
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -186,9 +181,11 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
     );
   }
 
+  // index: 0 = Keranjang, 1 = Home (tengah), 2 = Profil
   void _onNavTap(int index) {
     HapticFeedback.selectionClick();
-    if (index == 0) {
+    if (index == 1) {
+      // Home
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const PuBeranda()),
@@ -196,7 +193,8 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
       );
       return;
     }
-    if (index == 2) {
+    if (index == 0) {
+      // Keranjang
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -212,14 +210,9 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
     setState(() => _currentIndex = index);
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  //  BUILD
-  // ═══════════════════════════════════════════════════════════════════════════
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // ✅ Gradient background sama persis beranda & minuman
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -275,14 +268,12 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
   }
 
   // ─── Header ──────────────────────────────────────────────────────────────────
-
   Widget _buildHeader(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Tombol kembali — style card seperti beranda & minuman
           Row(
             children: [
               GestureDetector(
@@ -334,7 +325,6 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
               ),
             ],
           ),
-          // Tombol maju ke minuman
           GestureDetector(
             onTap: () {
               HapticFeedback.lightImpact();
@@ -375,7 +365,6 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
   }
 
   // ─── Search Bar ───────────────────────────────────────────────────────────────
-
   Widget _buildSearchBar(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -431,7 +420,6 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
   }
 
   // ─── Section Title ────────────────────────────────────────────────────────────
-
   Widget _buildSectionTitle(BuildContext context) {
     final title =
         _searchQuery.isNotEmpty ? 'Hasil Pencarian' : 'Semua Makanan';
@@ -449,7 +437,6 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
               letterSpacing: -0.3,
             ),
           ),
-          // Pill badge — sama seperti beranda & minuman
           Container(
             padding:
                 const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -474,7 +461,6 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
   }
 
   // ─── Menu Grid ───────────────────────────────────────────────────────────────
-
   Widget _buildMenuGrid(BuildContext context, double screenWidth) {
     final items = _filteredMenuItems;
     int crossAxisCount = _getCrossAxisCount(screenWidth);
@@ -526,8 +512,7 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
     );
   }
 
-  // ─── Bottom Nav Bar ───────────────────────────────────────────────────────────
-
+  // ─── Bottom Nav Bar (3 item: Keranjang — Home — Profil) ──────────────────────
   Widget _buildBottomNavBar() {
     return Container(
       height: 72,
@@ -554,24 +539,19 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _NavItem(
-              icon: Icons.home_rounded,
-              index: 0,
-              currentIndex: _currentIndex,
-              onTap: _onNavTap),
-          _NavItem(
-              icon: Icons.search_rounded,
-              index: 1,
-              currentIndex: _currentIndex,
-              onTap: _onNavTap),
-          _NavItem(
               icon: Icons.shopping_bag_rounded,
-              index: 2,
+              index: 0,
               currentIndex: _currentIndex,
               onTap: _onNavTap,
               badgeCount: _keranjangCount),
           _NavItem(
+              icon: Icons.home_rounded,
+              index: 1,
+              currentIndex: _currentIndex,
+              onTap: _onNavTap),
+          _NavItem(
               icon: Icons.person_rounded,
-              index: 3,
+              index: 2,
               currentIndex: _currentIndex,
               onTap: _onNavTap),
         ],
@@ -580,8 +560,7 @@ class _MenuPageState extends State<MenuPage> with TickerProviderStateMixin {
   }
 }
 
-// ─── Food Card Widget (selaras _MenuCard beranda & _DrinkCard minuman) ────────
-
+// ─── Food Card Widget ─────────────────────────────────────────────────────────
 class _FoodCard extends StatelessWidget {
   final MenuModel item;
   final String imageUrl;
@@ -615,7 +594,6 @@ class _FoodCard extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // Gambar produk
               imageUrl.isNotEmpty
                   ? Image.network(
                       imageUrl,
@@ -636,8 +614,6 @@ class _FoodCard extends StatelessWidget {
                             color: AppColors.primary, size: 40),
                       ),
                     ),
-
-              // Overlay gradient — pakai AppColors primary & accent
               Positioned(
                 bottom: 0,
                 left: 0,
@@ -659,7 +635,6 @@ class _FoodCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Nama menu
                       Text(
                         item.nama,
                         style: GoogleFonts.poppins(
@@ -674,7 +649,6 @@ class _FoodCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 2),
-                      // Harga
                       Text(
                         'IDR ${item.harga}',
                         style: GoogleFonts.openSans(
@@ -684,7 +658,6 @@ class _FoodCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      // Status & tombol tambah
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -711,7 +684,6 @@ class _FoodCard extends StatelessWidget {
                               ),
                             ],
                           ),
-                          // Tombol + — gradient card style
                           GestureDetector(
                             onTap: onAddToCart,
                             child: Container(
@@ -751,8 +723,7 @@ class _FoodCard extends StatelessWidget {
   }
 }
 
-// ─── Nav Item Widget (selaras beranda & minuman) ──────────────────────────────
-
+// ─── Nav Item Widget ──────────────────────────────────────────────────────────
 class _NavItem extends StatelessWidget {
   final IconData icon;
   final int index;
@@ -840,8 +811,7 @@ class _NavItem extends StatelessWidget {
   }
 }
 
-// ─── Detail Bottom Sheet (selaras dengan tema baru) ──────────────────────────
-
+// ─── Detail Bottom Sheet ──────────────────────────────────────────────────────
 class _DetailSheet extends StatefulWidget {
   final MenuModel item;
   final String imageUrl;
@@ -871,7 +841,6 @@ class _DetailSheetState extends State<_DetailSheet> {
       ),
       child: Column(
         children: [
-          // Handle drag
           Padding(
             padding: const EdgeInsets.only(top: 12),
             child: Container(
@@ -888,7 +857,6 @@ class _DetailSheetState extends State<_DetailSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Gambar produk
                   ClipRRect(
                     borderRadius:
                         const BorderRadius.vertical(top: Radius.circular(28)),
@@ -918,13 +886,11 @@ class _DetailSheetState extends State<_DetailSheet> {
                             ),
                           ),
                   ),
-                  // Detail info
                   Padding(
                     padding: const EdgeInsets.all(22.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Nama
                         Text(
                           widget.item.nama,
                           style: GoogleFonts.poppins(
@@ -935,7 +901,6 @@ class _DetailSheetState extends State<_DetailSheet> {
                           ),
                         ),
                         const SizedBox(height: 6),
-                        // Harga
                         Text(
                           'IDR ${widget.item.harga}',
                           style: GoogleFonts.openSans(
@@ -945,7 +910,6 @@ class _DetailSheetState extends State<_DetailSheet> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        // Deskripsi
                         Text(
                           widget.item.deskripsi.isNotEmpty
                               ? widget.item.deskripsi
@@ -957,7 +921,6 @@ class _DetailSheetState extends State<_DetailSheet> {
                           ),
                         ),
                         const SizedBox(height: 28),
-                        // Jumlah
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -969,7 +932,6 @@ class _DetailSheetState extends State<_DetailSheet> {
                                 color: AppColors.accent,
                               ),
                             ),
-                            // Tombol +/- — style card
                             Container(
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(
@@ -1017,13 +979,11 @@ class _DetailSheetState extends State<_DetailSheet> {
                           ],
                         ),
                         const SizedBox(height: 28),
-                        // Tombol tambah ke keranjang
                         SizedBox(
                           width: double.infinity,
                           height: 54,
                           child: ElevatedButton(
-                            onPressed: () =>
-                                widget.onAddToCart(_quantity),
+                            onPressed: () => widget.onAddToCart(_quantity),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primary,
                               foregroundColor: Colors.white,

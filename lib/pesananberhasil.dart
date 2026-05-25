@@ -3,7 +3,12 @@ import 'package:google_fonts/google_fonts.dart';
 import 'beranda.dart';
 import 'profil_pelanggan.dart';
 
-// ─── Constants (Selaras Global) ───────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────────────────────
+// 1. KONSTANTA WARNA GLOBAL (AppColors)
+// ──────────────────────────────────────────────────────────────────────────────
+// Digunakan untuk konsistensi tema di seluruh aplikasi.
+// primary (coklat) → warna utama brand.
+// bgGradient → background gradasi halus dari krem hingga coklat muda.
 class AppColors {
   static const Color primary        = Color(0xFFB86B2B);
   static const Color accent         = Color(0xFF8D5524);
@@ -21,6 +26,11 @@ class AppColors {
   ];
 }
 
+// ──────────────────────────────────────────────────────────────────────────────
+// 2. APLIKASI UTAMA (FigmaToCodeApp)
+// ──────────────────────────────────────────────────────────────────────────────
+// - Menonaktifkan banner debug.
+// - Menentukan halaman pertama: PuPesananBerhasil.
 class FigmaToCodeApp extends StatelessWidget {
   const FigmaToCodeApp({super.key});
 
@@ -33,6 +43,14 @@ class FigmaToCodeApp extends StatelessWidget {
   }
 }
 
+// ──────────────────────────────────────────────────────────────────────────────
+// 3. HALAMAN PESANAN BERHASIL (PuPesananBerhasil)
+// ──────────────────────────────────────────────────────────────────────────────
+// Menampilkan konfirmasi setelah pengguna berhasil melakukan pemesanan.
+// Fitur utama:
+// - Animasi masuk (scale + fade) untuk pengalaman visual yang menarik.
+// - Background gradasi yang menenangkan.
+// - Bottom navigation bar untuk akses cepat ke halaman lain.
 class PuPesananBerhasil extends StatefulWidget {
   const PuPesananBerhasil({super.key});
 
@@ -42,7 +60,7 @@ class PuPesananBerhasil extends StatefulWidget {
 
 class _PuPesananBerhasilState extends State<PuPesananBerhasil>
     with TickerProviderStateMixin {
-  // Animasi masuk (sama seperti di detailkeranjang.dart)
+  
   late AnimationController _scaleController;
   late Animation<double> _scaleAnimation;
   late AnimationController _fadeController;
@@ -67,7 +85,9 @@ class _PuPesananBerhasilState extends State<PuPesananBerhasil>
       CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
     );
 
+    // Mulai animasi scale
     _scaleController.forward();
+    // Tunda fade sebentar agar efeknya berurutan
     Future.delayed(const Duration(milliseconds: 300), () {
       if (mounted) _fadeController.forward();
     });
@@ -80,6 +100,11 @@ class _PuPesananBerhasilState extends State<PuPesananBerhasil>
     super.dispose();
   }
 
+  // ────────────────────────────────────────────────────────────────────────────
+  // 5. FUNGSI NAVIGASI
+  // ────────────────────────────────────────────────────────────────────────────
+  // Mengganti halaman dengan efek transisi fade.
+  // Digunakan bottom nav bar untuk berpindah ke Beranda atau Profile.
   void _navigateTo(Widget page) {
     Navigator.pushReplacement(
       context,
@@ -94,8 +119,8 @@ class _PuPesananBerhasilState extends State<PuPesananBerhasil>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // ✅ Gradient Background
       body: Container(
+        // Background gradasi dari AppColors.bgGradient
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: AppColors.bgGradient,
@@ -109,7 +134,12 @@ class _PuPesananBerhasilState extends State<PuPesananBerhasil>
             children: [
               const Spacer(flex: 2),
 
-              // Gambar Ilustrasi dengan Animasi Scale & Lingkaran Dekoratif
+              // ──────────────────────────────────────────────────────────────
+              // 6. IKON SUKSES DENGAN ANIMASI SCALE
+              // ──────────────────────────────────────────────────────────────
+              // - Lingkaran dekoratif dengan border & shadow.
+              // - Gambar "Escoklat.png" dari aset lokal.
+              // - ScaleTransition membuat ikon membesar dari kecil.
               ScaleTransition(
                 scale: _scaleAnimation,
                 child: Container(
@@ -138,7 +168,11 @@ class _PuPesananBerhasilState extends State<PuPesananBerhasil>
 
               const SizedBox(height: 32),
 
-              // Teks Judul dengan Animasi Fade
+              // ──────────────────────────────────────────────────────────────
+              // 7. TEKS KONFIRMASI (Fade Animation)
+              // ──────────────────────────────────────────────────────────────
+              // - "Pesanan Berhasil" dengan font Poppins tebal.
+              // - Subteks ucapan terima kasih.
               FadeTransition(
                 opacity: _fadeAnimation,
                 child: Text(
@@ -161,7 +195,6 @@ class _PuPesananBerhasilState extends State<PuPesananBerhasil>
 
               const SizedBox(height: 14),
 
-              // Teks Subjudul
               FadeTransition(
                 opacity: _fadeAnimation,
                 child: Text(
@@ -179,7 +212,12 @@ class _PuPesananBerhasilState extends State<PuPesananBerhasil>
 
               const Spacer(flex: 3),
 
-              // ✅ Bottom Navigation Bar (Selaras dengan Beranda, Minuman, dll)
+              // ──────────────────────────────────────────────────────────────
+              // 8. BOTTOM NAVIGATION BAR
+              // ──────────────────────────────────────────────────────────────
+              // - Menyediakan akses ke Beranda, Keranjang, Riwayat, Profile.
+              // - Memiliki gradasi putih hingga cardColor.
+              // - Menggunakan _NavItem untuk setiap tombol.
               _buildBottomNavBar(),
             ],
           ),
@@ -188,7 +226,9 @@ class _PuPesananBerhasilState extends State<PuPesananBerhasil>
     );
   }
 
-  // ─── Bottom Nav Bar ─────────────────────────────────────────────────────────
+  // ────────────────────────────────────────────────────────────────────────────
+  // 9. MEMBANGUN BOTTOM NAV BAR
+  // ────────────────────────────────────────────────────────────────────────────
   Widget _buildBottomNavBar() {
     return Container(
       height: 72,
@@ -225,7 +265,7 @@ class _PuPesananBerhasilState extends State<PuPesananBerhasil>
           _NavItem(
             icon: Icons.receipt_rounded,
             onTap: () {
-              // TODO: Tambahkan navigasi riwayat pesanan jika sudah ada
+              // TODO: nanti dihubungkan ke halaman riwayat pesanan
             },
           ),
           _NavItem(
@@ -238,7 +278,13 @@ class _PuPesananBerhasilState extends State<PuPesananBerhasil>
   }
 }
 
-// ─── Nav Item Widget (Selaras Global) ────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────────────────────
+// 10. WIDGET TOMBOL NAVIGASI (_NavItem)
+// ──────────────────────────────────────────────────────────────────────────────
+// - Menampilkan ikon dengan efek sentuh (GesturDetector).
+// - Ukuran tetap 58x58 untuk konsistensi.
+// - Warna ikon menggunakan primary dengan opacity rendah (tidak aktif).
+//   (Jika ingin menandai halaman aktif, bisa ditambahkan kondisi)
 class _NavItem extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
@@ -263,8 +309,7 @@ class _NavItem extends StatelessWidget {
             Icon(
               icon,
               size: 24,
-              // Karena tidak ada halaman yang aktif, gunakan warna non-aktif
-              color: AppColors.primary.withOpacity(0.45),
+              color: AppColors.primary.withOpacity(0.45), // warna tidak aktif
             ),
           ],
         ),

@@ -47,11 +47,10 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman>
     with TickerProviderStateMixin {
   List<MenuModel> _allDrinks = [];
   bool _isLoading            = true;
-  int _currentIndex          = 0;
+  int _currentIndex          = 1; // index 1 = Home (tengah)
   String _searchQuery        = '';
   final TextEditingController _searchController = TextEditingController();
 
-  // Animasi masuk — sama seperti beranda
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -157,9 +156,11 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman>
       );
   }
 
+  // index: 0 = Keranjang, 1 = Home (tengah), 2 = Profil
   void _onNavTap(int index) {
     HapticFeedback.selectionClick();
-    if (index == 0) {
+    if (index == 1) {
+      // Home
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const PuBeranda()),
@@ -167,7 +168,8 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman>
       );
       return;
     }
-    if (index == 2) {
+    if (index == 0) {
+      // Keranjang
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -190,7 +192,6 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // ✅ Gradient background sama persis beranda
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -253,7 +254,6 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Tombol kembali — style card seperti beranda
           Row(
             children: [
               GestureDetector(
@@ -309,7 +309,6 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman>
               ),
             ],
           ),
-          // Tombol maju ke snack
           GestureDetector(
             onTap: () {
               HapticFeedback.lightImpact();
@@ -424,7 +423,6 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman>
               letterSpacing: -0.3,
             ),
           ),
-          // Pill badge — sama seperti beranda
           Container(
             padding:
                 const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -501,7 +499,7 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman>
     );
   }
 
-  // ─── Bottom Nav Bar ───────────────────────────────────────────────────────────
+  // ─── Bottom Nav Bar (3 item: Keranjang — Home — Profil) ──────────────────────
 
   Widget _buildBottomNavBar() {
     return Container(
@@ -529,24 +527,19 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman>
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _NavItem(
-              icon: Icons.home_rounded,
-              index: 0,
-              currentIndex: _currentIndex,
-              onTap: _onNavTap),
-          _NavItem(
-              icon: Icons.search_rounded,
-              index: 1,
-              currentIndex: _currentIndex,
-              onTap: _onNavTap),
-          _NavItem(
               icon: Icons.shopping_bag_rounded,
-              index: 2,
+              index: 0,
               currentIndex: _currentIndex,
               onTap: _onNavTap,
               badgeCount: _keranjangCount),
           _NavItem(
+              icon: Icons.home_rounded,
+              index: 1,
+              currentIndex: _currentIndex,
+              onTap: _onNavTap),
+          _NavItem(
               icon: Icons.person_rounded,
-              index: 3,
+              index: 2,
               currentIndex: _currentIndex,
               onTap: _onNavTap),
         ],
@@ -555,7 +548,7 @@ class _PaMenuJenisMinumanState extends State<PaMenuJenisMinuman>
   }
 }
 
-// ─── Drink Card Widget (selaras _MenuCard di beranda.dart) ─────────────────────
+// ─── Drink Card Widget ─────────────────────────────────────────────────────────
 
 class _DrinkCard extends StatelessWidget {
   final MenuModel item;
@@ -583,7 +576,6 @@ class _DrinkCard extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // Gambar produk
             imageUrl.isNotEmpty
                 ? Image.network(
                     imageUrl,
@@ -604,8 +596,6 @@ class _DrinkCard extends StatelessWidget {
                           color: AppColors.primary, size: 40),
                     ),
                   ),
-
-            // Overlay gradient — pakai AppColors.primary & accent
             Positioned(
               bottom: 0,
               left: 0,
@@ -627,7 +617,6 @@ class _DrinkCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Nama menu
                     Text(
                       item.nama,
                       style: GoogleFonts.poppins(
@@ -642,7 +631,6 @@ class _DrinkCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
-                    // Harga
                     Text(
                       'IDR ${item.harga}',
                       style: GoogleFonts.openSans(
@@ -652,7 +640,6 @@ class _DrinkCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    // Status & tombol tambah
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -679,7 +666,6 @@ class _DrinkCard extends StatelessWidget {
                             ),
                           ],
                         ),
-                        // Tombol + — gradient card style seperti beranda
                         GestureDetector(
                           onTap: onAddToCart,
                           child: Container(
@@ -718,7 +704,7 @@ class _DrinkCard extends StatelessWidget {
   }
 }
 
-// ─── Nav Item Widget (selaras beranda.dart) ────────────────────────────────────
+// ─── Nav Item Widget ──────────────────────────────────────────────────────────
 
 class _NavItem extends StatelessWidget {
   final IconData icon;
